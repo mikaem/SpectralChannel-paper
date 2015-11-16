@@ -1,0 +1,648 @@
+\documentclass[11pt, oneside]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{bm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{ptex2tex, minted}
+\usepackage{xcolor}
+\usepackage{cancel}
+\usepackage{caption}
+\usepackage{subfigure}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\subfiglabelskip=0pt
+
+\definecolor{gray}{gray}{0.97}
+\colorlet{commentcolour}{green!50!black}
+\colorlet{stringcolour}{red!60!black}
+\colorlet{keywordcolour}{magenta!90!black}
+\colorlet{exceptioncolour}{yellow!50!red}
+\colorlet{commandcolour}{blue!60!black}
+\colorlet{numpycolour}{blue!60!green}
+\colorlet{literatecolour}{magenta!90!black}
+\colorlet{promptcolour}{green!50!black}
+\colorlet{specmethodcolour}{violet}
+\colorlet{indendifiercolour}{green!70!white}
+
+%\newcommand{\codetitlestyle}[1]{\small\textit{#1}\hspace{0.1cm}}
+\newcommand{\belowtitleskip}{2pt}%\smallskipamount}
+%\newcommand{\captionposition}{t}
+
+%\newcommand{\mmo}[1]{\emph{#1}}
+
+%\renewcommand{\ttdefault}{pcr}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[top=3cm,bottom=4cm,left=3cm,right=3.2cm,asymmetric]{geometry}
+
+\lstset{
+numbers=none,
+aboveskip=1ex,
+belowskip=1ex,
+basicstyle=\ttfamily\footnotesize,
+}
+
+\lstdefinestyle{pythonstyle}{
+%%\lstset{
+%%keepspaces=true,
+language=python,
+showtabs=true,
+tab=,
+tabsize=2,
+basicstyle=\ttfamily\footnotesize,%\setstretch{.5},
+stringstyle=\color{stringcolour},
+showstringspaces=false,
+alsoletter={1234567890},
+otherkeywords={\ , \}, \{, \%, \&, \|},
+keywordstyle=\color{keywordcolour}\bfseries,
+emph={and,break,class,continue,def,yield,del,elif ,else,%
+except,exec,finally,for,from,global,if,import,in,%
+lambda,not,or,pass,print,raise,return,try,while,assert},
+emphstyle=\color{blue}\bfseries,
+emph={[2]True, False, None},
+emphstyle=[2]\color{keywordcolour},
+emph={[3]object,type,isinstance,copy,deepcopy,zip,enumerate,reversed,list,len,dict,tuple,xrange,append,execfile,real,imag,reduce,str,repr},
+emphstyle=[3]\color{commandcolour},
+emph={Exception,NameError,IndexError,SyntaxError,TypeError,ValueError,OverflowError,ZeroDivisionError},
+emphstyle=\color{exceptioncolour}\bfseries,
+%upquote=true,
+morestring=[s]{"""}{"""},
+morestring=[s]{'''}{'''},
+commentstyle=\color{commentcolour}\slshape,
+emph={[4]1, 2, 3, 4, 5, 6, 7, 8, 9, 0,ode, fsolve, sqrt, exp, sin, cos, arccos, pi, array, norm, solve,float,complex, dot, arange, isscalar, max, sum, flatten, shape, reshape, find, any, all, abs, plot, linspace, legend, quad, polyval,polyfit, hstack,vector, concatenate,vstack,column_stack,empty,zeros,ones,rand,vander,grid,pcolor,eig,eigs,eigvals,svd,qr,tan,det,logspace,roll,min,mean,cumsum,cumprod,diff,vectorize,lstsq,cla,eye,xlabel,ylabel,squeeze},
+emphstyle=[4]\color{commandcolour},
+emph={[5]__init__,__add__,__mul__,__div__,__sub__,__call__,__getitem__,__setitem__,__eq__,__ne__,__nonzero__,__rmul__,__radd__,__repr__,__str__,__get__,__truediv__,__pow__,__name__,__future__,__all__},
+emphstyle=[5]\color{specmethodcolour},
+emph={[6]assert,range,yield},
+emphstyle=[6]\color{keywordcolour}\bfseries,
+emph={[7]def, return, and, print},
+emphstyle=[7]\color{black}\bfseries,
+% emph={[7]self},
+% emphstyle=[7]\bfseries,
+literate=*%
+%{:}{{\literatecolour:}}{1}%
+%{=}{{\literatecolour=}}{1}%
+%{-}{{\literatecolour-}}{1}%
+%{+}{{\literatecolour+}}{1}%
+%{*}{{\literatecolour*}}{1}%
+{/}{{\literatecolour/}}{1}%
+{!}{{\literatecolour!}}{1}%
+%{(}{{\literatecolour(}}{1}%
+%{)}{{\literatecolour)}}{1}%
+%{[}{{\literatecolour[}}{1}%
+%{]}{{\literatecolour]}}{1}%
+{<}{{\literatecolour<}}{1}%
+{>}{{\literatecolour>}}{1}%
+{>>>}{{\textcolor{promptcolour}{>>>}}}{1}%
+,%
+breaklines=true,
+breakatwhitespace= true,
+xleftmargin=\framemargin,
+xrightmargin=\framemargin,
+aboveskip=1ex,
+belowskip=1ex,
+frame=trbl, %trbl
+numbers=none,
+%frameround=tttt,
+rulecolor=\color{black!40},
+%framexleftmargin=\framemargin,
+%framextopmargin=.1ex,
+%framexbottommargin=.1ex,
+%framexrightmargin=\framemargin,
+%framexleftmargin=1mm, framextopmargin=1mm, frame=shadowbox, rulesepcolor=\color{blue},#1
+%frame=tb,
+%backgroundcolor=\color{yellow!10}
+backgroundcolor=\color{gray}
+%}
+}
+
+\newcommand{\N}[1]{\check{#1}}
+\newcommand{\D}[1]{\overline{#1}}
+
+\newcommand{\inpyth}{\lstinline[style=pythonstyle, basicstyle=\ttfamily]} %[]%
+
+\lstnewenvironment{inpython}[1][]{
+\lstset{style=pythonstyle, frame=trbl, belowcaptionskip=\belowtitleskip}
+}{}
+
+\newcommand{\includecode}[2][py]{\lstinputlisting[caption=#2,label=list:#2,style=pythonstyle,
+float=!htpb]{#2}}
+
+\newcommand{\mmo}[1]{({\bf mmo comment:} \emph{#1})}
+\bibliographystyle{plain}
+
+\title{Assessment of a Shen-Fourier turbulent channel flow solver for large-scale simulations}
+\author{Mikael Mortensen and Diako Darian}
+%\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+\section*{Abstract}
+
+\section{Introduction}
+
+\section{Preliminaries}
+The Navier-Stokes equations used to describe turbulent flow in a doubly periodic channel are
+\begin{align}
+ \frac{\partial \bm{u}}{\partial t} + (\bm{u} \cdot \nabla) \bm{u}   &= \nu \nabla^2 \bm{u} - \nabla{p} + \bm{f},  \label{eq:NS} \\
+ \nabla \cdot \bm{u} &= 0,
+\end{align}
+where $\bm{u}(\bm{x}, t)=(u, v, w)$ is the velocity vector, $\bm{x}=(x, y, z)$ and $t$ are position and time,   $p(\bm{x}, t)$ is the instantaneous pressure normalized by a constant density and $\bm{f} = (0, f_y, 0)$ is a constant forcing vector. The computational domain is $\Omega=[-1, 1]\times [0, L_y] \times [0, L_z]$ with channel walls located at $x=\pm 1$ such that no-slip applies at $ \bm{u}(\pm 1, y, z, t) = 0$. The walls are spanning the $y-z$ plane and the equations are periodic in the $y$ and $z$ directions. 
+
+The Navier Stokes equations are discretized using Fourier basis functions for the periodic directions, and a combination of Chebyshev polynomials in the wall normal direction. Three different sets of basis functions and function spaces are relevant for the wall normal direction
+\begin{align}
+&  \phi_k(x) = T_k(x), & V_{N_x} &= \text{span}\{\phi_0, \phi_1,\ldots, \phi_{N_x}\} \label{eq:Tk}\\
+& \D{\phi}_k(x) = T_k(x) - T_{k+2}(x), & \D{V}_{N_x} &= \text{span} \{ \D{\phi}_0, \D{\phi}_1, \ldots, \D{\phi}_{N_x-2} \} \label{eq:phiD}\\
+& \N{\phi}_k(x) = T_k(x) - \left(\frac{k}{k+2}\right)^2 T_{k+2}(x), & \N{V}_{N_x} &= \text{span} \{\N{\phi}_1, \N{\phi}_2, \ldots, \N{\phi}_{N_x-2} \} \label{eq:phiN} 
+\end{align}
+where $T_k(x)$ is the $k$'th degree Chebyshev polynomial of the first kind. The basis functions and function spaces in (\ref{eq:phiD}) and (\ref{eq:phiN}) were suggested by Shen, and satisfy, respectively, the boundary conditions $\D{\phi}_k(\pm 1) = 0$ and $\N{\phi}'_k(\pm 1)=0$. The last two function spaces may alternatively be written as $\D{V}_{N_x} = \{v \in V_{N_x}: v(\pm 1)=0 \}$ and $\N{V}_{N_x} = \{v \in V_{N_x}: \int_{-1}^{1}v/\sqrt{1-x^2} dx = 0, \, v'(\pm 1) = 0 \}$.  
+
+Three-dimensional basis functions that are periodic in $y$ and $z$ directions, can now be defined as
+\begin{align}
+  \psi_{\bm{k}}(\bm{x}) = \phi_{l}(x)e^{ \imath(\underline{m} y + \underline{n} z)}, \quad V_N &= \text{span} \{ \psi_{\bm{k}}(\bm{x}):\, \bm{k} \in K_N  \}, \\
+  \D{\psi}_{\bm{k}}(\bm{x}) = \D{\phi}_{l}(x)e^{ \imath(\underline{m} y + \underline{n} z)}, \quad \D{V}_N &= \text{span} \{ \D{\psi}_{\bm{k}}(\bm{x}):\, \bm{k} \in \D{K}_N  \}, \\
+  \N{\psi}_{\bm{k}}(\bm{x}) = \N{\phi}_{l}(x)e^{ \imath(\underline{m} y + \underline{n} z)}, \quad \N{V}_N &= \text{span} \{ \N{\psi}_{\bm{k}}(\bm{x}):\, \bm{k} \in \N{K}_N  \},
+\end{align}
+where $\imath=\sqrt{-1}$ and 
+\begin{align}
+K_N = \Big\{\bm{k} \in \mathcal{Z}\times\mathcal{R}^2 / &(l, \underline{m}, \underline{n}) \in \left( l, \frac{2 \pi m}{L_y}, \frac{2 \pi n}{L_z} \right), \text{where} \notag \\
+ &(l, m, n) \in  [0, \ldots, N_x] \times [-\frac{N_y}{2},\ldots, \frac{N_y}{2}-1] \times[-\frac{N_z}{2},\ldots, \frac{N_z}{2}-1] \Big\}. \label{eq:wavenumbermesh}
+\end{align}
+$\D{K}_N$ and $\N{K}_N$ are both equal to $K_N$ except from in index $l$ that ranges from $[0, 1, \ldots, N_x-2]$ and $[1, 2, \ldots, N_x-2]$ for $\D{K}_N$ and $\N{K}_N$ respectively, see (\ref{eq:phiD}) and (\ref{eq:phiN}). The computational mesh has in real space been created using $N = (N_x, N_y, N_z)$ intervals, where the two periodic directions use uniform intervals. The computational mesh is given as
+\begin{align}
+  X_N = \Big\{ \bm{x} \in \mathcal{R}^3/&(x_i, y_j, z_k) \in \left( h(i), \frac{jL_y}{N_y}, \frac{kL_z}{N_z} \right), \text{where} \notag \\
+  &(i, j, k) \in [0, 1, \ldots, N_x] \times [0, 1, \ldots, N_y-1] \times [0, 1, \ldots, N_z-1] \Big\} \label{eq:Xn}
+\end{align}
+where $x_i = h(i)$ represents either
+\begin{equation}
+ h(i) = \begin{cases}
+   \cos \left(\frac{i \pi }{N_x} \right) \, &\forall \, i=0,1, \ldots, N_x \quad  \text{for Gauss-Lobatto points}, \\
+   \cos \left(\frac{(2i +1)\pi}{2N_x+2} \right) \, &\forall \, i=0,1, \ldots, N_x \quad  \text{for Gauss-Chebyshev points}. \\
+ \end{cases}
+\end{equation}
+
+For the Navier Stokes equations we look for solutions for the velocity components of the form
+\begin{equation}
+u(\bm{x}, t) = \frac{1}{N_yN_z}\sum_{\bm{k} \in \D{K}_N} \hat{u}_{\bm{k}}(t) \D{\psi}_{\bm{k}}(\bm{x}), \label{eq:u_sol}
+\end{equation}
+where $\hat{u}_{\bm{k}}(t) = \hat{u}(l, {m}, {n}, t)$ are the expansion coefficients for the velocity component in $x$-direction and the scaling by $N_y$ and $N_z$ is merely for convenience and compliance with the inverse discrete Fourier transform. Similar expressions apply for the remaining two velocity components. Note that from now on we will simply use the notation $\hat{u}$ for $\hat{u}_{\bm{k}}(t)$, when it is possible to simplify without loss of clarity. Likewise we will simply use $u$ for $u(\bm{x}, t)$. 
+
+If the expansion coefficients $\hat{u}$  are known for the entire wavenumber mesh (\ref{eq:wavenumbermesh}), then the expression (\ref{eq:u_sol}) may be evaluated on the mesh (\ref{eq:Xn}) using fast Fourier and fast Shen inverse transforms as
+\begin{align}
+u(x_i, y_j, z_k, t) &= \underbrace{\frac{1}{N_z}\sum_n \underbrace{\frac{1}{N_y} \sum_m \underbrace{\sum_l \hat{u}(l,m,n)\D{\phi}_l(x_i)}_{\mathcal{S}_x^{-1}} e^{\imath \underline{m} y_j}}_{\mathcal{F}_y^{-1}} e^{\imath \underline{n} z_k}}_{\mathcal{F}_z^{-1}} , \quad \forall \, \bm{x} \in X_N, \notag \\
+  u &= \D{\mathcal{T}}^{-1}(\hat{u}) =  \mathcal{F}^{-1}_z (\mathcal{F}^{-1}_y (\D{\mathcal{S}}^{-1}_x (\hat{u}))), \quad \forall \, \bm{x} \in X_N.  \label{eq:ifft} 
+\end{align}
+Here $\D{\mathcal{T}}^{-1}$ is used as short notation for the complete inverse transform, $\mathcal{F}_{y}^{-1}$ and $\mathcal{F}_{z}^{-1}$ represents inverse Fourier transforms along directions $y$ and $z$ respectively, and the inverse Shen transform $\D{\mathcal{S}}_{x}^{-1}$ is performed along the wall normal $x$ direction. Note that the transforms are applied sequentially to the entire computational mesh. The inverse Shen transform may be computed using fast Chebyshev transforms for all the three bases in (\ref{eq:Tk}, \ref{eq:phiD}, \ref{eq:phiN}). The transforms are slightly different for the three bases and ${\mathcal{S}}, \D{\mathcal{S}}$ and $\N{\mathcal{S}}$ are used to distinguish between them with obvious notation. Python implementations of forward and inverse Shen transforms and scalar products are given in the Appendix.
+
+A three-dimensional scalar product in the weighted $[L^2_w(\Omega)]^3$ space is defined as
+\begin{align}
+ \left<u, v\right>_w &= \int_{\Omega} {u(\bm{x}) v^*(\bm{x})}w\,dxdydz, \notag \\
+   &= \int_{\Omega} {u(\bm{x}) v^*(\bm{x})}\,dx_wdydz,
+\end{align}
+where $v^*$ is the comlex conjugate of $v$ and the weights $w$ are unity for periodic directions and  $w=1/\sqrt{1-x^2}$ for the inhomogeneous direction, and we have used $dx_w = dx/\sqrt{1-x^2}$. In this work we will make use of the discrete weighted $[l^2_w(\Omega)]^3$ space, where quadrature is employed for integration. As such the scalar product corresponds to sums that may be computed using fast transforms
+\begin{align}
+ \left< u, \D{\psi}_{\bm{k}} \right>_w &= h \underbrace{\sum_i \underbrace{\sum_j \underbrace{\sum_k u(x_i, y_j, z_k, t)  e^{-\imath \underline{n} z_k}}_{\mathcal{F}_n}  e^{-\imath \underline{m} y_j} }_{\mathcal{F}_m} \D{\phi}_{l}(x_i) w_i}_{\D{\mathcal{S}}_l},   \notag \\
+  &=  h \D{\mathcal{S}}(u) = h \D{\mathcal{S}}_{l} (\mathcal{F}_{{m}} (\mathcal{F}_{{n}}(u))), \quad \forall \, \bm{k} \in \D{K}_N. \label{eq:sst1}
+\end{align}
+Here $h\D{\mathcal{S}}$ denotes the complete three dimensional scalar product and $h = L_yL_zN_y^{-1}N_z^{-1}$ is a constant. $\mathcal{F}_{{n}}$ and $\mathcal{F}_{{m}}$ represent discrete Fourier transforms in $z$- and $y$-directions, respectively, and $\D{\mathcal{S}}_{l}(\cdot) = (\cdot, \D{\phi}_l)_w$ is the Shen scalar product in the $x$-direction. The weights, $w_i$, required for the Shen transforms are defined as
+\begin{equation}
+ w_i = \begin{cases}
+       \frac{\pi}{c_i N_x} &\forall \, i=0,1,\ldots, N_x \quad  \text{for Gauss-Lobatto},\\
+       \frac{\pi}{N_x+1} &\forall \, i=0,1,\ldots, N_x  \quad \text{for Gauss-Chebyshev},      
+ \end{cases}
+\end{equation}
+where $c_0 = c_{N_x} = 2$ and $c_i = 1$ for $0 < i < N_x$.
+
+The scalar product  $h\D{\mathcal{S}}$ in (\ref{eq:sst1}) does not represent a complete transform. To find a transformation between physical $u$ and spectral $\hat{u}$ we make use of Eq. (\ref{eq:u_sol}) directly and use the discrete orthogonality of the Fourier basis functions
+\begin{align}
+\left<u, \D{\psi}_{\bm{k}}\right>_w &= \frac{1}{N_yN_z}\left< \sum_{\bm{m}=(q,r,s) \in \D{K}_N} \hat{u}_{\bm{m}} \D{\psi}_{\bm{m}}, \D{\psi}_{\bm{k}} \right>_w, \notag \\
+           &= h \sum_{q=0}^{N_x-2} \sum_{i=0}^{N_x} \D{\phi}_{q}(x_i) \D{\phi}_{l}(x_i) w_i \, \hat{u}(q, {m}, {n}, t), \notag \\
+           &= h \sum_{p=0}^{N_x-2} \D{B}_{lq} \hat{u}(q, {m}, {n}, t), \label{eq:sst2}
+\end{align}
+where the scalar product $\D{B}_{lq} = (\D{\phi}_q, \D{\phi}_l)_w = \sum_{i=0}^{N_x} \D{\phi}_{q}(x_i) \D{\phi}_{l}(x_i) w_i$ can be assembled to a tridiagonal mass matrix. The complete transformation is now obtained by setting Eq. (\ref{eq:sst2}) equal to (\ref{eq:sst1}) and solving for $\hat{u}$. Moving to matrix notation we get
+\begin{align}
+h\sum_{q=0}^{N_x-2} \D{B}_{lq} \hat{u}(q, {m}, {n}, t) &= h\D{\mathcal{S}}(u)(l, m, n, t), \notag \\
+ \hat{u}_{\bm{k}}(t) &= \D{\mathcal{T}}(u) =  \D{B}^{-1}\D{\mathcal{S}}(u), \quad \forall \, \bm{k} \in \D{K}_N.
+\end{align}
+where $\D{\mathcal{T}}(u)$ denotes the complete transformation, such that $u = \D{\mathcal{T}}^{-1}(\D{\mathcal{T}}(u))$. Note that since $\D{B}$ assembles to a tridiagonal matrix the solution can be obtained very fast ($O(N_x)$) using one forward elimination followed by a backwards substitution (Thomas algorithm). The complete transformation thus requires a fast Chebyshev transform and a fast linear algebraic solve. Similar transforms $\mathcal{T}$ and $\N{\mathcal{T}}$ are defined for the two other bases (\ref{eq:Tk}) and (\ref{eq:phiN}), using mass matrices $B_{kj}=(T_j, T_k)_w$ and $\N{B}_{kj}=(\N{\phi}_j, \N{\phi}_j)_w$ and scalar products $\mathcal{S}_k(\cdot) = (\cdot, T_k)_w$ and $\N{\mathcal{S}}_k(\cdot) = (\cdot, \N{\phi}_k)_w$.
+
+
+\section{The incremental pressure correction scheme}
+
+The Navier Stokes equations are discretized in time using a second order incremental pressure correction scheme with Crank-Nicolson on diffusion and explicit Adams Bashforth on the nonlinear convection. The incremental pressure correction scheme (IPCS) that is used consists of a tentative momentum equation followed by a pressure correction. The two steps may be performed iteratively. The equations are iterated forward in time in equal size time steps $\triangle t$ from initial conditions $u(\bm{x}, 0) = u^0(\bm{x})$ at $t=0$, such that $t_n = n\triangle t$, $n \in \mathcal{Z}$. For turbulent channel flows initial conditions are simply a perturbed state used to get a turbulent flow going. 
+
+The IPCS attempts to find velocity vector $\bm{u}^{n}$ on time step $t_n$  and pressure midway between $t_n$ and $t_{n-1}$, $p^{n-1/2}$, given the solutions on all previous time steps. The three steps that are required solved on each time step are
+\begin{align}
+i)&\,\, \frac{\bm{u}^{*}-\bm{u}^{n-1}}{\triangle t} + \bm{N}^{n-1/2}   = \nu \nabla^2 \bm{u}^{n-1/2} - \nabla{p}^{n-3/2} + \bm{f}, \quad \bm{u}^*=0 \text{ for } x=\pm1   \label{eq:NSCN} \\
+ii)&\,\,\begin{cases}
+  \frac{\bm{u}^{n}-\bm{u}^*}{\triangle t} &= -\nabla p^* \\
+  \nabla \cdot \bm{u}^{n} &= 0, \quad \bm{u}^n\cdot \bm{n} = 0,\text{ for } x=\pm1
+  \end{cases} \label{eq:momupdate}\\
+  iii)&\,\,p^{n-1/2}=p^{n-3/2}+p^* \label{eq:pupdate} 
+\end{align}
+Here $\bm{u}^{n-1/2} = 0.5(\bm{u}^*+\bm{u}^{n-1})$, $\bm{u}^*$ is a tentative velocity, $p^*$ is a pressure correction, and the explicit convection is computed as $\bm{N}^{n-1/2}=1.5(\bm{u}^{n-1}\cdot \nabla) \bm{u}^{n-1} - 0.5(\bm{u}^{n-2}\cdot \nabla) \bm{u}^{n-2}$. The second step is computed by solving a Poisson equation for the pressure correction
+\begin{equation}
+  \nabla^2p^* = \frac{\nabla \cdot \bm{u}^*}{\triangle t}
+\end{equation}
+and subsequently updating the velocity through (\ref{eq:momupdate}).
+
+All three velocity components use the Dirichlet basis (\ref{eq:u_sol}), whereas the pressure is searched for in $\N{V}_N$
+\begin{equation}
+p(\bm{x}, t) = \frac{1}{N_yN_z}\sum_{\bm{k} \in \N{K}_N} \hat{p}_{\bm{k}}(t) \N{\psi}_{\bm{k}}(\bm{x}), \label{eq:p_sol}
+\end{equation}
+ 
+The spectral Galerkin method becomes: 
+
+1) Find $\bm{u}^*$ in $\D{V}_N^3$ by solving
+\begin{multline}
+ \frac{1}{\triangle t}\left<\bm{u}^*-\bm{u}^{n-1}, \bm{\D{\psi}}\right>_w + \left<\bm{N}^{n-1/2}, \bm{\D{\psi}} \right>_w   = \nu \left<\nabla^2 \bm{u}^{n-1/2}, \bm{\D{\psi}} \right>_w \\ - \left<\nabla{p}^{n-3/2}, \bm{\D{\psi}} \right>_w + \left<\bm{f}, \bm{\D{\psi}} \right>_w \,\,  \forall \, \bm{\D{\psi}} \in \D{V}_N^3. \label{eq:tentative}
+\end{multline}
+
+2) Compute the pressure correction $p^*\in \N{V}_N$ by solving
+\begin{equation}
+\left< \nabla^2 p^*, \N{\psi} \right>_w = \frac{1}{\triangle t} \left<\nabla \cdot \bm{u}^*, \N{\psi} \right>_w\,\, \forall \, \N{\psi} \in \N{V}_N. \label{eq:pcorr}
+\end{equation}
+
+3) Update the velocity, $\bm{u}^n \in \D{V}_N^3$, and pressure, $p^{n-1/2} \in \N{V}_N$, by solving
+\begin{align}
+\left< \bm{u}^n, \bm{\D{\psi}}\right>_w &= \left< \bm{u}^*, \bm{\D{\psi}}\right>_w - \triangle t \left< \nabla p^*, \bm{\D{\psi}} \right>_w \,\,  &\forall \, \bm{\D{\psi}} \in \D{V}_N^3, \label{eq:u_update} \\
+\left<p^{n-1/2}, \N{\psi}\right>_w &= \left<p^{n-3/2}, \N{\psi}\right>_w + \left<p^*, \N{\psi}\right>_w \,\, &\forall \, \N{\psi} \in \N{V}_N,\label{eq:pres_update}
+\end{align}
+where the pressure update simply resorts to $\hat{p}^{n-1/2} = \hat{p}^{n-3/2} + \hat{p}^* \, \forall \, \bm{k}\in \N{K}_N$.
+
+\section{Implementation}
+The vector valued equations (\ref{eq:tentative}) and (\ref{eq:u_update}) are solved in a segregated manner, one component at the time. We use $u_i$ and $\hat{u}_i$ for component $i$ of the real and transformed velocity vector. The inner products in Eqs. (\ref{eq:tentative}, \ref{eq:pcorr}, \ref{eq:u_update}, \ref{eq:pres_update}) lead to a range of new matrices
+\begin{align}
+ \left< u_i^* - u_i^{n-1}, \D{\psi}\right>_w &= h\D{B}\left({\hat{u}}_i^*-{\hat{u}}_i^{n-1} \right) \quad &i \in (0,1,2), \\ 
+ \left<\nabla^2 {u}_i^{n-1/2}, \D{\psi}\right>_w &= -h  \left( \D{A} +(\underline{m}^2+\underline{n}^2)\D{B}\right) \hat{u}_i^{n-1/2} \quad &i \in (0,1,2), \\ 
+ \left< f_i, \D{\psi}\right>_w &= h\D{\mathcal{S}}(f_i) &i \in (0,1,2), \\
+ \left<N_i^{n-1/2}, \D{\psi} \right>_w &= h\D{\mathcal{S}}(N_i^{n-1/2}) &i \in (0,1,2), \\  
+ \left< \nabla p^{n-3/2}, \bm{\D{\psi}} \right>_w &= h\left[\grave{C},\, \imath \underline{m} \grave{B},\, \imath \underline{n} \grave{B} \right] \hat{p}^{n-3/2}, \\ 
+ \left< \nabla^2 p^*, \N{\psi} \right>_w &= -h\left(\N{A} +(\underline{m}^2 + \underline{n}^2)\N{B} \right) \hat{p}^*, \\ 
+ \left<\nabla \cdot \bm{u}^*, \N{\psi} \right>_w &= h\left( \tilde{C} \hat{u}^* + \imath \underline{m} \tilde{B} \hat{v}^* + \imath \underline{n} \tilde{B} \hat{w}^* \right), 
+\end{align}
+where $\D{A}_{kj} = -\left(\D{\phi}^{''}_{j}, \D{\phi}_{k} \right)_w, \N{A}_{kj} = -\left(\N{\phi}^{''}_{j}, \N{\phi}_{k} \right)_w,  \grave{C}_{kj} = \left(\N{\phi}^{'}_j, \D{\phi}_k \right)_w, \tilde{C}_{kj} = (\D{\phi}^{'}_j, \N{\phi}_k)_w, \N{B}_{kj} = \left( \N{\phi}_j, \N{\phi}_k \right)_w, \grave{B}_{kj} = (\N{\phi}_j, \D{\phi}_k)_w$ and $\tilde{B}_{kj} = (\D{\phi}_j, \N{\phi}_k)_w$ are all more or less sparse matrices. Arranging the governing equations on matrix form we obtain for the three tentative velocity components in (\ref{eq:tentative})
+\begin{align}
+\D{H} \hat{u}^* &= \left(\frac{4}{\nu \triangle t} \D{B}-\D{H}\right) \hat{u}^{n-1} - \left[\D{\mathcal{S}}(N_x^{n-1/2}) + \grave{C} \hat{p}^{n-3/2} + \D{\mathcal{S}}(f_x)\right]\frac{2}{\nu}, \label{eq:tentativeUA}\\
+\D{H} \hat{v}^* &=  \left(\frac{4}{\nu \triangle t} \D{B}-\D{H}\right)\hat{v}^{n-1} - \left[\D{\mathcal{S}}(N_y^{n-1/2}) + \imath \underline{m} \grave{B} \hat{p}^{n-3/2} + \D{\mathcal{S}}(f_y)\right]\frac{2}{\nu}, \label{eq:tentativeVA}\\
+\D{H} \hat{w}^* &= \left(\frac{4}{\nu \triangle t} \D{B}-\D{H}\right) \hat{w}^{n-1} - \left[\D{\mathcal{S}}(N_z^{n-1/2}) + \imath \underline{n} \grave{B} \hat{p}^{n-3/2} + \D{\mathcal{S}}(f_z)\right]\frac{2}{\nu},\label{eq:tentativeWA}
+\end{align}
+where $\D{H}=\D{A} +(\underline{m}^2 + \underline{n}^2 + \frac{2}{\nu \triangle t})\D{B}$ is a matrix consisting of one subdiagonal, and where every second diagonal is zero. As such, we may split the matrix into two smaller (and decoupled) matrices for odd and even coefficients $H^e_{k,j} = H_{2k,2j}$ and $H^o_{k,j} = H_{2k+1,2j+1}$, where the two matrices $H^{e,o}$ are of type upper Hessenberg, with only 4 distinct values on each row. This structure of $H$ allows us to perform a very efficient tailored LU decomposition, as shown in Algorithm (\ref{alg:lu}), and a very efficient tailored solve through Algorithm (\ref{alg:lusolve}). Regarding Algorithm (\ref{alg:lusolve}), we note that the ability to decouple the system into odd and even coefficients leads to two subsystem that may be trivially solved simultaneously in two threads by letting one thread call LUODDEVEN with even coefficients, and the second thread call it for odd. 
+
+The linear system arising for the pressure correction equation is similar to the tentative velocities
+\begin{equation}
+\N{H}\hat{p}^* = -\frac{1}{\triangle t}\left( \tilde{C} \hat{u}^* + \imath \underline{m} \tilde{B} \hat{v}^* + \imath \underline{n} \tilde{B} \hat{w}^* \right), \label{eq:pressureA}
+\end{equation}
+where $\N{H}=\N{A} +(\underline{m}^2 + \underline{n}^2)\N{B}$ is of the same structure as $\D{H}$ and as such  should be factorizable in the same way. However, entries of the matrix $\N{H}_{kj}$ contain the column index $j^2$ (see $\N{A}$), and as such the values on each row of the matrix $\N{H}_{kj}$ are not constant for $j \ge k+4$ and the LU decomposition of $\N{H}$ will require a full upper $U$ matrix. To circumvent this we define $\N{H}_{kj} = \underline{H}_{kl}J_{lj}$, where $J_{kj}= j^2\delta_{kj}$ (no summation implied). We then set $w_k=J_{kj}\hat{p}_j$, use $b_k$ for the right hand side of (\ref{eq:pressureA}) and solve
+\begin{align}
+  \underline{H}_{kj}w_j &= b_k &\forall \, k \in 1, 2, \ldots, N_x-2, \\
+  \hat{p}_k &= J_{kj}^{-1}w_j &\forall \, k \in 1, 2, \ldots, N_x-2.
+\end{align}
+Here the first system $\underline{H}_{kj} w_j = b_k$ can be solved using the same LU factorization as the $\D{H}$ matrix, since $\underline{H}_{kj}=\underline{H}_{k, k+4}\, \forall \, j=k+6, k+8, \ldots$ and there are only 4 distinct values on each row. The implementation is the same as for $\D{H}$, except that for the matrix $\underline{H}$ the indices start at 1 instead of zero.
+
+The velocity update is computed on matrix form as
+\begin{align}
+  \hat{u}^n &= \hat{u}^* - \triangle t \D{B}^{-1} \left( \grave{C} \hat{p}^* \right),\\
+  \hat{v}^n &= \hat{v}^* - \triangle t \D{B}^{-1} \left( \imath \underline{m} \grave{B} \hat{p}^* \right),\\ 
+  \hat{w}^n &= \hat{w}^* - \triangle t \D{B}^{-1} \left( \imath \underline{n} \grave{B} \hat{p}^* \right).
+\end{align}
+using a tridiagonal solver.
+
+The convection term is computed in standard form with a pseudo-spectral method that requires a fast scalar product
+\begin{equation}
+  \D{\mathcal{S}}(N_i^{n-1}) = \D{\mathcal{S}}(\bm{u}^{n-1} \cdot \nabla u_i^{n-1}) \quad \forall \, i \in (0, 1, 2).
+\end{equation}
+We obtain the gradients of $u_i$ in real space by projecting $\partial u/\partial x$ to $\D{V}_{N_x}$ (boundary condition $\partial u/\partial x(\pm 1)=0$ follows from continuity) and $\partial v/\partial x$ and $\partial w/\partial x$ to $V_{N_x}$. 
+\begin{align}
+  \frac{\partial u}{\partial x} &= \D{\mathcal{T}}^{-1} (\D{B}^{-1}(\D{C}\hat{u})), \\
+  \frac{\partial v}{\partial x} &= \mathcal{T}^{-1} (B^{-1}(\acute{C}\hat{v})), \\
+  \frac{\partial w}{\partial x} &= \mathcal{T}^{-1} (B^{-1}(\acute{C}\hat{w})),  
+\end{align}
+where $\D{C}_{kj} = (\D{\phi}_j^{'}, \D{\phi}_k)_w$,  $\acute{C_{kj}} = (\D{\phi}_j^{'}, T_k)_w$ and $B=(T_j, T_k)_w$. Partial derivatives with respect to periodic directions are computed as
+\begin{align}
+ \frac{\partial u_i}{\partial y} &= \D{\mathcal{T}}^{-1}(\imath \underline{m} \hat{u}_i) &\forall \, i \in (0, 1, 2), \\
+ \frac{\partial u_i}{\partial w} &= \D{\mathcal{T}}^{-1}(\imath \underline{n} \hat{u}_i) &\forall \, i \in (0, 1, 2).
+\end{align}
+Dealiasing is implemented using the 2/3-rule.
+
+We finally note that the right hand sides of all the linear systems that need to solved can be assembled fast using tailored matrix vector products taking advantage of the fact that there are at most three distinct diagonals in any matrix. This concludes the implementation required to solve the Navier-Stokes equations by the incremental pressure correction method and the spectral Shen-Fourier Galerkin method. We note that all terms in assembly and solve may be performed using fast routines, at worst scaling like $O(N_x \log_2 N_x)$. 
+
+\section{Serial scaling}
+
+\section{Parallel scaling}
+
+
+
+\begin{algorithm}
+\caption{LU factorization of matrix $H_{k,j}$, that may be split into two decoupled upper Hessenberg matrices $H^e_{k,j} = H_{2k,2j}$ and $H^o_{k,j} = H_{2k+1,2j+1}$ for even and odd coefficients. Return LU factorization for even and odd coefficients, such that $L^eU^e=H^e$ and $L^oU^o=H^o$. Note that $L^{e}$ and $L^{o}$ each have one single nonzero diagonal in addition to the unity main diagonal, and as such only a vector is stored. Each $U^{e}$ and $U^{o}$ has three distinct diagonals and $U^{e}_{kj}=U^{e}_{k, k+2} \,\forall j > k+2, j< M^e$ and $U^{o}_{kj}=U^{o}_{k, k+2} \,\forall j > k+2, j< M^o$. As such, a sparse three-diagonal storage may be used for $U^e$ and $U^o$.}
+\label{alg:lu}
+\begin{algorithmic}[1]
+\Procedure{LUoddeven}{}
+  \State \textbf{Input:} $\{H\}_{k,j=0}^{N-2}$
+  \State \textit{integer} $M^e \gets (N-2)/2$
+  \State \textit{integer} $M^o \gets (N-3)/2$
+  \State ${U}^e_{0j} \gets {H}_{0,2j}, \, \forall j=0,1,2 $
+  \State ${U}^o_{0j} \gets {H}_{1,2j+1}, \, \forall j=0,1,2 $
+  \For{$k=1, 2,  \ldots, M^e-2$}
+    \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
+    \State ${U}^e_{kj} \gets {H}_{2k,2j} - {L}^e_{k}{U}^e_{k-1,j}, \, \forall j=k, k+1, k+2$
+    \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
+    \State ${U}^o_{kj} \gets {H}_{2k+1,2j+1} - {L}^o_{k}{U}^o_{k-1,j}, \, \forall j=k, k+1, k+2$
+  \EndFor
+  \State $k \gets M^e-1$
+  \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
+  \State ${U}^e_{kj} \gets {H}_{2k,2j} - {L}^e_{k}{U}^e_{k-1,j}, \, \forall j=k, k+1$
+  \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
+  \State ${U}^o_{kj} \gets {H}_{2k+1,2j+1} - {L}^o_{k}{U}^o_{k-1,j}, \, \forall j=k, k+1$
+  \State $k \gets M^e$
+  \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
+  \State ${U}^e_{kk} \gets {H}_{2k,2k} - {L}^e_{k}{U}^e_{k-1,k}$
+  \If{$M^o == M^e$ }
+    \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
+    \State ${U}^o_{kk} \gets {H}_{2k+1,2k+1} - {L}^o_{k}{U}^o_{k-1,k}$
+
+  \EndIf  
+  \State \Return $\{L^e_k\}_{k=0}^{M^e},\{U^e\}_{k,j=0}^{M^e}, \{L^o_k\}_{k=0}^{M^o},\{U^o\}_{k,j=0}^{M^o}$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Solve of $H_{kj}u_j = b_k$, where $H$ has previously been LU factorized for odd even coefficients using Algorithm (\ref{alg:lu}).}
+\label{alg:lusolve}
+\begin{algorithmic}[1]
+\Procedure{LUoddeven}{}
+  \State \textbf{Input:} $\{U_{kj}\}_{k,j=0}^{M}, \{L_k\}_{k=0}^{M}, \{b_k\}_{k=0}^{M}$ 
+  \State // Solve $Ly=b$  
+  \State $y_0 \gets b_0$
+  \For{$k = 1$ \textbf{to} $M$}
+    \State $y_k \gets b_k - L_ky_{k-1}$
+  \EndFor
+  \State // Solve $Uu=y$
+  \State double $s = 0.0$     
+  \State $u_M = y_M / U_{MM}$    
+  \For{$i = M-1$ \textbf{to} $0$ \textbf{step} $-1$}
+     \State $u_i \gets y_i - U_{i, i+1}\cdot u_{i+1}$
+     \If{$i < M-1$}
+       \State $s \gets s + u_{i+2}$
+       \State $u_i \gets u_i - s\cdot U_{i,i+2}$            
+     \EndIf
+     \State $u_i \gets  u_i / U_{i,i}$
+   \EndFor
+  \State \Return $\{u_k\}_{k=0}^{M}$  
+\EndProcedure
+\end{algorithmic}
+\begin{algorithmic}[1]
+\Procedure{LUSolve}{}
+  \State \textbf{Input: $\{u_k\}_{k=0}^{N-2}, \{b_k\}_{k=0}^{N-2}, \{U_{kj}^{e}\}_{k,j=0}^{M^{e}}, \{U_{kj}^{o}\}_{k,j=0}^{M^{o}}, \{L^{e}_k\}_{k=0}^{M^{e}}, \{L^{o}_k\}_{k=0}^{M^{o}}$}
+  \State $\{u_{2k}\}_{k=0}^{M^e} \gets $ LUoddeven($U^{e}, L^e, \{b_{2k}\}_{k=0}^{M^e}$)
+  \State $\{u_{2k+1}\}_{k=0}^{M^o} \gets $ LUoddeven($U^{o}, L^o, \{b_{2k+1}\}_{k=0}^{M^o}$)
+  
+\EndProcedure
+\end{algorithmic}
+
+\end{algorithm}
+
+\section{Appendices}
+\subsection*{Fast Shen transforms}
+The fast forward and inverse Chebyshev transforms are used by the Shen transforms. The code below computes both scalar products and complete transforms for both 
+
+\begin{python}
+from numpy import *
+from scipy.fftpack import dct
+
+def fct(f, transform="GL"):
+    """Fast Chebyshev transform."""
+    N = f.shape[0]
+    f_hat = zeros(N)
+    if transform == "GL":
+        fk[:] = dct(fj, type=2, axis=0)            
+        fk /= N
+        fk[0] /= 2
+                
+    elif transform == "GC":
+        fk[:] = dct(fj, type=1, axis=0)/(N-1)
+        fk[0] /= 2
+        fk[-1] /= 2
+            
+    return fk
+
+def ifct(fk, transform="GL"):
+    """Inverse fast Chebyshev transform."""
+    if transform == "GL":
+        f = 0.5*dct(fk, type=3, axis=0)
+        f += 0.5*fk[0]
+    
+    elif transform == "GC":
+        f = 0.5*dct(fk, type=1, axis=0)
+        f += 0.5*fk[0]
+        f[::2] += 0.5*fk[-1]
+        f[1::2] -= 0.5*fk[-1]
+
+    return f
+
+def fastChebScalar(f, transform="GL"):
+    """Fast Chebyshev scalar product."""
+    N = f.shape[0]
+    if transform == "GL":
+        fk = dct(fj, type=2, axis=0)*pi/(2*N)
+        
+    elif transform == "GC":
+        fk = dct(fj, type=1, axis=0)*pi/(2*(N-1))
+    return fk
+
+def fastShenScalar(f, transform="GL"):
+    """Fast Shen scalar product"""                
+    fk = fastChebScalar(f, transform)
+    fk[:-2] -= fk[2:]
+    return fk
+
+def ifst(fk):
+    """Fast inverse Shen transform
+    """
+    N = len(fj)
+    wk = np.zeros(N, dtype=fk.dtype)        
+    wk[:-2] = fk[:-2] 
+    wk[2:] -= fk[:-2] 
+    return ifct(wk)
+    
+
+def fst(fj, transform="GL"):
+    """Fast Shen transform"""
+    fk = fastShenScalar(fj, transform)
+    
+    N = fj.shape[0]
+    if transform == "GL":
+        ck = np.ones(N-2); ck[0] = 2
+        
+    elif transform == "GC":
+        ck = np.ones(N-2); ck[0] = 2; ck[-1] = 2
+        
+    a = np.ones(N-4)*(-np.pi/2)
+    b = np.pi/2*(ck+1)
+    c = a.copy()
+    fk[:-2] = TDMA_1D(a, b, c, fk[:-2])
+        
+    return fk
+
+def fastShenScalar(f, transform="GL"):
+    """Fast Shen scalar product Neumann basis"""        
+    k  = wavenumbers(f.shape)
+    fk = fastChebScalar(f, transform)
+    fk[:-2] -= ((k/(k+2))**2) * fk[2:]
+    return fk
+
+def ifst(fk):
+    """Fast inverse Shen scalar transform Neumann basis"""
+    k = self.wavenumbers(fk.shape[0])
+    wk = np.zeros(fk.shape[0])    
+    wk[1:-2] = fk[1:-2]
+    wk[3:] -= (k[1:]/(k[1:]+2))**2*fk[1:-2]
+    f = ifct(wk, transform)
+    return f
+        
+def fst(f, transform="GL"):
+    """Fast Shen transform Neumann basis"""
+    fk = fastShenScalar(f, transform)
+    N = fj.shape[0]
+    k = wavenumbers(N)
+    ck = np.ones(N-3)
+    if transform == "GC": ck[-1] = 2
+    a = np.ones(N-5)*(-np.pi/2)*(k[1:-2]/(k[1:-2]+2))**2
+    b = np.pi/2*(1+ck*(k[1:]/(k[1:]+2))**4)
+    c = a.copy()
+    fk[1:-2] = TDMA_1D(a, b, c, fk[1:-2])
+    return fk
+
+# Cython implementation of TDMA    
+import numpy as np
+cimport cython
+cimport numpy as np
+#cython: boundscheck=False
+#cython: wraparound=False
+
+ctypedef fused T:
+    np.float64_t
+    np.complex128_t
+
+def TDMA_1D(np.ndarray[np.float64_t, ndim=1] a, 
+            np.ndarray[np.float64_t, ndim=1] b, 
+            np.ndarray[np.float64_t, ndim=1] c, 
+            np.ndarray[T, ndim=1] d):
+    cdef:
+        unsigned int n = b.shape[0]
+        unsigned int m = a.shape[0]
+        unsigned int k = n - m
+        int i
+        
+    for i in range(m):
+        d[i + k] -= d[i] * a[i] / b[i]
+        b[i + k] -= c[i] * a[i] / b[i]
+    for i in range(m - 1, -1, -1):
+        d[i] -= d[i + k] * c[i] / b[i + k]
+    for i in range(n):
+        d[i] /= b[i]
+        
+    return d
+    
+
+\end{python}
+\subsection*{Matrices}
+
+
+\begin{equation}
+ \{\D{A}_{kj}\}_{k,j=0}^{N_x-2} = -\left(\D{\phi}^{''}_{j}, \D{\phi}_{k} \right)_w = \begin{cases}
+ 2\pi(k+1)(k+2), &j=k,\\
+ 4\pi(k+1), & j=k+2, k+4, k+6, \ldots, \\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+\begin{equation}
+ \{\N{A}_{kj}\}_{k,j=1}^{N_x-2} = -\left(\N{\phi}^{''}_{j}, \N{\phi}_{k} \right)_w = \begin{cases}
+ 2\pi j^2(k+1)/(k+2), &j=k,\\
+ 4\pi j^2(k+1)/(k+2)^2, & j=k+2, k+4, k+6, \ldots, \\
+ 0, &j>k, \text{ or } k+j \text{ odd}.
+ \end{cases}
+\end{equation}
+
+\begin{equation}
+ \{\D{C}_{kj}\}_{k,j=0}^{N_x-2} = \left(\D{\phi}^{'}_j, \D{\phi}_k \right)_w = \begin{cases}
+ \pi(k+1), &j=k+1,\\
+ -\pi(k+1), & j=k-1, \\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+\begin{equation}
+ \{\grave{C}_{kj}\}_{k=0,j=1}^{N_x-2} = \left(\N{\phi}^{'}_j, \D{\phi}_k \right)_w = \begin{cases}
+ \pi(k+1), &j=k+1,\\
+ -\pi(k-1)^2/(k+1) , & j=k-1, \\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+\begin{equation}
+ \{\tilde{C}_{kj}\}_{k=1,j=0}^{N_x-2} = (\D{\phi}^{'}_j, \N{\phi}_k)_w = \begin{cases}
+ -\pi(k+1), &j=k-1,\\
+ -\pi(2-\left(\frac{k}{k+2}\right)^2(k+3)) , & j=k+1, \\
+ -2 \pi(1-\left(\frac{k}{k+2}\right)^2), &j=k+3, k+5, k+7, \ldots,\\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+\begin{equation}
+  \{\acute{C}_{kj}\}_{k,j=0}^{N_x-2, N_x} = (\D{\phi}^{'}_j, T_k)_w = \begin{cases}
+    -\pi (k+1), &j=k-1, \\
+    -2 \pi,   &j = k+1, k+3, k+5, \ldots, \\
+    0, &\text{otherwise}
+  \end{cases}
+\end{equation}
+
+\begin{equation}
+  \{\D{B}_{kj}\}_{j,k=0}^{N_x-2} = (\D{\phi}_j, \D{\phi}_k)_w = \begin{cases}
+  \frac{c_k+c_{k+2}}{2}\pi,& k = j \\
+  -\frac{\pi}{2},& j=k\pm 2 \\
+  0,& \text{otherwise}
+\end{cases}
+\end{equation}
+
+
+\begin{equation}
+ \{\tilde{B}_{kj}\}_{k=1, j=0}^{N_x-2} = (\D{\phi}_j, \N{\phi}_k)_w = \begin{cases}
+ -\frac{\pi}{2}, &j=k-2,\\
+ -\frac{\pi}{2}\left(1+ {c_{k+2}}\left(\frac{k}{k+2}\right)^2 \right), &j=k,\\
+ -\frac{\pi}{2} k^2/(k+2)^2 , & j=k+2, \\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+\begin{equation}
+ \{\grave{B}_{kj}\}_{k=0, j=1}^{N_x-2} = (\N{\phi}_j, \D{\phi}_k)_w = \begin{cases}
+ -\frac{\pi}{2} (k-2)^2/k^2 , & j=k-2, \\
+ -\frac{\pi}{2}\left(1+ {c_{k+2}} \left(\frac{k}{k+2}\right)^2 \right), &j=k,\\
+ -\frac{\pi}{2}, &j=k-2,\\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+\begin{equation}
+ \{\N{B}_{kj}\}_{k,j=1}^{N_x-2} = (\N{\phi}_j, \N{\phi}_k)_w = \begin{cases}
+ -\frac{\pi}{2} \left(\frac{k-2}{k}\right)^2, &j=k-2,\\
+ -\frac{\pi}{2}\left(1+ {c_{k+2}}\left(\frac{k}{k+2}\right)^4 \right), &j=k,\\
+ -\frac{\pi}{2} k^2/(k+2)^2 , & j=k+2, \\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+\begin{equation}
+ \{B_{kj}\}_{k,j=0}^{N_x} = (T_k, T_j)_w = \frac{c_k \pi}{2} \delta_{kj}
+\end{equation}
+
+For Gauss-Lobatto points we have $c_0=c_{N_x}=2$ and $c_k=1$ for $0<k<N_x$. For Gauss-Chebyshev points we have $c_0=2$ and $c_k=1$ for $k>0$. Note that for an $L^2_w$ scalar product we would have $c_{N_x}=1$ as well, but for the $l^2_w$ scalar product used here we get $c_{N_x}=2$. This disagreement, that follows from inexact quadrature at the highest mode, is not reported by Shen, but is reported by, e.g., Kopriva.
+
+
+\end{document}
