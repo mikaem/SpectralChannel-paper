@@ -477,10 +477,12 @@ Crank-Nicolson and Adams-Bashforth, and we obtain
 \begin{align}
 \left(-\frac{\nu \triangle t}{2}\D{A} + \D{B} \right)\hat{v}_0^{n+1} &= 
 \left(\frac{\nu \triangle t}{2}\D{A} + \D{B} 
-\right)\hat{v}^{n}_0 + \D{B}\hat{\mathcal{H}}_{y,0}^{n+1/2}, \label{eq:v00} \\
+\right)\hat{v}^{n}_0 + \triangle t\D{B}\hat{\mathcal{H}}_{y,0}^{n+1/2} , 
+\label{eq:v00} \\
 \left(-\frac{\nu \triangle t}{2}\D{A} + \D{B} \right)\hat{w}_0^{n+1} &= 
 \left(\frac{\nu \triangle t}{2}\D{A} + \D{B} 
-\right)\hat{w}^{n}_0 + \D{B}\hat{\mathcal{H}}_{z,0}^{n+1/2}, \label{eq:w00}
+\right)\hat{w}^{n}_0 + \triangle t\D{B}\hat{\mathcal{H}}_{z,0}^{n+1/2}, 
+\label{eq:w00}
 \end{align}
 where we have used notation $\hat{v}^{n}_0 = \hat{v}(l, 0, 0, t_n)$, 
 $\hat{\mathcal{H}}^{n}_{y,0} = \hat{\mathcal{H}}_y(l, 0, 0, t_n)$ and similar 
@@ -578,9 +580,11 @@ tridiagonal matrix has a maximum of three distinct values for each row.
 Regarding Algorithm 
 (\ref{alg:lusolve}), we note that the ability to decouple the system into odd 
 and even coefficients leads to two subsystem that may be trivially solved 
-simultaneously in two threads by 
-letting one thread call LUODDEVEN with even coefficients, and the second thread 
-call it for odd.
+simultaneously in two threads by letting one thread call LUSolveoddeven with 
+even coefficients, and the second thread call it for odd. For optimal 
+performance, the odd and even coefficient would then need to be stored 
+contiguously in computer memory, and not alternately, which would be the normal 
+way of storing the coefficients.
 
 \begin{algorithm}
 \caption{LU factorization of matrix $H_{k,j}$, that may be split into two 
@@ -669,8 +673,57 @@ factorized for odd even coefficients using Algorithm (\ref{alg:lu}).}
   
 \EndProcedure
 \end{algorithmic}
-
 \end{algorithm}
+
+The biharmonic operator $\N{H}$ is more challenging to solve efficiently, but 
+it is still possible to find an algorithm that is $O(N)$ for $N$ unknowns. Let 
+first $\N{H}_kj$ be decoupled into odd $\N{H}^o_{k,j}= \N{H}_{2k,2k}$ and even 
+$\N{H}^e_{k,j}= \N{H}_{2k+1,2k+1}$ coefficients. Both systems can be solve with 
+the same algorithm, so we show only the details for the even coefficients. Note 
+that $\N{H}$ is the sum of three matrices $\N{L}, \N{A}$ and $\N{B}$ and can be 
+written
+\begin{equation}
+\N{H} = c_0\N{L} + c_1\N{A} + c_2 \N{B},
+\end{equation}
+where $c_0, c_1$ and $c_2$ are constants. The matrix $\N{A}$ contains only 
+three nonzero diagonals at $k-2, k, k+2$,  whereas matrix $\N{B}$ contains five 
+nonzero diagonals at $k-4, k-2, k, k+2, k+4$. The $\N{L}$ matrix is given as
+\begin{align}
+ \N{L}_{kk} &= -4(k+1)(k+2)^2 \\
+ \N{L}_{kj} &= p(k)q(j) + r(k)s(j), \quad j = k+2, k+4, \ldots N_x-4
+\end{align}
+where 
+\begin{align}
+p(k) &= 8 k (k+1)(k+2)(k+4)\pi, &q(j) = \frac{1}{j+3} \\
+r(k) &= 24(k+1)(k+2)\pi, &s(j) =  \frac{(j+2)^2}{(j+3)}
+\end{align} 
+For each row in $\N{H}_{kj}$ we have that $\N{H}_{kj}=c_0\N{L}_{kj}\, \forall j 
+> k+4$. A direct LU decomposition of $\N{H}^e$ leads to a lower triangluar 
+matrix $l^e_{kj}$ with two nonzero diagonals and an upper triangular matrix 
+$U^e_{kj}$ that can be written as
+\begin{equation}
+\N{U}^e_{kj} = a^e(k)q(2j) + b^e(k)s(2j), \quad j > k+2
+\end{equation}
+where $a^e(k)$ and $b^e(k)$ are two new vectors that can be pre-computed 
+recursively as
+\begin{align}
+a^e[0] &= p(0),\\
+b^e[0] &= r(0), \\
+a^e[1] &= p(2) - l^e_{10}a[0]\\
+b^e[1] &= r(2) - l^e_{10}b[0]\\
+a^e(k) &= p(2k) - l^e_{k,k-1} a^e(k-1) - l^e_{k,k-2}a^e(k-2) \quad k = 2, 3, 
+\ldots, (N_x-4)/2, \\
+b^e(k) &= r(2k) - l^e_{k,k-1} b^e(k-1) - l^e_{k,k-2}b(^ek-2)\quad k = 2, 3, 
+\ldots, (N_x-4)/2.
+\end{align}
+In other words, we need the three closest upper diagonals of $U$ plus $a$ and 
+$b$. In other words, the total storage requirement is $7N$. Having completed 
+the LU decomposition with minimal storage, the solution of the system can be 
+obtained very quickly with one forward elimination and a back solve. The back 
+solve is very fast since there is only one new addition to the sum for each row 
+
+
+
 
 %\section{The incremental pressure correction scheme}
 %
