@@ -146,21 +146,23 @@ float=!htpb]{#2}}
 
 \section{Preliminaries}
 The Navier-Stokes equations used to describe turbulent flow in a doubly 
-periodic channel can be written as
+periodic channel can be written in rotational form as
 \begin{align}
  \frac{\partial \bm{u}}{\partial t}   &= \bm{\mathcal{H}} + \nu 
- \nabla^2 \bm{u} - \nabla{p}, \notag \\
+ \nabla^2 \bm{u} - \nabla{P}, \notag \\
  \nabla \cdot \bm{u} &= 0, \label{eq:NS}
 \end{align}
 where $\bm{u}(\bm{x}, t)=(u, v, w)$ is the velocity vector, $\bm{x}=(x, y, z)$ 
-and $t$ are position and time, $\bm{\mathcal{H}}(\bm{x}, t)$ represents the 
-nonlinear convection and the mean pressure gradient (the driving force), $\nu$ 
-is a constant dynamic viscosity and $p$ is the instantaneous pressure 
-fluctuation normalized by a constant density. The 
-computational domain is $\Omega=[-1, 1]\times [0, L_y] \times [0, L_z]$ with 
-channel walls located at $x=\pm 1$ such that no-slip applies at $ \bm{u}(\pm 1, 
-y, z, t) = 0$. The walls are spanning the $y-z$ plane and the equations are 
-periodic in the $y$ and $z$ directions. 
+and $t$ are position and time and $\bm{\mathcal{H}}(\bm{x}, t) = \bm{u}\times 
+\bm{\omega}$ (where $\bm{\omega} = \nabla \times \bm{u}$)  represents the 
+nonlinear convection.  The constant dynamic viscosity is denoted as $\nu$ and 
+$P$ is a pressure modified to account for the kinetic energy, i.e., $P = p + 
+\bm{u} \cdot \bm{u}/2$, where $p$ the instantaneous pressure 
+normalized by a constant density. The computational domain is $\Omega=[-1, 
+1]\times [0, L_y] \times [0, L_z]$ with channel walls located at $x=\pm 1$ such 
+that no-slip applies at $ \bm{u}(\pm 1, y, z, t) = 0$. The walls are spanning 
+the $y-z$ plane and the equations are periodic in the $y$ and $z$ directions 
+with periodic lengths $L_y$ and $L_z$, respectively. 
 
 The Navier Stokes equations are discretized using Fourier basis functions for the periodic directions, and a combination of Chebyshev polynomials in the wall normal direction. Three different sets of basis functions and function spaces are relevant for the wall normal direction
 \begin{align}
@@ -191,9 +193,13 @@ K_N = \Big\{\bm{k} \in \mathcal{Z}\times\mathcal{R}^2 / &(l, \underline{m}, \und
  &(l, m, n) \in  [0, \ldots, N_x] \times [-\frac{N_y}{2},\ldots, \frac{N_y}{2}-1] \times[-\frac{N_z}{2},\ldots, \frac{N_z}{2}-1] \Big\}. \label{eq:wavenumbermesh}
 \end{align}
 $\D{K}_N$ and $\N{K}_N$ are both equal to $K_N$ except from index $l$ that 
-ranges from $[0, 1, \ldots, N_x-2]$ and $[0, 1, \ldots, N_x-4]$ for $\D{K}_N$ 
-and $\N{K}_N$ respectively, see (\ref{eq:phiD}) and (\ref{eq:phiN}). The 
-computational mesh has in real space been created using $N = (N_x, N_y, N_z)$ 
+ranges $[0, 1, \ldots, N_x-2]$ and $[0, 1, \ldots, N_x-4]$ for $\D{K}_N$ 
+and $\N{K}_N$ respectively, see (\ref{eq:phiD}) and (\ref{eq:phiN}). We use 
+notation $K_N^p(m, n)=K_N(0, m, n)$ when referring to only the two periodic 
+dimensions of $K_N$.
+
+The computational mesh has in real space been created using $N = (N_x, N_y, 
+N_z)$ 
 intervals, where the two periodic directions use uniform intervals. The 
 computational mesh is given as
 \begin{align}
@@ -250,8 +256,7 @@ computational mesh. The inverse Shen transform may be computed using fast
 Chebyshev transforms for all the three bases in (\ref{eq:Tk}, \ref{eq:phiD}, 
 \ref{eq:phiN}). The transforms are slightly different for the three bases and 
 ${\mathcal{S}}, \D{\mathcal{S}}$ and $\N{\mathcal{S}}$ are used to distinguish 
-between them with obvious notation. Python implementations of forward and 
-inverse Shen transforms and scalar products are given in the Appendix.
+between them with obvious notation. 
 
 A three-dimensional scalar product in the weighted $[L^2_w(\Omega)]^3$ space is defined as
 \begin{align}
@@ -271,8 +276,8 @@ Here $h\N{\mathcal{S}}$ denotes the complete three dimensional scalar product
 and $h = L_yL_zN_y^{-1}N_z^{-1}$ is a constant. $\mathcal{F}_{{n}}$ and 
 $\mathcal{F}_{{m}}$ represent discrete Fourier transforms in $z$- and 
 $y$-directions, respectively, and $\N{\mathcal{S}}_{l}(\cdot) = (\cdot, 
-\N{\phi}_l)_w$ is the Shen scalar product in the $x$-direction for the 
-$\N{V}_N$ space. The weights, $w_i$, required for the Shen transforms are 
+\N{\phi}_l)_w$ is the Shen scalar product in the $x$-direction. The weights, 
+$w_i$, required for the Shen transforms are 
 defined as
 \begin{equation}
  w_i = \begin{cases}
@@ -297,18 +302,16 @@ orthogonality of the Fourier basis functions
            &= h \sum_{p=0}^{N_x-4} \N{B}_{lq} \hat{u}(q, {m}, {n}, t), 
            \label{eq:sst2}
 \end{align}
-where the scalar product $\N{B}_{lq} = (\N{\phi}_q, \N{\phi}_l)_w = 
+where $\N{B}_{lq} = (\N{\phi}_q, \N{\phi}_l)_w = 
 \sum_{i=0}^{N_x} \N{\phi}_{q}(x_i) \N{\phi}_{l}(x_i) w_i$ is a 
-pentadiagonal mass matrix. Likewise, for the remaining two velocity components, 
-the corresponding mass matrix, $\D{B}_{lq} = (\D{\phi}_q, \D{\phi}_l)_w$, is 
-tridiagonal. The complete transformation is now obtained by setting Eq. 
-(\ref{eq:sst2}) equal to (\ref{eq:sst1}) and solving for $\hat{u}$. Moving to 
-matrix notation we get
+pentadiagonal mass matrix. The complete transformation is now obtained by 
+setting Eq. (\ref{eq:sst2}) equal to (\ref{eq:sst1}) and solving for $\hat{u}$. 
+Moving to matrix notation we get
 \begin{align}
 h\sum_{q=0}^{N_x-4} \N{B}_{lq}\, \hat{u}(q, {m}, {n}, t) &= 
 h\N{\mathcal{S}}(u)(l, m, n, t), \notag \\
  \hat{u}_{\bm{k}}(t) &= \N{\mathcal{T}}(u) =  \N{B}^{-1}\N{\mathcal{S}}(u), 
- \quad \forall \, \bm{k} \in \N{K}_N.
+ \quad \forall \, \bm{k} \in \N{K}_N. \label{eq:fstB}
 \end{align}
 where $\N{\mathcal{T}}(u)$ denotes the complete transformation, such that $u = 
 \N{\mathcal{T}}^{-1}(\N{\mathcal{T}}(u))$. Note that since $\N{B}$ assembles to 
@@ -349,7 +352,7 @@ h_g &= \frac{\partial \mathcal{H}_z}{\partial y} - \frac{\partial
 \end{align}
 The two remaining velocity components are computed from the definitions of $f$ 
 and $g$. The biharmonic equation (\ref{eq:biharmonic}) is solved with boundary 
-conditions are $u(\pm 1) = u'(\pm 1) = 0$, where the Neumann condition follows 
+conditions are $u(\pm 1) = u'(\pm 1) = 0$, where the Neumann conditions follow 
 from the continuity equation. The boundary conditions for Eq. (\ref{eq:g}) are 
 $g(\pm 1) = 0$. The variational formulation becomes: Find ${u} \in 
 \N{V}_N$, ${g} \in \D{V}_N$ and ${f} \in \D{V}_N$ such that
@@ -369,10 +372,10 @@ Dirichlet space $\D{V}_N$: Find
 ${v}, {w}$ in $\D{V}_N \times \D{V}_N$ such that
 \begin{align}
 \left<f, \D{\psi}\right>_w &= \left<\frac{\partial v}{\partial y} + 
-\frac{\partial w}{\partial z}, \D{\psi}\right>_w, \, &\forall \D{\psi} \in 
-\D{V}_N \label{eq:f2} \\
+\frac{\partial w}{\partial z}, \D{\psi}\right>_w \, &\forall \D{\psi} \in 
+\D{V}_N, \label{eq:f2} \\
 \left<g, \D{\psi}\right>_w &= \left<\frac{\partial w}{\partial y}  - 
-\frac{\partial v}{\partial z}, \D{\psi}\right>_w, \, &\forall \D{\psi} \in 
+\frac{\partial v}{\partial z}, \D{\psi}\right>_w \, &\forall \D{\psi} \in 
 \D{V}_N, \label{eq:g2}
 \end{align}
 which simplifies considerably because all the derivatives are in periodic 
@@ -415,13 +418,14 @@ the required inner products become
 \left<\frac{\partial u}{\partial x}, \D{\psi}_{\bm{k}}\right>_w &=
 h\left(\N{\phi}_q^{'}, \D{\phi}_l\right)_w \hat{u}_q, \\
 \left<h_u, \N{\psi} \right>_w &= h\left[-(\underline{m}^2+\underline{n}^2) 
-\N{\mathcal{S}}(\mathcal{H}_x) - \imath \underline{m}\left(\D{\phi}_q, 
-\N{\phi}_l \right)_w \hat{\mathcal{H}}_y - \imath 
-\underline{n}\left(\D{\phi}_q, \N{\phi}_l \right)_w \hat{\mathcal{H}}_z\right], 
+\N{\mathcal{S}}(\mathcal{H}_x) - \imath \underline{m}\left(\D{\phi}_q^{'}, 
+\N{\phi}_l \right)_w \hat{\mathcal{H}}_{y, q} - \imath 
+\underline{n}\left(\D{\phi}_q^{'}, \N{\phi}_l \right)_w 
+\hat{\mathcal{H}}_{z, q}\right], 
 \\
 \left< h_g, \D{\psi} \right>_w &= h\left[ \imath \underline{m}\, \D{B} 
-\hat{\mathcal{H}}_z - \imath \underline{n}\, \D{B} \hat{\mathcal{H}}_y 
-\right]
+\hat{\mathcal{H}}_z - \imath \underline{n}\, \D{B} \hat{\mathcal{H}}_{y} 
+\right],
 \end{align}
 where for brevity in notation (as before) it is understood that the matrices 
 act along the first dimension of the transformed variables, i.e.,  $ 
@@ -441,9 +445,12 @@ $\left(\cdot, \cdot\right)_w$ can be represented by sparse matrices.
 %\left(\D{\psi}_j, \D{\psi}_k\right)_w \hat{f}_j &= \left(\N{\psi}_j^{'}, 
 %\D{\psi}_k\right)_w \hat{u}_j, \, &\forall \D{\psi}_k \in \D{V}_N.
 %\end{align}
-The mass matrices, $\N{A}_{lq} = \left( \N{\phi}_q^{''}, \N{\phi}_l\right)_w 
-$ and $\N{L}_{lq} = \left(\N{\phi}^{''''}_q, \N{\phi}_l\right)_w$ are given by 
-Shen, whereas $\left(\N{\phi}_q^{'}, \D{\phi}_l\right)_w$ is given in the 
+The mass matrices, stiffness matrices $\N{A}_{lq} = \left( \N{\phi}_q^{''}, 
+\N{\phi}_l\right)_w, 
+\D{A}_{lq} = \left( \D{\phi}_q^{''}, \D{\phi}_l\right)_w 
+$ and $\N{Q}_{lq} = \left(\N{\phi}^{''''}_q, \N{\phi}_l\right)_w$ are given by 
+Shen, whereas $\left(\N{\phi}_q^{'}, \D{\phi}_l\right)_w$ and 
+$\left(\D{\phi}_q^{'}, \N{\phi}_l\right)_w$ are given in the 
 appendix.
 
 It remains to discretize the equations in time. Kim, Moin and Mansour use 
@@ -452,27 +459,37 @@ convective terms, whereas a third order Runge-Kutta method is used for the
 nonlinear term by Moser, Kim and Mansour (1999). We have implemented both 
 approaches, but for simplicity only the first one is described here. 
 Discretization in time is performed using a constant time step $\triangle t$, 
-such that the time is represented discretely as $t_n = n \triangle t$. After 
+such that the time is represented discretely as $t_n = n \triangle t, \, n \in 
+\mathcal{Z}^{\ge}$. After 
 discretizing in time, equations (\ref{eq:u1}) and (\ref{eq:g1}) are transformed 
-to a matrix form that can be solved for $\hat{u}^{n+1} (= 
-\hat{u}_{\bm{k}}(t_{n+1}))$ and $\hat{g}^{n+1}$
+to a matrix form that can be solved for $\hat{u}^{n+1}$ and $\hat{g}^{n+1}$ 
+given wavenumbers $m$ and $n$
 \begin{align}
 \N{H}\hat{u}^{n+1} & = \left(2\N{A} - 2\underline{z}^2\N{B} - \N{H} 
-\right)\hat{u}^{n} + \N{\mathcal{S}}(h_v^{n+1/2}) \triangle t, 
+\right)\hat{u}^{n} + \N{\mathcal{S}}(h_v^{n+1/2}) \triangle t & 
+\forall \, {\bm{k}} \in \N{K}_N, 
 \label{eq:ufin}\\ 
 \D{H} \hat{g}^{n+1} &= \left(2 \D{B}-\D{H}\right) 
-\hat{g}^{n} + \D{\mathcal{S}}(h_g^{n+1/2}) \triangle t. \label{eq:gfin}
+\hat{g}^{n} + \D{\mathcal{S}}(h_g^{n+1/2}) \triangle t &\forall \, 
+{\bm{k}} \in 
+\D{K}_N. \label{eq:gfin}
 \end{align}
-Here $\N{H} = -\frac{\nu \triangle t}{2}\N{L} + \left( 1 + \nu \triangle t 
-\underline{z}^2 \right) \N{A} - \frac{2\underline{z}^2 + \nu \triangle t 
-\underline{z}^4}{2} \N{B}$, $\D{H} = -\frac{\nu \triangle t}{2}\D{A} + (1 + 
-\frac{\nu \triangle t \underline{z}^2}{2}) \D{B}$ and $\underline{z}^2 = 
-\underline{m}^2 + \underline{n}^2$. The convective terms are computed with 
+The convective terms are computed with 
 a forward Adams-Bashforth projection, such that $\N{\mathcal{S}}(h_v^{n+1/2}) = 
 \N{\mathcal{S}}(1.5h_v^{n} - 0.5 h_v^{n-1})$ and $\D{\mathcal{S}}(h_g^{n+1/2}) 
-= \D{\mathcal{S}}(1.5h_g^{n} - 0.5 h_g^{n-1})$.
-
-Equations (\ref{eq:v0}) and (\ref{eq:w0}) are also discretized in time using 
+= \D{\mathcal{S}}(1.5h_g^{n} - 0.5 h_g^{n-1})$ and the coefficient matrices are 
+given as
+\begin{align}
+\N{H}_{lq}(m, n) &= -\frac{\nu \triangle t}{2}\N{Q}_{lq} + \left( 1 + \nu 
+\triangle t 
+\underline{z}^2 \right) \N{A}_{lq} - \frac{2\underline{z}^2 + \nu \triangle t 
+\underline{z}^4}{2} \N{B}_{lq} &\forall m, n \in K_N^p, \\
+\D{H}_{lq}(m, n) &= -\frac{\nu \triangle 
+t}{2}\D{A}_{lq} + (1 + \frac{\nu \triangle t \underline{z}^2}{2}) \D{B}_{lq} 
+&\forall m, n \in K_N^p,
+\end{align}
+where $\underline{z}^2 = \underline{m}^2 + \underline{n}^2$. Equations 
+(\ref{eq:v0}) and (\ref{eq:w0}) are also discretized in time using 
 Crank-Nicolson and Adams-Bashforth, and we obtain
 \begin{align}
 \left(-\frac{\nu \triangle t}{2}\D{A} + \D{B} \right)\hat{v}_0^{n+1} &= 
@@ -494,16 +511,18 @@ The solution procedure for the numerical method described in
 Sec.~\ref{sec:discretizationNS} is given in Algorithm \ref{alg:NS}
 
 \begin{algorithm}
-	\caption{Solution procedure}
+	\caption{Solution procedure for Navier Stokes equations}
     \label{alg:NS}
     \begin{algorithmic}[1]
     	\State \text{Initialize} $\bm{u}(\bm{x}, 0)$ and compute 
-    	$\hat{g}_{\bm{k}}(0)$
-		\State \text{Assemble} $\N{H}, \D{H}$
-		\State $t=0$
+    	$\hat{g}_{\bm{k}}(0)$ and $\hat{u}_{\bm{k}}(0)$
+		\State \text{Compute LU decomposition of} $\N{H}(m,n), \D{H}(m,n) 
+		\,\forall \, m, n \in K_N^p$
+		\State $t=0; n=0$
     	\While{$t<T$}
-	    	\State $t \gets t+dt$
-	    	\State \text{Compute nonlinear convection} $\bm{\mathcal{H}}$
+	    	\State \text{Compute nonlinear convection} $\bm{\mathcal{H}}^n$
+	    	\State \text{Compute right hand sides of Eqs.~}(\ref{eq:ufin}), 
+	    	(\ref{eq:gfin})
 		    \State \text{Solve Eq.}(\ref{eq:ufin}) for 
 		    $\hat{u}^{n+1}_{\bm{k}} \, \forall \,\bm{k} \in \N{K}_N$
 		    \State \text{Solve Eqs.}(\ref{eq:gfin}) for 
@@ -512,58 +531,76 @@ Sec.~\ref{sec:discretizationNS} is given in Algorithm \ref{alg:NS}
 		    $\hat{v}_{\bm{k}}, \hat{w}_{\bm{k}}\, \forall\, \bm{k} 
 		    \in \D{K}_N^0$
 		    \State \text{Solve Eqs.}(\ref{eq:v00}, \ref{eq:w00}) for 
-		    $\hat{v}^{n+1}(l, 0, 0, t_{n+1}), \hat{w}^{n+1}(l, 0, 0, t_{n+1})\, 
+		    $\hat{v}_0^{n+1}, \hat{w}_0^{n+1}\, 
 		    \forall \, l \in [0, 1, \ldots, N_x-2] $
+		    \State $n \gets n + 1$
+		    \State $t \gets t+\triangle t$
 		    \State \text{Update to new time step}
 	    \EndWhile 
 	    	
     \end{algorithmic}
 \end{algorithm}
 
-The major computational cost is found in computing the nonlinear convection and 
-in solving for Eqs.~(\ref{eq:ufin}, \ref{eq:gfin}). The nonlinear convection 
+The major computational cost comes from  computing the nonlinear convection 
+and solving for Eqs.~(\ref{eq:ufin}, \ref{eq:gfin}). The nonlinear 
+convection 
 term $\bm{\hat{\mathcal{H}}}$ is computed using a pseudo-spectral method with 
 the 3/2-rule for de-aliasing in the periodic directions (ref Canuto). The 
 transforms are carried out using fast Fourier and fast Chebyshev transforms 
 that are all of order $O(N\log N)$ per one-dimensional transform of size 
 N. The Shen transforms make use of the Chebyshev transforms that are using 
-discrete cosine transforms. The forward scalar product is shown in Algorithm 
-\ref{alg:fst}.
+discrete cosine transforms. The forward scalar product is implemented as shown 
+in Algorithm \ref{alg:fst}. A complete transform is obtained through a scalar 
+product followed by solving the linear system involving the mass 
+matrix, just like shown in Eq. (\ref{eq:fstB}) for space $\N{V}_N$ and similar 
+for $\D{V}_N$ and $V_N$. Since the mass matrices are diagonal, tridiagonal and 
+pentadiagonal for $V_N, \D{V}_N$ and $\N{V}_N$ respectively, solving the linear 
+system is $O(N)$ and the complete transform still scales like $O(N\log N)$. 
 \begin{algorithm}
 	\caption{Forward scalar product for all spaces $V_N, \D{V}_N, \N{V}_N$. 
 	Here "dct" is the discrete cosine transform from SciPy.}
 	\label{alg:fst}
 	\begin{algorithmic}[1]
-		\State \textbf{Input:} $\{f\}_{j=0}^{N}$
+	\Procedure{fastScalar}{}
+		\State \textbf{Input:} $\{f_j\}_{j=0}^{N}$
 		\State \textbf{Input:} points
 		\State \textbf{Input:} space
 		\If{ points = "Gauss-Lobatto"}
-			\State $f_k \gets \text{dct}(f_j, type=2, axis=0)\pi/(2 N)\, 
-			\forall \, \, k \in 
-			[0, 1, \ldots, N]$
+			\State $\{ w_k\}_{k=0}^{N} \gets \text{dct}(f, \text{type=2}, 
+			\text{axis=0})\frac{\pi}{2 N}$
 		\Else{ points = "Gauss-Chebyshev"}
-		    \State $f_k \gets \text{dct}(f_j, type=1, axis=0)\pi/(2 (N-1))\, 
-		    \forall \, \, k 
-		    \in [0, 1, \ldots, N]$
+		    \State $\{ w_k\}_{k=0}^{N} \gets \text{dct}(f, \text{type=1}, 
+		    \text{axis=0}) \frac{\pi}{2 (N-1)}$
 	    \EndIf
 	    \If{ space = $\D{V}_N$}
-	        \State $f_k \gets f_k - f_{k+2} \, \forall k \in [0, 1, \ldots, 
-	        N-2]$
+	        \For{$k=0$ to $N-2$}
+		        \State $\hat{f}_k \gets w_k - w_{k+2}$
+	        \EndFor
+			\State \Return $\{\hat{f}_k\}_{k=0}^{N-2}$	        
 	    \ElsIf{ space = $\N{V}_N$}	                
-	        \State $f_k \gets f_k - 2(k+2)/(k+3)f_{k+2} + (k+1)/(k+3)f_{k+4} 
-	        \,\, 
-	        \forall \, k \in [0, 1, \ldots, N-4]$
-	    \Else{}
-	        \State pass
+  	        \For{$k=0$ to $N-4$}
+       	        \State $\hat{f}_k \gets w_k - \frac{2(k+2)}{k+3} w_{k+2} + 
+       	        \frac{k+1}{k+3}w_{k+4}$
+   	        \EndFor
+   	        \State \Return $\{\hat{f}_k\}_{k=0}^{N-4}$
+   	    \Else{}
+   	        \For{$k = 0$ to $N$}
+     	        \State $f_k \gets \frac{2}{\pi} w_k $
+     	    \EndFor
+     	    \State $f_0 \gets f_0 / 2$
+     	    \If{ points = "Gauss-Lobatto"}
+	     	\State $f_N \gets f_N / 2$	     	
+     	    \EndIf
+			\State \Return $\{f_k\}_{k=0}^{N}$    
 	    \EndIf
-\State \Return $f_k$    
-	\end{algorithmic}
+	\EndProcedure
+\end{algorithmic}
 \end{algorithm}
 
 We will now describe very efficient direct solvers for Eqs.~(\ref{eq:ufin}, 
 \ref{eq:gfin}) that are of order $O(N)$. The solvers are generated using clever 
 direct LU decomposition and only a few diagonals need to be stored for each 
-final lower (L) and upper (U) matrix. 
+final lower (L) and upper (U) triangular matrix. 
 
 To solve Eq. (\ref{eq:gfin}) we perform an LU decomposition of the coefficient 
 matrix $\D{H}$. $\D{H}$ consists of one subdiagonal, and every 
@@ -574,9 +611,10 @@ $\D{H}^{e,o}$ are of type upper
 Hessenberg, with only 4 distinct values on each row. This structure of $\D{H}$ 
 allows us to perform a very efficient tailored LU decomposition, as shown in 
 Algorithm (\ref{alg:lu}), and a very efficient tailored solve through 
-Algorithm (\ref{alg:lusolve}). The efficiency follows from the fact that all 
+Algorithm (\ref{alg:lusolve}). The efficiency follows from the fact that 
 $U^{o,e}_{kj} = U^{o,e}_{kk+2} \, \forall \, j > k+2$, i.e., the upper 
-tridiagonal matrix has a maximum of three distinct values for each row. 
+triangular matrix has a maximum of three distinct values for each row, which 
+allows for a very fast solve through back substitution. 
 Regarding Algorithm 
 (\ref{alg:lusolve}), we note that the ability to decouple the system into odd 
 and even coefficients leads to two subsystem that may be trivially solved 
@@ -613,6 +651,7 @@ j=k, k+1, k+2$
     \State ${U}^o_{kj} \gets {H}_{2k+1,2j+1} - {L}^o_{k}{U}^o_{k-1,j}, \, 
 \forall j=k, k+1, k+2$
   \EndFor
+  
   \State $k \gets M^e-1$
   \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
   \State ${U}^e_{kj} \gets {H}_{2k,2j} - {L}^e_{k}{U}^e_{k-1,j}, \, \forall 
@@ -661,6 +700,7 @@ factorized for odd even coefficients using Algorithm (\ref{alg:lu}).}
   \State \Return $\{u_k\}_{k=0}^{M}$  
 \EndProcedure
 \end{algorithmic}
+
 \begin{algorithmic}[1]
 \Procedure{LUSolve}{}
   \State \textbf{Input: $\{u_k\}_{k=0}^{N-2}, \{b_k\}_{k=0}^{N-2}, 
@@ -670,57 +710,170 @@ factorized for odd even coefficients using Algorithm (\ref{alg:lu}).}
 \{b_{2k}\}_{k=0}^{M^e}$)
   \State $\{u_{2k+1}\}_{k=0}^{M^o} \gets $ LUSolveoddeven($U^{o}, L^o, 
 \{b_{2k+1}\}_{k=0}^{M^o}$)
-  
+  \State \Return $\{u_k\}_{k=0}^{N-2}$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
 The biharmonic operator $\N{H}$ is more challenging to solve efficiently, but 
-it is still possible to find an algorithm that is $O(N)$ for $N$ unknowns. Let 
-first $\N{H}_kj$ be decoupled into odd $\N{H}^o_{k,j}= \N{H}_{2k,2k}$ and even 
-$\N{H}^e_{k,j}= \N{H}_{2k+1,2k+1}$ coefficients. Both systems can be solve with 
-the same algorithm, so we show only the details for the even coefficients. Note 
-that $\N{H}$ is the sum of three matrices $\N{L}, \N{A}$ and $\N{B}$ and can be 
-written
+it is still possible to find an algorithm that is $O(N)$ for a system of $N$ 
+unknowns. Note 
+that $\N{H}$ is the sum of three matrices $\N{Q}, \N{A}$ and $\N{B}$ and can be 
+written as
 \begin{equation}
-\N{H} = c_0\N{L} + c_1\N{A} + c_2 \N{B},
+\N{H} = c_0\N{Q} + c_1\N{A} + c_2 \N{B},
 \end{equation}
-where $c_0, c_1$ and $c_2$ are constants. The matrix $\N{A}$ contains only 
-three nonzero diagonals at $k-2, k, k+2$,  whereas matrix $\N{B}$ contains five 
-nonzero diagonals at $k-4, k-2, k, k+2, k+4$. The $\N{L}$ matrix is given as
+where $c_0, c_1$ and $c_2$ are constants. The matrix $\N{A}_{kj}$ contains only 
+three nonzero diagonals at $ j = k-2, k, k+2$,  whereas matrix $\N{B}_{kj}$ 
+contains five 
+nonzero diagonals at $ j = k-4, k-2, k, k+2, k+4$. The nonzero elements of the 
+$\N{Q}_{kj}$ matrix are given as
 \begin{align}
- \N{L}_{kk} &= -4(k+1)(k+2)^2 \\
- \N{L}_{kj} &= p(k)q(j) + r(k)s(j), \quad j = k+2, k+4, \ldots N_x-4
+ \N{Q}_{kk} &= -4(k+1)(k+2)^2 \\
+ \N{Q}_{kj} &= p_kq_j + r_ks_j, \quad j = k+2, k+4, \ldots N_x-4
 \end{align}
 where 
 \begin{align}
-p(k) &= 8 k (k+1)(k+2)(k+4)\pi, &q(j) = \frac{1}{j+3} \\
-r(k) &= 24(k+1)(k+2)\pi, &s(j) =  \frac{(j+2)^2}{(j+3)}
+p_k &= 8 k (k+1)(k+2)(k+4)\pi, &q_j = \frac{1}{j+3} \label{eq:pk} \\
+r_k &= 24(k+1)(k+2)\pi, &s_j =  \frac{(j+2)^2}{(j+3)} \label{eq:rk}
 \end{align} 
-For each row in $\N{H}_{kj}$ we have that $\N{H}_{kj}=c_0\N{L}_{kj}\, \forall j 
-> k+4$. A direct LU decomposition of $\N{H}^e$ leads to a lower triangluar 
-matrix $l^e_{kj}$ with two nonzero diagonals and an upper triangular matrix 
-$U^e_{kj}$ that can be written as
+For each row in $\N{H}_{kj}$ we have that $\N{H}_{kj}=c_0\N{Q}_{kj}\, \forall j 
+> k+4$. A direct LU decomposition of $\N{H}$ can be performed as shown in Alg. 
+\ref{alg:lu_biharmonic}, which leads to a lower triangular 
+matrix $\N{L}_{kj}$ with two nonzero diagonals at $j=k-2$ and $k-4$ plus a 
+unity 
+main diagonal. The upper triangular matrix $\N{U}_{kj}$ contains three distinct 
+diagonals at $j=k, k+2$ and $k+4$. The remaining part of $\N{U}_{kj}$ can be 
+written as
 \begin{equation}
-\N{U}^e_{kj} = a^e(k)q(2j) + b^e(k)s(2j), \quad j > k+2
+\N{U}_{kj} = a_k q_j + b_k s_j, \quad j = k+6, k+8, \ldots, N_x-4 \label{eq:ab}
 \end{equation}
-where $a^e(k)$ and $b^e(k)$ are two new vectors that can be pre-computed 
-recursively as
-\begin{align}
-a^e[0] &= p(0),\\
-b^e[0] &= r(0), \\
-a^e[1] &= p(2) - l^e_{10}a[0]\\
-b^e[1] &= r(2) - l^e_{10}b[0]\\
-a^e(k) &= p(2k) - l^e_{k,k-1} a^e(k-1) - l^e_{k,k-2}a^e(k-2) \quad k = 2, 3, 
-\ldots, (N_x-4)/2, \\
-b^e(k) &= r(2k) - l^e_{k,k-1} b^e(k-1) - l^e_{k,k-2}b(^ek-2)\quad k = 2, 3, 
-\ldots, (N_x-4)/2.
-\end{align}
-In other words, we need the three closest upper diagonals of $U$ plus $a$ and 
-$b$. In other words, the total storage requirement is $7N$. Having completed 
-the LU decomposition with minimal storage, the solution of the system can be 
-obtained very quickly with one forward elimination and a back solve. The back 
-solve is very fast since there is only one new addition to the sum for each row 
+where $\bm{a}$ and $\bm{b}$ are two new vectors that can be computed 
+recursively as shown in Alg. (\ref{alg:ab}). If $\bm{a}$ and $\bm{b}$ are 
+pre-computed 
+the total storage requirement for the complete LU decomposition is no more than 
+$7N$ and the solution of the complete system can be obtained very quickly with 
+one forward elimination and a back solve. The back 
+solve is very fast because of the recursive formulation (\ref{eq:ab}), leading 
+to a formula like (valid for $k \le N_x-8$)
+\begin{equation}
+u_k = \left(y_k - \N{U}_{k, k+2} u_{k+2} - \N{U}_{k, k+4} u_{k+4} - 
+a_k\sum_{\substack{j=k+6\\k-j \text{ even}}}^{N_x-4} q_j u_j - 
+b_k\sum_{\substack{j=k+6\\k-j \text{ even}}}^{N_x-4} 
+s_j u_j\right)/\N{U}_{kk},
+\end{equation}
+that only requires 
+one new addition to the row-sums for each back-traversed
+row, see Alg. (\ref{alg:SolveBiharmonic}).
+
+\begin{algorithm}
+	\caption{LU decomposition of biharmonic operator $\N{H}$. Current algorithm 
+	is using dense storage of $U_{kj}$, but no more than the 3 diagonals need 
+	to be stored.}
+	\label{alg:lu_biharmonic}
+	\begin{algorithmic}[1]
+		\Procedure{LUbiharmonic}{}
+			\State \textbf{Input:} $\{\N{H}_{kj}\}_{k, j = 0}^{N}$
+	        \State $U_{0j} = \N{H}_{0j} \quad \forall \, j \in 0, 2, \ldots, N$
+	        \State $U_{1j} = \N{H}_{1j} \quad \forall \, j \in 1, 3, \ldots, N$
+	        \State $L_{20} = \N{H}_{20}/U_{00}$
+	        \State $L_{31} = \N{H}_{31}/U_{11}$
+	        \State $U_{2j} = L_{20} U_{0j} \quad \forall \, j \in 2, 4, \ldots, 
+	        N$
+	        \State $U_{3j} = L_{31} U_{1j} \quad \forall \, j \in 3, 5, \ldots, 
+	        N$
+	        \For{$k = 4, 5, \ldots, N$}
+	            \State $L_{k,k-2} = {U}_{k,k-2}/{U}_{k-2, k-2}$
+		        \State $U_{kj} = {U}_{kj} - L_{k, k-2} U_{k-2, j} \quad 
+		        \forall j = k, k+2, \ldots, N$
+		        \If{$k <= N-2$}
+		        \State $L_{k+2,k-2} = \N{H}_{k+2, k-2} / U_{k-2, k-2}$
+		        \State $U_{k+2,j} = \N{H}_{k+2,j} - L_{k+2, k-2} U_{k-2, j} 
+		        \quad \forall j = k-2, k, \ldots, N$
+		        \EndIf
+	        \EndFor
+	        \State \Return $\{L_{kj}\}_{k, j = 0}^{N}$, $\{U_{kj}\}_{k, j = 
+	        0}^{N}$
+		\EndProcedure	
+	\end{algorithmic}
+\end{algorithm}		
+
+\begin{algorithm}
+	\caption{Recursive formula to compute $\{a_k\}_{k=0}^{N_x-4}, 
+	\{b_k\}_{k=0}^{N_x-4}$ in Eq. (\ref{eq:ab}). Note that the lower triangular 
+	matrix $\{L_{kj}\}_{k,j=0}^{N_x-4}$ contains only two nonzero diagonals and 
+	the parameters $p_k$ and $r_k$ are given in Eqs. (\ref{eq:pk}) and 
+	(\ref{eq:rk}) respectively. }
+    \label{alg:ab}
+	\begin{algorithmic}[1]
+		\Procedure{ReduceAB}{}
+		\State \textbf{Input:} $ \{L_{kj}\}_{k,j=0}^{N_x-4}$
+		\For{$k=0,1$}
+		     \State $a_k = p_k$
+		     \State $b_k = r_k$
+		\EndFor
+		\For{$k=2,3$}
+		    \State $a_k = p_k - L_{k,k-2}\,a_{k-2}$
+		    \State $b_k = r_k - L_{k, k-2}\,b_{k-2}$
+		\EndFor
+		\For{$k=4, 5, \ldots, N_x-4$}
+     		\State $a_k = p_k - L_{k,k-2}\,a_{k-2} - L_{k, k-4} \,a_{k-4}$
+	    	\State $b_k = r_k - L_{k, k-2}\,b_{k-2}- L_{k, k-4} \,b_{k-4}$
+		\EndFor
+		\State \Return $\{a_k\}_{k=0}^{N_x-4}, \{b_k\}_{k=0}^{N_x-4}$
+        \EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Solve biharmonic Eq. (\ref{eq:ufin}) with pre-computed $L$, $U$ 
+	matrices. The parameters $q_j$ and $s_j$ are given in Eqs. (\ref{eq:pk}) 
+	and 
+	(\ref{eq:rk}) respectively. }
+	\label{alg:SolveBiharmonic}
+	\begin{algorithmic}[1]
+		\Procedure{LUSolveBiharmonic}{}
+		  \State \textbf{Input:} $\{U_{kj}\}_{k,j=0}^{N}, 
+		  \{L_{kj}\}_{k,j=0}^{N}, 
+		  \{f_k\}_{k=0}^{N}, \{a_k\}_{k=0}^{N}, \{b_k\}_{k=0}^{N}$ 
+		  \State // Solve $Ly=f$ by forward elimination 
+		  \State $y_0 \gets f_0$
+		  \State $y_1 \gets f_1$
+		  \State $y_2 \gets f_2 - L_{20}y_{0}$
+		  \State $y_3 \gets f_3 - L_{31}y_{1}$
+		  \For{$k = 4$ \textbf{to} $N$}
+		  \State $y_k \gets f_k - L_{k,k-2}y_{k-2} - L_{k, k-4}y_{k-4}$
+		  \EndFor
+		  \State // Solve $Uu=y$ with back substitution                    
+		  \State $u_N = y_N / U_{NN}$
+	      \State $u_{N-1} = y_{N-1} / U_{N-1,N-1}$
+	      \State $u_{N-2} = \left(y_{N-2} - U_{N-2, N}y_N\right)/U_{N-2,N-2}$
+	      \State $u_{N-3} = \left(y_{N-3} - U_{N-3, 
+	      N-1}y_{N-1}\right)/U_{N-3,N-3}$
+	      
+	      \State $q^o = q^e = s^o = s^e = 0.0$
+		  \For{$k = N-4$ \textbf{to} $0$ \textbf{step} $-1$}
+		  \State $u_k \gets y_k - U_{k, k+2} u_{k+2} - U_{k, k+4} 
+		  u_{k+4} $ 
+		  \If{$k < N-5$}
+		  \State $j=k+6$
+		  \If{$k$ is odd}
+		    \State $q^o \gets q^o + u_{j}q_{j}$
+		    \State $s^o \gets s^o + u_{j}s_{j}$
+		    \State $u_k \gets u_k - c_0 q^o a_k - c_0 s^o b_k $	    
+		  \Else
+		    \State $q^e \gets q^e + u_{j}q_{j}$
+		    \State $s^e \gets s^e + u_{j}s_{j}$	  
+		    \State $u_k \gets u_k - c_0 q^e a_k - c_0 s^e b_k $
+		  \EndIf
+		  \EndIf
+		  \State $u_k \gets  u_k / U_{kk}$
+		  \EndFor
+		  \State \Return $\{u_k\}_{k=0}^{N}$  
+		  
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
 
 
 
@@ -957,149 +1110,151 @@ solve is very fast since there is only one new addition to the sum for each row
 
 
 \section{Appendices}
-\subsection*{Fast Shen transforms}
-The fast forward and inverse Chebyshev transforms are used by the Shen transforms. The code below computes both scalar products and complete transforms for both 
-
-\begin{python}
-from numpy import *
-from scipy.fftpack import dct
-
-def fct(f, transform="GL"):
-    """Fast Chebyshev transform."""
-    N = f.shape[0]
-    f_hat = zeros(N)
-    if transform == "GL":
-        fk[:] = dct(fj, type=2, axis=0)            
-        fk /= N
-        fk[0] /= 2
-                
-    elif transform == "GC":
-        fk[:] = dct(fj, type=1, axis=0)/(N-1)
-        fk[0] /= 2
-        fk[-1] /= 2
-            
-    return fk
-
-def ifct(fk, transform="GL"):
-    """Inverse fast Chebyshev transform."""
-    if transform == "GL":
-        f = 0.5*dct(fk, type=3, axis=0)
-        f += 0.5*fk[0]
-    
-    elif transform == "GC":
-        f = 0.5*dct(fk, type=1, axis=0)
-        f += 0.5*fk[0]
-        f[::2] += 0.5*fk[-1]
-        f[1::2] -= 0.5*fk[-1]
-
-    return f
-
-def fastChebScalar(f, transform="GL"):
-    """Fast Chebyshev scalar product."""
-    N = f.shape[0]
-    if transform == "GL":
-        fk = dct(fj, type=2, axis=0)*pi/(2*N)
-        
-    elif transform == "GC":
-        fk = dct(fj, type=1, axis=0)*pi/(2*(N-1))
-    return fk
-
-def fastShenScalar(f, transform="GL"):
-    """Fast Shen scalar product"""                
-    fk = fastChebScalar(f, transform)
-    fk[:-2] -= fk[2:]
-    return fk
-
-def ifst(fk):
-    """Fast inverse Shen transform
-    """
-    N = len(fj)
-    wk = np.zeros(N, dtype=fk.dtype)        
-    wk[:-2] = fk[:-2] 
-    wk[2:] -= fk[:-2] 
-    return ifct(wk)
-    
-
-def fst(fj, transform="GL"):
-    """Fast Shen transform"""
-    fk = fastShenScalar(fj, transform)
-    
-    N = fj.shape[0]
-    if transform == "GL":
-        ck = np.ones(N-2); ck[0] = 2
-        
-    elif transform == "GC":
-        ck = np.ones(N-2); ck[0] = 2; ck[-1] = 2
-        
-    a = np.ones(N-4)*(-np.pi/2)
-    b = np.pi/2*(ck+1)
-    c = a.copy()
-    fk[:-2] = TDMA_1D(a, b, c, fk[:-2])
-        
-    return fk
-
-def fastShenScalar(f, transform="GL"):
-    """Fast Shen scalar product Neumann basis"""        
-    k  = wavenumbers(f.shape)
-    fk = fastChebScalar(f, transform)
-    fk[:-2] -= ((k/(k+2))**2) * fk[2:]
-    return fk
-
-def ifst(fk):
-    """Fast inverse Shen scalar transform Neumann basis"""
-    k = self.wavenumbers(fk.shape[0])
-    wk = np.zeros(fk.shape[0])    
-    wk[1:-2] = fk[1:-2]
-    wk[3:] -= (k[1:]/(k[1:]+2))**2*fk[1:-2]
-    f = ifct(wk, transform)
-    return f
-        
-def fst(f, transform="GL"):
-    """Fast Shen transform Neumann basis"""
-    fk = fastShenScalar(f, transform)
-    N = fj.shape[0]
-    k = wavenumbers(N)
-    ck = np.ones(N-3)
-    if transform == "GC": ck[-1] = 2
-    a = np.ones(N-5)*(-np.pi/2)*(k[1:-2]/(k[1:-2]+2))**2
-    b = np.pi/2*(1+ck*(k[1:]/(k[1:]+2))**4)
-    c = a.copy()
-    fk[1:-2] = TDMA_1D(a, b, c, fk[1:-2])
-    return fk
-
-# Cython implementation of TDMA    
-import numpy as np
-cimport cython
-cimport numpy as np
-#cython: boundscheck=False
-#cython: wraparound=False
-
-ctypedef fused T:
-    np.float64_t
-    np.complex128_t
-
-def TDMA_1D(np.ndarray[np.float64_t, ndim=1] a, 
-            np.ndarray[np.float64_t, ndim=1] b, 
-            np.ndarray[np.float64_t, ndim=1] c, 
-            np.ndarray[T, ndim=1] d):
-    cdef:
-        unsigned int n = b.shape[0]
-        unsigned int m = a.shape[0]
-        unsigned int k = n - m
-        int i
-        
-    for i in range(m):
-        d[i + k] -= d[i] * a[i] / b[i]
-        b[i + k] -= c[i] * a[i] / b[i]
-    for i in range(m - 1, -1, -1):
-        d[i] -= d[i + k] * c[i] / b[i + k]
-    for i in range(n):
-        d[i] /= b[i]
-        
-    return d
-    
-
-\end{python}
+%\subsection*{Fast Shen transforms}
+%The fast forward and inverse Chebyshev transforms are used by the Shen 
+%transforms. The code below computes both scalar products and complete 
+%transforms for both 
+%
+%\begin{python}
+%from numpy import *
+%from scipy.fftpack import dct
+%
+%def fct(f, transform="GL"):
+%    """Fast Chebyshev transform."""
+%    N = f.shape[0]
+%    f_hat = zeros(N)
+%    if transform == "GL":
+%        fk[:] = dct(fj, type=2, axis=0)            
+%        fk /= N
+%        fk[0] /= 2
+%                
+%    elif transform == "GC":
+%        fk[:] = dct(fj, type=1, axis=0)/(N-1)
+%        fk[0] /= 2
+%        fk[-1] /= 2
+%            
+%    return fk
+%
+%def ifct(fk, transform="GL"):
+%    """Inverse fast Chebyshev transform."""
+%    if transform == "GL":
+%        f = 0.5*dct(fk, type=3, axis=0)
+%        f += 0.5*fk[0]
+%    
+%    elif transform == "GC":
+%        f = 0.5*dct(fk, type=1, axis=0)
+%        f += 0.5*fk[0]
+%        f[::2] += 0.5*fk[-1]
+%        f[1::2] -= 0.5*fk[-1]
+%
+%    return f
+%
+%def fastChebScalar(f, transform="GL"):
+%    """Fast Chebyshev scalar product."""
+%    N = f.shape[0]
+%    if transform == "GL":
+%        fk = dct(fj, type=2, axis=0)*pi/(2*N)
+%        
+%    elif transform == "GC":
+%        fk = dct(fj, type=1, axis=0)*pi/(2*(N-1))
+%    return fk
+%
+%def fastShenScalar(f, transform="GL"):
+%    """Fast Shen scalar product"""                
+%    fk = fastChebScalar(f, transform)
+%    fk[:-2] -= fk[2:]
+%    return fk
+%
+%def ifst(fk):
+%    """Fast inverse Shen transform
+%    """
+%    N = len(fj)
+%    wk = np.zeros(N, dtype=fk.dtype)        
+%    wk[:-2] = fk[:-2] 
+%    wk[2:] -= fk[:-2] 
+%    return ifct(wk)
+%    
+%
+%def fst(fj, transform="GL"):
+%    """Fast Shen transform"""
+%    fk = fastShenScalar(fj, transform)
+%    
+%    N = fj.shape[0]
+%    if transform == "GL":
+%        ck = np.ones(N-2); ck[0] = 2
+%        
+%    elif transform == "GC":
+%        ck = np.ones(N-2); ck[0] = 2; ck[-1] = 2
+%        
+%    a = np.ones(N-4)*(-np.pi/2)
+%    b = np.pi/2*(ck+1)
+%    c = a.copy()
+%    fk[:-2] = TDMA_1D(a, b, c, fk[:-2])
+%        
+%    return fk
+%
+%def fastShenScalar(f, transform="GL"):
+%    """Fast Shen scalar product Neumann basis"""        
+%    k  = wavenumbers(f.shape)
+%    fk = fastChebScalar(f, transform)
+%    fk[:-2] -= ((k/(k+2))**2) * fk[2:]
+%    return fk
+%
+%def ifst(fk):
+%    """Fast inverse Shen scalar transform Neumann basis"""
+%    k = self.wavenumbers(fk.shape[0])
+%    wk = np.zeros(fk.shape[0])    
+%    wk[1:-2] = fk[1:-2]
+%    wk[3:] -= (k[1:]/(k[1:]+2))**2*fk[1:-2]
+%    f = ifct(wk, transform)
+%    return f
+%        
+%def fst(f, transform="GL"):
+%    """Fast Shen transform Neumann basis"""
+%    fk = fastShenScalar(f, transform)
+%    N = fj.shape[0]
+%    k = wavenumbers(N)
+%    ck = np.ones(N-3)
+%    if transform == "GC": ck[-1] = 2
+%    a = np.ones(N-5)*(-np.pi/2)*(k[1:-2]/(k[1:-2]+2))**2
+%    b = np.pi/2*(1+ck*(k[1:]/(k[1:]+2))**4)
+%    c = a.copy()
+%    fk[1:-2] = TDMA_1D(a, b, c, fk[1:-2])
+%    return fk
+%
+%# Cython implementation of TDMA    
+%import numpy as np
+%cimport cython
+%cimport numpy as np
+%#cython: boundscheck=False
+%#cython: wraparound=False
+%
+%ctypedef fused T:
+%    np.float64_t
+%    np.complex128_t
+%
+%def TDMA_1D(np.ndarray[np.float64_t, ndim=1] a, 
+%            np.ndarray[np.float64_t, ndim=1] b, 
+%            np.ndarray[np.float64_t, ndim=1] c, 
+%            np.ndarray[T, ndim=1] d):
+%    cdef:
+%        unsigned int n = b.shape[0]
+%        unsigned int m = a.shape[0]
+%        unsigned int k = n - m
+%        int i
+%        
+%    for i in range(m):
+%        d[i + k] -= d[i] * a[i] / b[i]
+%        b[i + k] -= c[i] * a[i] / b[i]
+%    for i in range(m - 1, -1, -1):
+%        d[i] -= d[i + k] * c[i] / b[i + k]
+%    for i in range(n):
+%        d[i] /= b[i]
+%        
+%    return d
+%    
+%
+%\end{python}
 \subsection*{Matrices}
 
 
@@ -1120,70 +1275,32 @@ def TDMA_1D(np.ndarray[np.float64_t, ndim=1] a,
 \end{equation}
 
 \begin{equation}
- \{\D{C}_{kj}\}_{k,j=0}^{N_x-2} = \left(\D{\phi}^{'}_j, \D{\phi}_k \right)_w = \begin{cases}
- \pi(k+1), &j=k+1,\\
- -\pi(k+1), & j=k-1, \\
- 0, &\text{otherwise}.
- \end{cases}
-\end{equation}
-
-\begin{equation}
- \{\grave{C}_{kj}\}_{k=0,j=1}^{N_x-2} = \left(\N{\phi}^{'}_j, \D{\phi}_k \right)_w = \begin{cases}
- \pi(k+1), &j=k+1,\\
- -\pi(k-1)^2/(k+1) , & j=k-1, \\
- 0, &\text{otherwise}.
- \end{cases}
-\end{equation}
-
-\begin{equation}
- \{\tilde{C}_{kj}\}_{k=1,j=0}^{N_x-2} = (\D{\phi}^{'}_j, \N{\phi}_k)_w = \begin{cases}
+ \{\N{C}_{kj}\}_{k,j=0}^{N_x-4, N_x-2} = \left(\D{\phi}^{'}_j, \N{\phi}_k 
+ \right)_w = \begin{cases}
  -\pi(k+1), &j=k-1,\\
- -\pi(2-\left(\frac{k}{k+2}\right)^2(k+3)) , & j=k+1, \\
- -2 \pi(1-\left(\frac{k}{k+2}\right)^2), &j=k+3, k+5, k+7, \ldots,\\
+ 2\pi(k+1), & j=k+1, \\
+ -\pi(k+1), & j=k+3, \\
  0, &\text{otherwise}.
  \end{cases}
 \end{equation}
 
 \begin{equation}
-  \{\acute{C}_{kj}\}_{k,j=0}^{N_x-2, N_x} = (\D{\phi}^{'}_j, T_k)_w = \begin{cases}
-    -\pi (k+1), &j=k-1, \\
-    -2 \pi,   &j = k+1, k+3, k+5, \ldots, \\
-    0, &\text{otherwise}
-  \end{cases}
-\end{equation}
-
-\begin{equation}
-  \{\D{B}_{kj}\}_{j,k=0}^{N_x-2} = (\D{\phi}_j, \D{\phi}_k)_w = \begin{cases}
-  \frac{c_k+c_{k+2}}{2}\pi,& k = j \\
-  -\frac{\pi}{2},& j=k\pm 2 \\
-  0,& \text{otherwise}
-\end{cases}
-\end{equation}
-
-
-\begin{equation}
- \{\tilde{B}_{kj}\}_{k=1, j=0}^{N_x-2} = (\D{\phi}_j, \N{\phi}_k)_w = \begin{cases}
- -\frac{\pi}{2}, &j=k-2,\\
- -\frac{\pi}{2}\left(1+ {c_{k+2}}\left(\frac{k}{k+2}\right)^2 \right), &j=k,\\
- -\frac{\pi}{2} k^2/(k+2)^2 , & j=k+2, \\
+ \{\D{C}_{kj}\}_{k,j=0}^{N_x-2, N_x-4} = \left(\N{\phi}^{'}_j, \D{\phi}_k 
+ \right)_w = \begin{cases}
+ \pi (k-2)(k+1)/k, &j=k-3,\\
+ -2 \pi(k+1)^2/(k+2), & j=k-1, \\
+ \pi(k+1), & j=k+1, \\
  0, &\text{otherwise}.
  \end{cases}
 \end{equation}
 
 \begin{equation}
- \{\grave{B}_{kj}\}_{k=0, j=1}^{N_x-2} = (\N{\phi}_j, \D{\phi}_k)_w = \begin{cases}
- -\frac{\pi}{2} (k-2)^2/k^2 , & j=k-2, \\
- -\frac{\pi}{2}\left(1+ {c_{k+2}} \left(\frac{k}{k+2}\right)^2 \right), &j=k,\\
- -\frac{\pi}{2}, &j=k-2,\\
- 0, &\text{otherwise}.
- \end{cases}
-\end{equation}
-
-\begin{equation}
- \{\N{B}_{kj}\}_{k,j=1}^{N_x-2} = (\N{\phi}_j, \N{\phi}_k)_w = \begin{cases}
- -\frac{\pi}{2} \left(\frac{k-2}{k}\right)^2, &j=k-2,\\
- -\frac{\pi}{2}\left(1+ {c_{k+2}}\left(\frac{k}{k+2}\right)^4 \right), &j=k,\\
- -\frac{\pi}{2} k^2/(k+2)^2 , & j=k+2, \\
+ \{\N{B}_{kj}\}_{k,j=0}^{N_x-4} = \{\N{B}_{jk}\}_{j,k=0}^{N_x-4} = (\N{\phi}_j, 
+ \N{\phi}_k)_w = \begin{cases}
+ \frac{\pi}{2} \left(c_k + 4 \left(\frac{k+2}{k+3} \right)^2 + c_{k+4} 
+ \left(\frac{k+1}{k+3}\right)^2    \right), &j=k,\\
+ -\pi \left( \frac{k+2}{k+3} + \frac{(k+4)(k+1)}{(k+5)(k+3)} \right), &j=k+2,\\
+ \frac{\pi}{2} \frac{k+1}{k+3} , & j=k+4, \\
  0, &\text{otherwise}.
  \end{cases}
 \end{equation}
