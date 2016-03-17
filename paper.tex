@@ -190,17 +190,19 @@ and $z$ directions, can now be defined as
 where $\imath=\sqrt{-1}$ and 
 \begin{align}
 K_N = \Big\{\bm{k} \in \mathcal{Z}\times\mathcal{R}^2 / &(l, \underline{m}, \underline{n}) \in \left( l, \frac{2 \pi m}{L_y}, \frac{2 \pi n}{L_z} \right), \text{where} \notag \\
- &(l, m, n) \in  [0, \ldots, N_x] \times [-\frac{N_y}{2},\ldots, \frac{N_y}{2}-1] \times[-\frac{N_z}{2},\ldots, \frac{N_z}{2}-1] \Big\}. \label{eq:wavenumbermesh}
+ &(l, m, n) \in  [0, \ldots, N_x] \times [-\frac{N_y}{2},\ldots, 
+ \frac{N_y}{2}-1] \times[-\frac{N_z}{2},\ldots, \frac{N_z}{2}-1] \Big\} 
+ \label{eq:wavenumbermesh}
 \end{align}
-$\D{K}_N$ and $\N{K}_N$ are both equal to $K_N$ except from index $l$ that 
+is the wavenumber mesh for $V_N$. The other two wavenumber meshes $\D{K}_N$ and 
+$\N{K}_N$ are both equal to $K_N$ except from in index $l$ that 
 ranges $[0, 1, \ldots, N_x-2]$ and $[0, 1, \ldots, N_x-4]$ for $\D{K}_N$ 
 and $\N{K}_N$ respectively, see (\ref{eq:phiD}) and (\ref{eq:phiN}). We use 
 notation $K_N^p(m, n)=K_N(0, m, n)$ when referring to only the two periodic 
 dimensions of $K_N$.
 
-The computational mesh has in real space been created using $N = (N_x, N_y, 
-N_z)$ 
-intervals, where the two periodic directions use uniform intervals. The 
+The computational mesh in real space can be created using $N = (N_x, N_y, 
+N_z)$ intervals, where the two periodic directions use uniform intervals. The 
 computational mesh is given as
 \begin{align}
   X_N = \Big\{ \bm{x} \in \mathcal{R}^3/&(x_i, y_j, z_k) \in \left( h(i), \frac{jL_y}{N_y}, \frac{kL_z}{N_z} \right), \text{where} \notag \\
@@ -248,7 +250,7 @@ y_j}}_{\mathcal{F}_y^{-1}} e^{\imath \underline{n} z_k}}_{\mathcal{F}_z^{-1}} ,
   \label{eq:ifft} 
 \end{align}
 Here $\N{\mathcal{T}}^{-1}$ is used as short notation for the complete inverse 
-transform, $\mathcal{F}_{y}^{-1}$ and $\mathcal{F}_{z}^{-1}$ represents inverse 
+transform, $\mathcal{F}_{y}^{-1}$ and $\mathcal{F}_{z}^{-1}$ represent inverse 
 Fourier transforms along directions $y$ and $z$ respectively, and the inverse 
 Shen transform $\N{\mathcal{S}}_{x}^{-1}$ is performed along the wall normal 
 $x$ direction. Note that the transforms are applied sequentially to the entire 
@@ -299,7 +301,7 @@ orthogonality of the Fourier basis functions
 \N{\psi}_{\bm{k}} \right>_w, \notag \\
            &= h \sum_{q=0}^{N_x-4} \sum_{i=0}^{N_x} \N{\phi}_{q}(x_i) 
            \N{\phi}_{l}(x_i) w_i \, \hat{u}(q, {m}, {n}, t), \notag \\
-           &= h \sum_{p=0}^{N_x-4} \N{B}_{lq} \hat{u}(q, {m}, {n}, t), 
+           &= h \sum_{q=0}^{N_x-4} \N{B}_{lq} \hat{u}(q, {m}, {n}, t), 
            \label{eq:sst2}
 \end{align}
 where $\N{B}_{lq} = (\N{\phi}_q, \N{\phi}_l)_w = 
@@ -474,11 +476,7 @@ given wavenumbers $m$ and $n$
 {\bm{k}} \in 
 \D{K}_N. \label{eq:gfin}
 \end{align}
-The convective terms are computed with 
-a forward Adams-Bashforth projection, such that $\N{\mathcal{S}}(h_v^{n+1/2}) = 
-\N{\mathcal{S}}(1.5h_v^{n} - 0.5 h_v^{n-1})$ and $\D{\mathcal{S}}(h_g^{n+1/2}) 
-= \D{\mathcal{S}}(1.5h_g^{n} - 0.5 h_g^{n-1})$ and the coefficient matrices are 
-given as
+The coefficient matrices are given as
 \begin{align}
 \N{H}_{lq}(m, n) &= -\frac{\nu \triangle t}{2}\N{Q}_{lq} + \left( 1 + \nu 
 \triangle t 
@@ -488,7 +486,11 @@ given as
 t}{2}\D{A}_{lq} + (1 + \frac{\nu \triangle t \underline{z}^2}{2}) \D{B}_{lq} 
 &\forall m, n \in K_N^p,
 \end{align}
-where $\underline{z}^2 = \underline{m}^2 + \underline{n}^2$. Equations 
+where $\underline{z}^2 = \underline{m}^2 + \underline{n}^2$. The convective 
+terms are computed with a forward Adams-Bashforth projection, such that 
+$\N{\mathcal{S}}(h_v^{n+1/2}) = 
+\N{\mathcal{S}}(1.5h_v^{n} - 0.5 h_v^{n-1})$ and $\D{\mathcal{S}}(h_g^{n+1/2}) 
+= \D{\mathcal{S}}(1.5h_g^{n} - 0.5 h_g^{n-1})$. Equations 
 (\ref{eq:v0}) and (\ref{eq:w0}) are also discretized in time using 
 Crank-Nicolson and Adams-Bashforth, and we obtain
 \begin{align}
@@ -727,15 +729,15 @@ where $c_0, c_1$ and $c_2$ are constants. The matrix $\N{A}_{kj}$ contains only
 three nonzero diagonals at $ j = k-2, k, k+2$,  whereas matrix $\N{B}_{kj}$ 
 contains five 
 nonzero diagonals at $ j = k-4, k-2, k, k+2, k+4$. The nonzero elements of the 
-$\N{Q}_{kj}$ matrix are given as
+upper triangular $\N{Q}_{kj}$ matrix are given as
 \begin{align}
  \N{Q}_{kk} &= -4(k+1)(k+2)^2 \\
  \N{Q}_{kj} &= p_kq_j + r_ks_j, \quad j = k+2, k+4, \ldots N_x-4
 \end{align}
 where 
 \begin{align}
-p_k &= 8 k (k+1)(k+2)(k+4)\pi, &q_j = \frac{1}{j+3} \label{eq:pk} \\
-r_k &= 24(k+1)(k+2)\pi, &s_j =  \frac{(j+2)^2}{(j+3)} \label{eq:rk}
+p_k &= 8 k (k+1)(k+2)(k+4)\pi, &q_j = \frac{1}{j+3}, \label{eq:pk} \\
+r_k &= 24(k+1)(k+2)\pi, &s_j =  \frac{(j+2)^2}{(j+3)}. \label{eq:rk}
 \end{align} 
 For each row in $\N{H}_{kj}$ we have that $\N{H}_{kj}=c_0\N{Q}_{kj}\, \forall j 
 > k+4$. A direct LU decomposition of $\N{H}$ can be performed as shown in Alg. 
@@ -754,8 +756,8 @@ pre-computed
 the total storage requirement for the complete LU decomposition is no more than 
 $7N$ and the solution of the complete system can be obtained very quickly with 
 one forward elimination and a back solve. The back 
-solve is very fast because of the recursive formulation (\ref{eq:ab}), leading 
-to a formula like (valid for $k \le N_x-8$)
+solve is very fast because of the formulation (\ref{eq:ab}), leading 
+to a formula for the backwards substitution like (valid for $k \le N_x-8$)
 \begin{equation}
 u_k = \left(y_k - \N{U}_{k, k+2} u_{k+2} - \N{U}_{k, k+4} u_{k+4} - 
 a_k\sum_{\substack{j=k+6\\k-j \text{ even}}}^{N_x-4} q_j u_j - 
@@ -769,7 +771,7 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 \begin{algorithm}
 	\caption{LU decomposition of biharmonic operator $\N{H}$. Current algorithm 
 	is using dense storage of $U_{kj}$, but no more than the 3 diagonals need 
-	to be stored.}
+	to be stored eventually.}
 	\label{alg:lu_biharmonic}
 	\begin{algorithmic}[1]
 		\Procedure{LUbiharmonic}{}
