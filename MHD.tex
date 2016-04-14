@@ -1,0 +1,166 @@
+%This file contains MHD equations and their discretization
+
+\section{Discretization of MHD equations}
+\label{sec:discretizationMHD}
+
+The MHD equations are given by
+\begin{align}
+\frac{\partial \bm{u}}{\partial t} &=  \bm{\mathcal{H}} + \bm{\mathcal{F}} + \nu \nabla^2 \bm{u} - \nabla{p}, 
+\label{eq:momentum} \\
+\frac{\partial \bm{B}}{\partial t} &= \bm{\mathcal{G}}+ \frac{1}{Rm}\nabla^2 \bm{B}, 
+\label{eq:induction} \\
+ \nabla \cdot \bm{u} &= 0, \label{eq:divU}\\
+  \nabla \cdot \bm{B} &= 0, \label{eq:divB}
+\end{align}
+where 
+\begin{equation}
+\bm{\mathcal{F}} = \mathcal{N}(\nabla\times \bm{B})\times \bm{B},
+\end{equation}
+and
+\begin{equation}
+\bm{\mathcal{G}} = \nabla\times(\bm{u}\times\bm{B}).
+\end{equation}
+Here, $Rm$ and $\mathcal{N}$ are the magnetic Reynolds number and the coupling number, respectively. The magnetic induction is assumed to satisfy Neumann boundary condition. Since the magnetic field is divergence free, we get the following boundary conditions for the components of the magnetic field
+\begin{align}
+\partial_x B_x(\pm 1) = \partial^{2}_{xx} B_x(\pm 1) = 0, \label{NeumannBiharmonicBC}\\
+ \partial_x B_y(\pm 1) = \partial_{x} B_z(\pm 1) = 0. \label{NeumannBC}
+\end{align}
+The basis functions satisfying the above boundary conditions, are given by
+\begin{align}
+ \B{\phi}_k(x) &= T_k(x) + a_k T_{k+2}(x) + 
+b_k T_{k+4}, \label{eq:phiNB} \\
+\NB{\phi}_k(x) &= T_k(x) +\alpha_k T_{k+2}(x), \label{eq:phiNeumann}
+\end{align}
+respectively. Here
+\begin{align*}
+a_k &= - \frac{2k^2}{(k+2)(k+3)},\\
+b_k &= \frac{k^2(k+1)}{(k+3)(k+4)^2},\\
+\alpha_k &= - \frac{k^2}{(k+2)^2}. 
+\end{align*}
+The corresponding function spaces are
+\begin{align}
+\B{V}_{N_x} &= \text{span} \{\B{\phi}_1, \B{\phi}_2, 
+\ldots, \B{\phi}_{N_x-4} \}. \label{eq:phiNBspace} \\
+\NB{V}_{N_x} &= \text{span} \{\NB{\phi}_1, \NB{\phi}_2, 
+\ldots, \NB{\phi}_{N_x-2} \}. \label{eq:phiNBspace}
+\end{align}
+The discretization of the Eq. \ref{eq:momentum} is similar to the discretization of the Navier-Stokes equations given in section \ref{sec:discretizationNS}, except for the extra $\bf{\mathcal{F}}$-term due to the magnetic induction. In this case, Eqs. \ref{eq:hu} and \ref{eq:hg} are modified to
+\begin{align}
+h_u &= -\frac{\partial}{\partial x} \left( \frac{\partial 
+(\mathcal{H}_y + \mathcal{F}_y)}{\partial y} + \frac{\partial (\mathcal{H}_z+\mathcal{F}_z)}{\partial z} \right) 
++ \left(\frac{\partial^2}{\partial y^2} + \frac{\partial^2}{\partial z^2} 
+\right) (\mathcal{H}_x + \mathcal{F}_x ), 
+\\
+h_g &= \frac{\partial( \mathcal{H}_z+ \mathcal{F}_z)}{\partial y} - \frac{\partial 
+(\mathcal{H}_y+\mathcal{F}_y)}{\partial z},
+\end{align}
+and therefore
+\begin{align*}
+\left<h_u, \N{\psi} \right>_w &= h\Biggl[-(\underline{m}^2+\underline{n}^2) 
+\N{\mathcal{S}}(\mathcal{H}_x + \mathcal{F}_x) \\
+&- \imath \underline{m}\left[\left(\D{\phi}_q^{'}, 
+\N{\phi}_l \right)_w \hat{\mathcal{H}}_y +\left(\NB{\phi}_q^{'}, 
+\N{\phi}_l \right)_w \hat{\mathcal{F}}_y\right] 
+- \imath \underline{n} \left[\left(\D{\phi}_q^{'}, \N{\phi}_l \right)_w \hat{\mathcal{H}}_z +\left(\NB{\phi}_q^{'}, \N{\phi}_l \right)_w \hat{\mathcal{F}}_z \right]\Biggr], \\
+\left< h_g, \D{\psi} \right>_w &= h\left[ \imath \underline{m}\, (\D{B} 
+\hat{\mathcal{H}}_z + \NB{B} 
+\hat{\mathcal{F}}_z) - \imath \underline{n}\,(\D{B} \hat{\mathcal{H}}_y+  \NB{B} \hat{\mathcal{F}}_y )
+\right].
+\end{align*}
+In the equations above, the matrices $\NB{B}$ and $\left(\NB{\phi}_q^{'}, \N{\phi}_l \right)_w$ are new, and they are given in the appendix. 
+
+The discretization of the magnetic induction equation is similar to the Navier-Stokes equation. Applying the same techniques, we end up with the following set of equations
+\begin{align}
+\frac{\partial}{\partial t} \nabla^2 B_x &= h_b + \frac{1}{Rm} \nabla^4 B_x, 
+\label{eq:biharmonicB} \\
+\frac{\partial g_b}{\partial t} &= h_{gb} + \frac{1}{Rm} \nabla^2 g_b, \label{eq:gB} \\
+f_b + \frac{\partial B_x}{\partial x} &= 0, \label{eq:fb}
+\end{align}
+where
+\begin{align}
+f_b &= \frac{\partial B_y}{\partial y} + \frac{\partial B_z}{\partial z}, \\
+g_b &= \frac{\partial B_z}{\partial y} - \frac{\partial B_y}{\partial z}, \\
+h_b &= \nabla^2 \mathcal{G}_x, \label{eq:hbB}\\
+h_{gb} &= \frac{\partial \mathcal{G}_z}{\partial y} - \frac{\partial 
+\mathcal{G}_y}{\partial z}.\label{eq:hgB}
+\end{align}
+The boundary conditions for Eqs. \ref{eq:biharmonicB} and \ref{eq:gB} are $\partial_x B_x(\pm 1) = \partial^{2}_{xx} B_x(\pm 1) = 0$ and $ \partial_{x} g_b(\pm 1) = 0$, respectively. The variational formulations is therefore: Find ${B_x} \in \B{V}_N$, ${g_b} \in \NB{V}_N$ and ${f_b} \in \NB{V}_N$ such that
+\begin{align}
+	\frac{\partial }{\partial t} \left< \nabla^2 B_x, \B{\psi}\right>_w &= 
+	\left<h_b, \B{\psi} \right>_w + \frac{1}{Rm} \left<\nabla^4 B_x, \B{\psi}\right>_w 
+	&\forall \B{\psi} \in \B{V}_N, \label{eq:b1} \\
+	\frac{\partial}{\partial t}\left<g_b, \NB{\psi}\right>_w &= \left<h_{gb}, 
+	\NB{\psi}\right>_w + \frac{1}{Rm} 
+	\left<\nabla^2 g_b, \NB{\psi}\right>_w &\forall \NB{\psi} \in \NB{V}_N ,
+	\label{eq:gb1} \\
+	\left<f_b, \NB{\psi}\right>_w &= \left<\frac{\partial B_x}{\partial x}, 
+	\NB{\psi}\right>_w &\forall \NB{\psi} \in \NB{V}_N. \label{eq:fb1}
+\end{align}
+The two remaining magnetic field components are computed by projection to the 
+Neumann space $\NB{V}_N$: Find 
+${B_y}, {B_z}$ in $\NB{V}_N \times \NB{V}_N$ such that
+\begin{align}
+\left<f_b, \NB{\psi}\right>_w &= \left<\frac{\partial B_y}{\partial y} + 
+\frac{\partial B_z}{\partial z}, \NB{\psi}\right>_w, \, &\forall \NB{\psi} \in 
+\NB{V}_N, \label{eq:fb2} \\
+\left<g_b, \NB{\psi}\right>_w &= \left<\frac{\partial B_z}{\partial y}  - 
+\frac{\partial B_y}{\partial z}, \NB{\psi}\right>_w, \, &\forall \NB{\psi} \in 
+\NB{V}_N. \label{eq:gb2}
+\end{align}
+In the spectral space Eqs. (\ref{eq:fb2}) and (\ref{eq:gb2}) become
+\begin{align}
+\hat{f_b}_{\bm{k}} &= \imath \underline{m}\, \hat{B_y}_{\bm{k}} + \imath 
+\underline{n}\, \hat{B_z}_{\bm{k}} &\forall \bm{k} \in \NB{K}_N^0, \label{eq:fb3} \\
+\hat{g_b}_{\bm{k}} &= \imath \underline{m}\, \hat{B_z}_{\bm{k}} - \imath 
+\underline{n}\, \hat{B_y}_{\bm{k}} & \forall \bm{k} \in \NB{K}_N^0. \label{eq:gb3}
+\end{align}
+For $m=n=0$ we solve the corresponding magnetic induction equations in $y$ and $z$ directions
+\begin{align}
+\partial_t B_y &= \mathcal{G}_y + \frac{1}{Rm}\nabla^2 B_y, \\
+\partial_t B_z &= \mathcal{G}_z + \frac{1}{Rm}\nabla^2 B_z, 
+\end{align}
+which on projection onto Neumann space become
+\begin{align}
+\frac{\partial }{\partial t} \NB{B}_{lq}\hat{B_y}(q, 0, 0, t) &= 
+\NB{B}_{lq}\hat{\mathcal{G}}_y(q, 0, 0, t) +  \frac{1}{Rm} \NB{A}_{lq} \hat{B_y}(q, 0, 0, t) 
+& \forall\, l \in [1, 
+\ldots, N_x-2], \label{eq:v0B}\\
+\frac{\partial }{\partial t} \NB{B}_{lq}\hat{B_z}(q, 0, 0, t) &= 
+\NB{B}_{lq}\hat{\mathcal{G}}_z(q, 0, 0, t) +  \frac{1}{Rm} \NB{A}_{lq} \hat{B_z}(q, 0, 0, t) 
+& \forall\, l \in [1, \ldots, N_x-2].\label{eq:w0B}
+\end{align}
+For the time discretization we use Crank-Nicolson for the diffusive terms and Adam-Bashforth for the nonlinear convective terms. Equations \ref{eq:b1} and \ref{eq:gb1} take the following form
+\begin{align}
+\B{H}\hat{B_x}^{n+1} & = \left(2\B{A} - 2\underline{z}^2\B{B} - \B{H} 
+\right)\hat{B_x}^{n} + \B{\mathcal{S}}(h_b^{n+1/2}) \triangle t, 
+\label{eq:Bxfin}\\ 
+\NB{H} \hat{g_b}^{n+1} &= \left(2 \NB{B}-\NB{H}\right) 
+\hat{g_b}^{n} + \NB{\mathcal{S}}(h_{gb}^{n+1/2}) \triangle t. \label{eq:gbfin}
+\end{align}
+Here $\B{H} = -\frac{\eta \triangle t}{2}\B{L} + \left( 1 + \eta \triangle t 
+\underline{z}^2 \right) \B{A} - \frac{2\underline{z}^2 + \eta \triangle t 
+\underline{z}^4}{2} \B{B}$, $\NB{H} = -\frac{\eta \triangle t}{2}\NB{A} + (1 + 
+\frac{\eta \triangle t \underline{z}^2}{2}) \NB{B}$, $\eta = 1/Rm$ and $\underline{z}^2 = 
+\underline{m}^2 + \underline{n}^2$. Using the same time discretization for Eqs. \ref{eq:v0B} and \ref{eq:w0B}, we obtain
+\begin{align}
+\left(-\frac{\eta \triangle t}{2}\NB{A} + \NB{B} \right)\hat{B_y}_0^{n+1} &= 
+\left(\frac{\eta \triangle t}{2}\NB{A} + \NB{B} 
+\right)\hat{B_y}^{n}_0 + \triangle t \NB{D}\hat{\mathcal{G}}_{y,0}^{n+1/2}, \label{eq:v00B} \\
+\left(-\frac{\eta \triangle t}{2}\NB{A} + \NB{B} \right)\hat{B_z}_0^{n+1} &= 
+\left(\frac{\eta \triangle t}{2}\NB{A} + \NB{B} 
+\right)\hat{B_z}^{n}_0 + \triangle t \NB{D}\hat{\mathcal{G}}_{z,0}^{n+1/2}. \label{eq:w00B}
+\end{align}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

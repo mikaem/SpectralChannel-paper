@@ -1,0 +1,112 @@
+ %This file contains all the matrices needed to solve MHD equations
+
+\begin{equation}
+ \{\B{B}_{kj}\}_{k,j=0}^{N_x-4} = (\B{\phi}_j, \B{\phi}_k)_w = \begin{cases}
+  \frac{\pi}{2} b_j, &j=k-4,\\
+  \frac{\pi}{2} (a_j+ a_k b_j), &j=k-2,\\
+ \frac{\pi}{2}\left({c_k} + a_j a_k +b_jb_k \right), &j=k,\\
+ \frac{\pi}{2} (a_k+ a_j b_k) , & j=k+2, \\
+   \frac{\pi}{2} b_k, &j=k+4,\\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+%\begin{equation}
+% \{\B{A}_{kj}\}_{k,j=0}^{N_x-4} = (\B{\phi}^{''}_j, \B{\phi}_k)_w = \begin{cases}
+%  \frac{\pi}{2} \Biggl[ (j (j^2 - k^2) + a_j (j + 2) ((j + 2)^2 - k^2) +   \nonumber\\ 
+%                                   \qquad b_j (j + 4) ((j + 4)^2 - k^2)) + \nonumber\\ 
+%                                    \qquad a_k \Bigl(j (j^2 - (k + 2)^2) +   \nonumber\\ 
+%                                    \qquad a_j (j + 2) ((j + 2)^2 - (k + 2)^2) + \nonumber\\  
+%                                    \qquad b_j (j + 4) ((j + 4)^2 - (k + 2)^2)\Bigr) + \nonumber\\ 
+%                                    \qquad b_k \Bigl(j (j^2 - (k + 4)^2) + \nonumber\\  
+%                                    \qquad a_j (j + 2) ((j + 2)^2 - (k + 4)^2) +  \nonumber\\ 
+%                                    \qquad b_j (j + 4) ((j + 4)^2 - (k + 4)^2)\Bigr) \Biggr], &j=k-4,\\
+%  \frac{\pi}{2} \Biggl[ j (j^2 - k^2) + a_j (j + 2) ((j + 2)^2 - k^2) + \nonumber\\ 
+%                            \qquad b_j (j + 4) ((j + 4)^2 - k^2)) + \nonumber\\ 
+%                            \qquad a_j a_k (j + 2) ((j + 2)^2 - j^2) +\nonumber\\ 
+%                            \qquad b_j a_k (j + 4) ((j + 4)^2 - j^2) + \nonumber\\ 
+%                            \qquad b_k b_j (j + 4) ((j + 4)^2 - (j + 2)^2) \Biggr], &j=k-2,\\
+% \frac{\pi}{2}\Biggl[ (a_j (j + 2) ((j + 2)^2 - j^2) + \nonumber\\ 
+%                            \qquad b_j (j + 4) ((j + 4)^2 - j^2) + \nonumber\\ 
+%                            \qquad b_j a_k (j + 4) ((j + 4)^2 - (j + 2)^2)) \Biggr], &j=k,\\
+% \frac{\pi}{2} b_j (j + 4) (((j + 4)^2 - (j + 2)^2)) , & j=k+2, \\
+% 0, &\text{otherwise}.
+% \end{cases}
+%\end{equation}
+
+For a given function expanded in Chebyshev polynomials we have the following recurrence relation for the derivatives in the spectral space \cite{Canuto2006}
+\begin{equation}
+c_j\hat{u}_j^{(q)} = 2(j+1)\hat{u}_{j+1}^{(q-1)}  + \hat{u}_{j+2}^{(q)}. 
+\end{equation}
+From this relation we can easily see that
+\begin{align}
+\hat{u}_j^{(1)} &= \frac{2}{c_j}\sum_{\substack{p = j+1\\
+                  p+j\; \text{odd}}} p \hat{u}_p, \\
+\hat{u}_j^{(2)} &= \frac{1}{c_j}\sum_{\substack{p = j+2\\
+                  p+j\; \text{even}}} p(p^2-j^2) \hat{u}_p, \label{eq:2ndDerivative}   \\   
+\hat{u}_j^{(3)} &= \frac{1}{4 c_j}\sum_{\substack{p = j+3\\
+                  p+j\; \text{odd}}} p((p-j)^2-1)((p+j)^2 -1) \hat{u}_p, \\   
+\hat{u}_j^{(4)} &= \frac{1}{24 c_j}\sum_{\substack{p = j+4\\
+                  p+j\; \text{even}}} p(p^2-j^2)((p+j)^2 -4) ((p-j)^2 -4) \hat{u}_p, \label{eq:4thDerivative}                                               
+\end{align}
+where $j \geq 0$. 
+For the Shen-Neumann-biharmonic basis functions, i.e.
+\begin{equation}
+\B{\phi}_j = T_j + a_j T_{j+2} + b_j T_{j+4}, 
+\end{equation}
+the second relation above, i.e. Eq. \ref{eq:2ndDerivative}, gives
+\begin{align}
+\B{\phi}^{''}_{j} &= T_j^{''} + a_j T_{j+2}^{''} + b_j T_{j+4}^{''},\nonumber\\
+                        &= \sum_{n=0}^{j-2} e_{j,n} T_n + a_j\sum_{n=0}^{j} e_{j+2,n} T_n + b_j\sum_{n=0}^{j+2} e_{j+4, n} T_n, \nonumber\\
+                        &= \sum_{n=0}^{j+2} d_{n} T_n, \label{eq:SecondDerivative}
+\end{align} 
+where $e_{j,n} = \frac{1}{c_j}j(j^2-n^2)$, and
+\begin{equation}
+d_{n} = \begin{cases}
+  b_j e_{j+4,j+2}, &n=j+2,\\
+  a_j e_{j+2,j}+ b_j e_{j+4,j}, &n=j,\\
+  e_{j,n} + a_j e_{j+2,n} + b_j e_{j+4,n}, &n= j-2, j-4, j-6, \ldots,\\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+Using Eq. \ref{eq:SecondDerivative}, we obtain
+\begin{equation}
+ \{\B{A}_{kj}\}_{k,j=0}^{N_x-4} = (\B{\phi}^{''}_j, \B{\phi}_k)_w = \begin{cases}
+   \frac{\pi}{2} d_{k}, &k=j+2,\\
+   \frac{\pi}{2} \left( d_{k}+ a_{k} d_{k+2} \right), &k=j,\\
+   \frac{\pi}{2} \left( d_{k}+ a_{k} d_{k+2} + b_{k} d_{k+4} \right), &k= j-2, j-4, j-6,\ldots,\\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+To find the matrix involving the fourth derivative of the basis functions, we first use the relation given by Eq. \ref{eq:4thDerivative}, to get
+\begin{align}
+\B{\phi}^{(4)}_{j} &= T_j^{(4)} + a_j T_{j+2}^{(4)} + b_j T_{j+4}^{(4)},\nonumber\\
+                           &=\sum_{n=0}^{j-4} e_{j,n} T_n + a_j\sum_{n=0}^{j-2} e_{j+2,n} T_n + b_j\sum_{n=0}^{j} e_{j+4, n} T_n,\nonumber\\
+                           &= \sum_{n=0}^{j} d_{n} T_n.\label{eq:FourthDerivative}
+\end{align} 
+Here $e_{j,n} = \frac{1}{24 c_j}j(j^2-n^2)((j+n)^2 -4) ((j-n)^2 -4)$, and
+\begin{equation}
+d_{n} = \begin{cases}
+  b_j e_{j+4,j}, &n=j,\\
+  a_j e_{j+2,j-2}+ b_j e_{j+4,j-2}, &n=j-2,\\
+  e_{j,n} + a_j e_{j+2,n} + b_j e_{j+4,n}, &n= j-4, j-6, j-8, \ldots,\\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+Using this, we finally find
+\begin{equation}
+ \{\B{L}_{kj}\}_{k,j=0}^{N_x-4} = (\B{\phi}^{(4)}_j, \B{\phi}_k)_w = \begin{cases}
+   \frac{\pi}{2} d_{k}, &k=j,\\
+   \frac{\pi}{2} \left( d_{k}+ a_{k} d_{k+2} \right), &k=j-2,\\
+   \frac{\pi}{2} \left( d_{k}+ a_{k} d_{k+2} + b_{k} d_{k+4} \right), &k= j-4, j-6, j-8,\ldots,\\
+ 0, &\text{otherwise}.
+ \end{cases}
+\end{equation}
+
+
+
+
+
+
+
+

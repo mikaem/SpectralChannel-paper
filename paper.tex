@@ -119,6 +119,8 @@ backgroundcolor=\color{gray}
 %}
 }
 
+\newcommand{\NB}[1]{\breve{#1}}
+\newcommand{\B}[1]{\tilde{#1}}
 \newcommand{\N}[1]{\check{#1}}
 \newcommand{\D}[1]{\overline{#1}}
 
@@ -347,10 +349,10 @@ g &= \frac{\partial w}{\partial y} - \frac{\partial v}{\partial z}, \\
 h_u = -\frac{\partial}{\partial x} &\left( \frac{\partial 
 \mathcal{H}_y}{\partial y} + \frac{\partial \mathcal{H}_z}{\partial z} \right) 
 + \left(\frac{\partial^2}{\partial y^2} + \frac{\partial^2}{\partial z^2} 
-\right) \mathcal{H}_x ,
+\right) \mathcal{H}_x , \label{eq:hu}
 \\
 h_g &= \frac{\partial \mathcal{H}_z}{\partial y} - \frac{\partial 
-\mathcal{H}_y}{\partial z}.
+\mathcal{H}_y}{\partial z}. \label{eq:hg}
 \end{align}
 The two remaining velocity components are computed from the definitions of $f$ 
 and $g$. The biharmonic equation (\ref{eq:biharmonic}) is solved with boundary 
@@ -877,7 +879,7 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 	\end{algorithmic}
 \end{algorithm}
 
-
+\include{MHD}
 
 
 %\section{The incremental pressure correction scheme}
@@ -1311,7 +1313,11 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
  \{B_{kj}\}_{k,j=0}^{N_x} = (T_k, T_j)_w = \frac{c_k \pi}{2} \delta_{kj}
 \end{equation}
 
+\include{MHDMatrices}
+
 For Gauss-Lobatto points we have $c_0=c_{N_x}=2$ and $c_k=1$ for $0<k<N_x$. For Gauss-Chebyshev points we have $c_0=2$ and $c_k=1$ for $k>0$. Note that for an $L^2_w$ scalar product we would have $c_{N_x}=1$ as well, but for the $l^2_w$ scalar product used here we get $c_{N_x}=2$. This disagreement, that follows from inexact quadrature at the highest mode, is not reported by Shen, but is reported by, e.g., Kopriva.
 
+\bibliographystyle{babplain}
+\bibliography{bib}
 
 \end{document}
