@@ -242,7 +242,8 @@ transforms as
 \begin{align}
 u(x_i, y_j, z_k, t) &= \underbrace{\frac{1}{N_z}\sum_n 
 \underbrace{\frac{1}{N_y} \sum_m \underbrace{\sum_l 
-\hat{u}(l,m,n)\N{\phi}_l(x_i)}_{\N{\mathcal{S}}_x^{-1}} e^{\imath \underline{m} 
+\hat{u}(l,m,n,t)\N{\phi}_l(x_i)}_{\N{\mathcal{S}}_x^{-1}} e^{\imath 
+\underline{m} 
 y_j}}_{\mathcal{F}_y^{-1}} e^{\imath \underline{n} z_k}}_{\mathcal{F}_z^{-1}} , 
 \quad \forall \, \bm{x} \in X_N, \notag \\
   u &= \N{\mathcal{T}}^{-1}(\hat{u}) =  \mathcal{F}^{-1}_z (\mathcal{F}^{-1}_y 
@@ -256,16 +257,21 @@ Shen transform $\N{\mathcal{S}}_{x}^{-1}$ is performed along the wall normal
 $x$ direction. Note that the transforms are applied sequentially to the entire 
 computational mesh. The inverse Shen transform may be computed using fast 
 Chebyshev transforms for all the three bases in (\ref{eq:Tk}, \ref{eq:phiD}, 
-\ref{eq:phiN}). The transforms are slightly different for the three bases and 
-${\mathcal{S}}, \D{\mathcal{S}}$ and $\N{\mathcal{S}}$ are used to distinguish 
-between them with obvious notation. 
+\ref{eq:phiN}). The inverse transforms are slightly different for the three 
+bases and 
+${\mathcal{S}}^{-1}, \D{\mathcal{S}}^{-1}$ and $\N{\mathcal{S}}^{-1}$ are used 
+to distinguish between them with obvious notation. 
 
 A three-dimensional scalar product in the weighted $[L^2_w(\Omega)]^3$ space is defined as
 \begin{align}
- \left<u, v\right>_w &= \int_{\Omega} {u(\bm{x}) v^*(\bm{x})}w\,dxdydz, \notag \\
-   &= \int_{\Omega} {u(\bm{x}) v^*(\bm{x})}\,dx_wdydz,
+ \left<u, v\right>_w &= \int_{\Omega} {u(\bm{x}) v^*(\bm{x})}w\,dxdydz, 
 \end{align}
-where $v^*$ is the comlex conjugate of $v$ and the weights $w$ are unity for periodic directions and  $w=1/\sqrt{1-x^2}$ for the inhomogeneous direction, and we have used $dx_w = dx/\sqrt{1-x^2}$. In this work we will make use of the discrete weighted $[l^2_w(\Omega)]^3$ space, where quadrature is employed for integration. As such the scalar product corresponds to sums that may be computed using fast transforms
+where $v^*$ is the comlex conjugate of $v$ and the weights $w$ are unity for 
+periodic directions and  $w=1/\sqrt{1-x^2}$ for the inhomogeneous direction. In 
+this work we will make use of the discrete weighted $[l^2_w(\Omega)]^3$ space, 
+where quadrature is employed for integration. As such the scalar product 
+corresponds to sums that may be computed using fast transforms. Using 
+$\N{\psi}_{\bm{k}}$ for $v$ we obtain
 \begin{align}
  \left< u, \N{\psi}_{\bm{k}} \right>_w &= h \underbrace{\sum_i 
  \underbrace{\sum_j \underbrace{\sum_k u(x_i, y_j, z_k, t)  e^{-\imath 
@@ -278,8 +284,8 @@ Here $h\N{\mathcal{S}}$ denotes the complete three dimensional scalar product
 and $h = L_yL_zN_y^{-1}N_z^{-1}$ is a constant. $\mathcal{F}_{{n}}$ and 
 $\mathcal{F}_{{m}}$ represent discrete Fourier transforms in $z$- and 
 $y$-directions, respectively, and $\N{\mathcal{S}}_{l}(\cdot) = (\cdot, 
-\N{\phi}_l)_w$ is the Shen scalar product in the $x$-direction. The weights, 
-$w_i$, required for the Shen transforms are 
+\N{\phi}_l)_w$ is used to represent the Shen scalar product in the 
+$x$-direction. The weights, $w_i$, required for the Shen transforms are 
 defined as
 \begin{equation}
  w_i = \begin{cases}
@@ -289,16 +295,22 @@ defined as
        Gauss-Chebyshev points},      
  \end{cases}
 \end{equation}
-where $c_0 = c_{N_x} = 2$ and $c_i = 1$ for $0 < i < N_x$.
+where $c_0 = c_{N_x} = 2$ and $c_i = 1$ for $0 < i < N_x$.\footnote{Note that 
+$c_{N_x}=1$ for the continuous scalar product $L^2_w(\Omega)$ (see, e.g., Eq. 
+(2.7) of Shen2), but for the discrete $l^2_w(\Omega)$ it follows that 
+$c_{N_x}=2$ due to inexact quadrature for the highest wavenumber.}
 
 The scalar product  $h\N{\mathcal{S}}$ in (\ref{eq:sst1}) does not represent a 
 complete transform. To find a transformation between physical $u$ and spectral 
 $\hat{u}$ we make use of Eq. (\ref{eq:u_solx}) directly and use the discrete 
 orthogonality of the Fourier basis functions
 \begin{align}
+%\left<u, \N{\psi}_{\bm{k}}\right>_w &= \frac{1}{N_yN_z}\left< 
+%\sum_{\bm{m}=(q,r,s) \in \N{K}_N} \hat{u}_{\bm{m}} \N{\psi}_{\bm{m}}, 
+%\N{\psi}_{\bm{k}} \right>_w, \notag \\
 \left<u, \N{\psi}_{\bm{k}}\right>_w &= \frac{1}{N_yN_z}\left< 
-\sum_{\bm{m}=(q,r,s) \in \N{K}_N} \hat{u}_{\bm{m}} \N{\psi}_{\bm{m}}, 
-\N{\psi}_{\bm{k}} \right>_w, \notag \\
+\sum_{(q,r,s) \in \N{K}_N} \hat{u}(q,r,s,t) \N{\psi}(q,r,s), 
+\N{\psi}(l,m,n,t) \right>_w, \notag \\
            &= h \sum_{q=0}^{N_x-4} \sum_{i=0}^{N_x} \N{\phi}_{q}(x_i) 
            \N{\phi}_{l}(x_i) w_i \, \hat{u}(q, {m}, {n}, t), \notag \\
            &= h \sum_{q=0}^{N_x-4} \N{B}_{lq} \hat{u}(q, {m}, {n}, t), 
@@ -313,7 +325,7 @@ Moving to matrix notation we get
 h\sum_{q=0}^{N_x-4} \N{B}_{lq}\, \hat{u}(q, {m}, {n}, t) &= 
 h\N{\mathcal{S}}(u)(l, m, n, t), \notag \\
  \hat{u}_{\bm{k}}(t) &= \N{\mathcal{T}}(u) =  \N{B}^{-1}\N{\mathcal{S}}(u), 
- \quad \forall \, \bm{k} \in \N{K}_N. \label{eq:fstB}
+ \quad \forall \, \bm{k} \in \N{K}_N, \label{eq:fstB}
 \end{align}
 where $\N{\mathcal{T}}(u)$ denotes the complete transformation, such that $u = 
 \N{\mathcal{T}}^{-1}(\N{\mathcal{T}}(u))$. Note that since $\N{B}$ assembles to 
@@ -354,7 +366,7 @@ h_g &= \frac{\partial \mathcal{H}_z}{\partial y} - \frac{\partial
 \end{align}
 The two remaining velocity components are computed from the definitions of $f$ 
 and $g$. The biharmonic equation (\ref{eq:biharmonic}) is solved with boundary 
-conditions are $u(\pm 1) = u'(\pm 1) = 0$, where the Neumann conditions follow 
+conditions $u(\pm 1) = u'(\pm 1) = 0$, where the Neumann conditions follow 
 from the continuity equation. The boundary conditions for Eq. (\ref{eq:g}) are 
 $g(\pm 1) = 0$. The variational formulation becomes: Find ${u} \in 
 \N{V}_N$, ${g} \in \D{V}_N$ and ${f} \in \D{V}_N$ such that
@@ -371,7 +383,7 @@ $g(\pm 1) = 0$. The variational formulation becomes: Find ${u} \in
 \end{align}
 The two remaining velocity components are computed by projection to the 
 Dirichlet space $\D{V}_N$: Find 
-${v}, {w}$ in $\D{V}_N \times \D{V}_N$ such that
+${v} \in \D{V}_N$ and $w \in \D{V}_N$ such that
 \begin{align}
 \left<f, \D{\psi}\right>_w &= \left<\frac{\partial v}{\partial y} + 
 \frac{\partial w}{\partial z}, \D{\psi}\right>_w \, &\forall \D{\psi} \in 
@@ -391,7 +403,7 @@ become simply
 \end{align}
 where $\D{K}_N^0$ is used to denote that these equations can be solved for all 
 wavenumbers except $m=n=0$. For $m=n=0$ we solve instead the 
-corresponding momentum equations in $y$ and $z$ directions:
+corresponding transformed momentum equations in $y$ and $z$ directions:
 \begin{align}
 \frac{\partial }{\partial t} \D{B}_{lq}\hat{v}(q, 0, 0, t) &= 
 \D{B}_{lq}\hat{\mathcal{H}}_y(q, 0, 0, t) + \nu \D{A}_{lq} \hat{v}(q, 0, 0, t) 
@@ -404,7 +416,7 @@ corresponding momentum equations in $y$ and $z$ directions:
 
 Equations (\ref{eq:u1}-\ref{eq:f1}) are also solved in spectral space. 
 Inserting for (\ref{eq:u_solx}) and a similar expansion for $g$ in $\D{V}_N$, 
-the required inner products become
+the inner products required to solve Eqs. (\ref{eq:u1}-\ref{eq:f1}) are
 \begin{align}
 \left<\nabla^4u, \N{\psi}_{\bm{k}}\right>_w &= h\left[ \left( 
 \N{\phi}_q^{''''}, 
@@ -419,13 +431,14 @@ the required inner products become
 \D{\phi}_l \right)_w \right] \hat{g}_q, \\
 \left<\frac{\partial u}{\partial x}, \D{\psi}_{\bm{k}}\right>_w &=
 h\left(\N{\phi}_q^{'}, \D{\phi}_l\right)_w \hat{u}_q, \\
-\left<h_u, \N{\psi} \right>_w &= h\left[-(\underline{m}^2+\underline{n}^2) 
+\left<h_u, \N{\psi}_{\bm{k}} \right>_w &= 
+h\left[-(\underline{m}^2+\underline{n}^2) 
 \N{\mathcal{S}}(\mathcal{H}_x) - \imath \underline{m}\left(\D{\phi}_q^{'}, 
 \N{\phi}_l \right)_w \hat{\mathcal{H}}_{y, q} - \imath 
 \underline{n}\left(\D{\phi}_q^{'}, \N{\phi}_l \right)_w 
 \hat{\mathcal{H}}_{z, q}\right], 
 \\
-\left< h_g, \D{\psi} \right>_w &= h\left[ \imath \underline{m}\, \D{B} 
+\left< h_g, \D{\psi}_{\bm{k}} \right>_w &= h\left[ \imath \underline{m}\, \D{B} 
 \hat{\mathcal{H}}_z - \imath \underline{n}\, \D{B} \hat{\mathcal{H}}_{y} 
 \right],
 \end{align}
@@ -481,10 +494,11 @@ The coefficient matrices are given as
 \N{H}_{lq}(m, n) &= -\frac{\nu \triangle t}{2}\N{Q}_{lq} + \left( 1 + \nu 
 \triangle t 
 \underline{z}^2 \right) \N{A}_{lq} - \frac{2\underline{z}^2 + \nu \triangle t 
-\underline{z}^4}{2} \N{B}_{lq} &\forall m, n \in K_N^p, \\
+\underline{z}^4}{2} \N{B}_{lq} &\forall m, n \in K_N^p, 
+\label{eq:Biharmonic_matrix} \\
 \D{H}_{lq}(m, n) &= -\frac{\nu \triangle 
 t}{2}\D{A}_{lq} + (1 + \frac{\nu \triangle t \underline{z}^2}{2}) \D{B}_{lq} 
-&\forall m, n \in K_N^p,
+&\forall m, n \in K_N^p, \label{eq:Helmholtz_matrix}
 \end{align}
 where $\underline{z}^2 = \underline{m}^2 + \underline{n}^2$. The convective 
 terms are computed with a forward Adams-Bashforth projection, such that 
@@ -508,7 +522,7 @@ $\hat{\mathcal{H}}^{n}_{y,0} = \hat{\mathcal{H}}_y(l, 0, 0, t_n)$ and similar
 for $\hat{w}^n_0$ and $\hat{\mathcal{H}}^n_{z,0}$.
 
 \section{Implementation}
-
+\label{sec:implementation}
 The solution procedure for the numerical method described in 
 Sec.~\ref{sec:discretizationNS} is given in Algorithm \ref{alg:NS}
 
@@ -599,125 +613,151 @@ system is $O(N)$ and the complete transform still scales like $O(N\log N)$.
 \end{algorithmic}
 \end{algorithm}
 
-We will now describe very efficient direct solvers for Eqs.~(\ref{eq:ufin}, 
-\ref{eq:gfin}) that are of order $O(N)$. The solvers are generated using clever 
-direct LU decomposition and only a few diagonals need to be stored for each 
-final lower (L) and upper (U) triangular matrix. 
-
-To solve Eq. (\ref{eq:gfin}) we perform an LU decomposition of the coefficient 
-matrix $\D{H}$. $\D{H}$ consists of one subdiagonal, and every 
-second upper diagonal is zero. As such, we may split the matrix into two 
-smaller (and decoupled) matrices for odd and even coefficients $\D{H}^e_{k,j} = 
-\D{H}_{2k,2j}$ and $\D{H}^o_{k,j} = \D{H}_{2k+1,2j+1}$, where the two matrices 
-$\D{H}^{e,o}$ are of type upper 
-Hessenberg, with only 4 distinct values on each row. This structure of $\D{H}$ 
-allows us to perform a very efficient tailored LU decomposition, as shown in 
-Algorithm (\ref{alg:lu}), and a very efficient tailored solve through 
-Algorithm (\ref{alg:lusolve}). The efficiency follows from the fact that 
-$U^{o,e}_{kj} = U^{o,e}_{kk+2} \, \forall \, j > k+2$, i.e., the upper 
-triangular matrix has a maximum of three distinct values for each row, which 
-allows for a very fast solve through back substitution. 
-Regarding Algorithm 
-(\ref{alg:lusolve}), we note that the ability to decouple the system into odd 
-and even coefficients leads to two subsystem that may be trivially solved 
-simultaneously in two threads by letting one thread call LUSolveoddeven with 
-even coefficients, and the second thread call it for odd. For optimal 
+Shen \cite{shen1995} states that it is possible to solve Eq.~(\ref{eq:gfin}) 
+with 
+essentially the same number of operations as a pentadiagonal solver. We note 
+that the matrix 
+$\D{H}$ is of type upper Hessenberg and a solution
+procedure is simply to perform a direct LU decomposition (se, e.g., 
+\cite{stewart98}), which leads to a 
+lower triangular  
+matrix $L$ with only one subdiagonal and an upper triangular matrix $U$ which 
+is dense. However, each row in $U$ 
+contains at most three distinct values at $U_{k,k}, U_{k,k+2}$ and $U_{k,k+4}$, 
+and then $U_{k,j} = U_{k,k+4}\, \forall \, j = k+6, k+8, \ldots N$. 
+Consequently 
+only three diagonals in $U$ need storage and the back solve can be traversed 
+very efficiently in $O(N)$. Note also that the system could be decoupled into 
+odd and even coefficients, which leads to two subsystem that may be trivially 
+solved 
+simultaneously in two threads. For optimal 
 performance, the odd and even coefficient would then need to be stored 
 contiguously in computer memory, and not alternately, which would be the normal 
 way of storing the coefficients.
 
-\begin{algorithm}
-\caption{LU factorization of matrix $H_{k,j}$, that may be split into two 
-decoupled upper Hessenberg matrices $H^e_{k,j} = H_{2k,2j}$ and $H^o_{k,j} = 
-H_{2k+1,2j+1}$ for even and odd coefficients. Return LU factorization for even 
-and odd coefficients, such that $L^eU^e=H^e$ and $L^oU^o=H^o$. Note that 
-$L^{e}$ and $L^{o}$ each have one single nonzero diagonal in addition to the 
-unity main diagonal, and as such only a vector is stored. Each $U^{e}$ and 
-$U^{o}$ has three distinct diagonals and $U^{e}_{kj}=U^{e}_{k, k+2} \,\forall 
-j 
-> k+2, j< M^e$ and $U^{o}_{kj}=U^{o}_{k, k+2} \,\forall j > k+2, j< M^o$. As 
-such, a sparse three-diagonal storage may be used for $U^e$ and $U^o$.}
-\label{alg:lu}
-\begin{algorithmic}[1]
-\Procedure{LUoddeven}{}
-  \State \textbf{Input:} $\{H\}_{k,j=0}^{N-2}$
-  \State \textit{integer} $M^e \gets (N-2)/2$
-  \State \textit{integer} $M^o \gets (N-3)/2$
-  \State ${U}^e_{0j} \gets {H}_{0,2j}, \, \forall j=0,1,2 $
-  \State ${U}^o_{0j} \gets {H}_{1,2j+1}, \, \forall j=0,1,2 $
-  \For{$k=1, 2,  \ldots, M^e-2$}
-    \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
-    \State ${U}^e_{kj} \gets {H}_{2k,2j} - {L}^e_{k}{U}^e_{k-1,j}, \, \forall 
-j=k, k+1, k+2$
-    \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
-    \State ${U}^o_{kj} \gets {H}_{2k+1,2j+1} - {L}^o_{k}{U}^o_{k-1,j}, \, 
-\forall j=k, k+1, k+2$
-  \EndFor
-  
-  \State $k \gets M^e-1$
-  \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
-  \State ${U}^e_{kj} \gets {H}_{2k,2j} - {L}^e_{k}{U}^e_{k-1,j}, \, \forall 
-j=k, k+1$
-  \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
-  \State ${U}^o_{kj} \gets {H}_{2k+1,2j+1} - {L}^o_{k}{U}^o_{k-1,j}, \, 
-\forall j=k, k+1$
-  \State $k \gets M^e$
-  \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
-  \State ${U}^e_{kk} \gets {H}_{2k,2k} - {L}^e_{k}{U}^e_{k-1,k}$
-  \If{$M^o == M^e$ }
-    \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
-    \State ${U}^o_{kk} \gets {H}_{2k+1,2k+1} - {L}^o_{k}{U}^o_{k-1,k}$
+%We will now describe very efficient direct solvers for Eqs.~(\ref{eq:ufin}, 
+%\ref{eq:gfin}) that are of order $O(N)$. The solvers are generated using 
+%clever 
+%direct LU decomposition and only a few diagonals need to be stored for each 
+%final lower (L) and upper (U) triangular matrix. 
 
-  \EndIf  
-  \State \Return $\{L^e_k\}_{k=0}^{M^e},\{U^e\}_{k,j=0}^{M^e}, 
-\{L^o_k\}_{k=0}^{M^o},\{U^o\}_{k,j=0}^{M^o}$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
+%To solve Eq. (\ref{eq:gfin}) we perform an LU decomposition of the coefficient 
+%matrix $\D{H}$. $\D{H}$ consists of one subdiagonal, and every 
+%second upper diagonal is zero. As such, we may split the matrix into two 
+%smaller (and decoupled) matrices for odd and even coefficients $\D{H}^e_{k,j} 
+%= 
+%\D{H}_{2k,2j}$ and $\D{H}^o_{k,j} = \D{H}_{2k+1,2j+1}$, where the two matrices 
+%$\D{H}^{e,o}$ are of type upper 
+%Hessenberg, with only 4 distinct values on each row. This structure of $\D{H}$ 
+%allows us to perform a very efficient tailored LU decomposition, as shown in 
+%Algorithm (\ref{alg:lu}), and a very efficient tailored solve through 
+%Algorithm (\ref{alg:lusolve}). The efficiency follows from the fact that 
+%$U^{o,e}_{kj} = U^{o,e}_{kk+2} \, \forall \, j > k+2$, i.e., the upper 
+%triangular matrix has a maximum of three distinct values for each row, which 
+%allows for a very fast solve through back substitution. 
+%Regarding Algorithm 
+%(\ref{alg:lusolve}), we note that the ability to decouple the system into odd 
+%and even coefficients leads to two subsystem that may be trivially solved 
+%simultaneously in two threads by letting one thread call LUSolveoddeven with 
+%even coefficients, and the second thread call it for odd. For optimal 
+%performance, the odd and even coefficient would then need to be stored 
+%contiguously in computer memory, and not alternately, which would be the 
+%normal 
+%way of storing the coefficients.
 
-\begin{algorithm}
-\caption{Solve of $H_{kj}u_j = b_k$, where $H$ has previously been LU 
-factorized for odd even coefficients using Algorithm (\ref{alg:lu}).}
-\label{alg:lusolve}
-\begin{algorithmic}[1]
-\Procedure{LUSolveoddeven}{}
-  \State \textbf{Input:} $\{U_{kj}\}_{k,j=0}^{M}, \{L_k\}_{k=0}^{M}, 
-\{b_k\}_{k=0}^{M}$ 
-  \State // Solve $Ly=b$ by forward elimination 
-  \State $y_0 \gets b_0$
-  \For{$k = 1$ \textbf{to} $M$}
-    \State $y_k \gets b_k - L_ky_{k-1}$
-  \EndFor
-  \State // Solve $Uu=y$ with back substitution
-  \State double $s = 0.0$     
-  \State $u_M = y_M / U_{MM}$    
-  \For{$i = M-1$ \textbf{to} $0$ \textbf{step} $-1$}
-     \State $u_i \gets y_i - U_{i, i+1}\cdot u_{i+1}$
-     \If{$i < M-1$}
-       \State $s \gets s + u_{i+2}$
-       \State $u_i \gets u_i - s\cdot U_{i,i+2}$            
-     \EndIf
-     \State $u_i \gets  u_i / U_{i,i}$
-   \EndFor
-  \State \Return $\{u_k\}_{k=0}^{M}$  
-\EndProcedure
-\end{algorithmic}
+%\begin{algorithm}
+%\caption{LU factorization of matrix $H_{k,j}$, that may be split into two 
+%decoupled upper Hessenberg matrices $H^e_{k,j} = H_{2k,2j}$ and $H^o_{k,j} = 
+%H_{2k+1,2j+1}$ for even and odd coefficients. Return LU factorization for even 
+%and odd coefficients, such that $L^eU^e=H^e$ and $L^oU^o=H^o$. Note that 
+%$L^{e}$ and $L^{o}$ each have one single nonzero diagonal in addition to the 
+%unity main diagonal, and as such only a vector is stored. Each $U^{e}$ and 
+%$U^{o}$ has three distinct diagonals and $U^{e}_{kj}=U^{e}_{k, k+2} \,\forall 
+%j 
+%> k+2, j< M^e$ and $U^{o}_{kj}=U^{o}_{k, k+2} \,\forall j > k+2, j< M^o$. As 
+%such, a sparse three-diagonal storage may be used for $U^e$ and $U^o$.}
+%\label{alg:lu}
+%\begin{algorithmic}[1]
+%\Procedure{LUoddeven}{}
+%  \State \textbf{Input:} $\{H\}_{k,j=0}^{N-2}$
+%  \State \textit{integer} $M^e \gets (N-2)/2$
+%  \State \textit{integer} $M^o \gets (N-3)/2$
+%  \State ${U}^e_{0j} \gets {H}_{0,2j}, \, \forall j=0,1,2 $
+%  \State ${U}^o_{0j} \gets {H}_{1,2j+1}, \, \forall j=0,1,2 $
+%  \For{$k=1, 2,  \ldots, M^e-2$}
+%    \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
+%    \State ${U}^e_{kj} \gets {H}_{2k,2j} - {L}^e_{k}{U}^e_{k-1,j}, \, \forall 
+%j=k, k+1, k+2$
+%    \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
+%    \State ${U}^o_{kj} \gets {H}_{2k+1,2j+1} - {L}^o_{k}{U}^o_{k-1,j}, \, 
+%\forall j=k, k+1, k+2$
+%  \EndFor
+%  
+%  \State $k \gets M^e-1$
+%  \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
+%  \State ${U}^e_{kj} \gets {H}_{2k,2j} - {L}^e_{k}{U}^e_{k-1,j}, \, \forall 
+%j=k, k+1$
+%  \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
+%  \State ${U}^o_{kj} \gets {H}_{2k+1,2j+1} - {L}^o_{k}{U}^o_{k-1,j}, \, 
+%\forall j=k, k+1$
+%  \State $k \gets M^e$
+%  \State ${L}^e_{k} \gets \frac{{H}_{2k,2(k-1)}}{{U}^e_{k-1,k-1}}$
+%  \State ${U}^e_{kk} \gets {H}_{2k,2k} - {L}^e_{k}{U}^e_{k-1,k}$
+%  \If{$M^o == M^e$ }
+%    \State ${L}^o_{k} \gets \frac{{H}_{2k+1,2k-1}}{{U}^o_{k-1,k-1}}$
+%    \State ${U}^o_{kk} \gets {H}_{2k+1,2k+1} - {L}^o_{k}{U}^o_{k-1,k}$
+%
+%  \EndIf  
+%  \State \Return $\{L^e_k\}_{k=0}^{M^e},\{U^e\}_{k,j=0}^{M^e}, 
+%\{L^o_k\}_{k=0}^{M^o},\{U^o\}_{k,j=0}^{M^o}$
+%\EndProcedure
+%\end{algorithmic}
+%\end{algorithm}
+%
+%\begin{algorithm}
+%\caption{Solve of $H_{kj}u_j = b_k$, where $H$ has previously been LU 
+%factorized for odd even coefficients using Algorithm (\ref{alg:lu}).}
+%\label{alg:lusolve}
+%\begin{algorithmic}[1]
+%\Procedure{LUSolveoddeven}{}
+%  \State \textbf{Input:} $\{U_{kj}\}_{k,j=0}^{M}, \{L_k\}_{k=0}^{M}, 
+%\{b_k\}_{k=0}^{M}$ 
+%  \State // Solve $Ly=b$ by forward elimination 
+%  \State $y_0 \gets b_0$
+%  \For{$k = 1$ \textbf{to} $M$}
+%    \State $y_k \gets b_k - L_ky_{k-1}$
+%  \EndFor
+%  \State // Solve $Uu=y$ with back substitution
+%  \State double $s = 0.0$     
+%  \State $u_M = y_M / U_{MM}$    
+%  \For{$i = M-1$ \textbf{to} $0$ \textbf{step} $-1$}
+%     \State $u_i \gets y_i - U_{i, i+1}\cdot u_{i+1}$
+%     \If{$i < M-1$}
+%       \State $s \gets s + u_{i+2}$
+%       \State $u_i \gets u_i - s\cdot U_{i,i+2}$            
+%     \EndIf
+%     \State $u_i \gets  u_i / U_{i,i}$
+%   \EndFor
+%  \State \Return $\{u_k\}_{k=0}^{M}$  
+%\EndProcedure
+%\end{algorithmic}
+%
+%\begin{algorithmic}[1]
+%\Procedure{LUSolve}{}
+%  \State \textbf{Input: $\{u_k\}_{k=0}^{N-2}, \{b_k\}_{k=0}^{N-2}, 
+%\{U_{kj}^{e}\}_{k,j=0}^{M^{e}}, \{U_{kj}^{o}\}_{k,j=0}^{M^{o}}, 
+%\{L^{e}_k\}_{k=0}^{M^{e}}, \{L^{o}_k\}_{k=0}^{M^{o}}$}
+%  \State $\{u_{2k}\}_{k=0}^{M^e} \gets $ LUSolveoddeven($U^{e}, L^e, 
+%\{b_{2k}\}_{k=0}^{M^e}$)
+%  \State $\{u_{2k+1}\}_{k=0}^{M^o} \gets $ LUSolveoddeven($U^{o}, L^o, 
+%\{b_{2k+1}\}_{k=0}^{M^o}$)
+%  \State \Return $\{u_k\}_{k=0}^{N-2}$
+%\EndProcedure
+%\end{algorithmic}
+%\end{algorithm}
 
-\begin{algorithmic}[1]
-\Procedure{LUSolve}{}
-  \State \textbf{Input: $\{u_k\}_{k=0}^{N-2}, \{b_k\}_{k=0}^{N-2}, 
-\{U_{kj}^{e}\}_{k,j=0}^{M^{e}}, \{U_{kj}^{o}\}_{k,j=0}^{M^{o}}, 
-\{L^{e}_k\}_{k=0}^{M^{e}}, \{L^{o}_k\}_{k=0}^{M^{o}}$}
-  \State $\{u_{2k}\}_{k=0}^{M^e} \gets $ LUSolveoddeven($U^{e}, L^e, 
-\{b_{2k}\}_{k=0}^{M^e}$)
-  \State $\{u_{2k+1}\}_{k=0}^{M^o} \gets $ LUSolveoddeven($U^{o}, L^o, 
-\{b_{2k+1}\}_{k=0}^{M^o}$)
-  \State \Return $\{u_k\}_{k=0}^{N-2}$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-The biharmonic operator $\N{H}$ is more challenging to solve efficiently, but 
+The biharmonic matrix $\N{H}$ in Eq.~(\ref{eq:Biharmonic_matrix}) is more 
+challenging to solve for efficiently, but 
 it is still possible to find an algorithm that is $O(N)$ for a system of $N$ 
 unknowns. Note 
 that $\N{H}$ is the sum of three matrices $\N{Q}, \N{A}$ and $\N{B}$ and can be 
@@ -731,37 +771,56 @@ contains five
 nonzero diagonals at $ j = k-4, k-2, k, k+2, k+4$. The nonzero elements of the 
 upper triangular $\N{Q}_{kj}$ matrix are given as
 \begin{align}
- \N{Q}_{kk} &= -4(k+1)(k+2)^2 \\
- \N{Q}_{kj} &= p_kq_j + r_ks_j, \quad j = k+2, k+4, \ldots N_x-4
+ \N{Q}_{kk} &= -4(k+1)(k+2)^2, \\
+ \N{Q}_{kj} &= p_kq_j + r_ks_j, \quad j = k+2, k+4, \ldots, N_x-4,
 \end{align}
 where 
 \begin{align}
-p_k &= 8 k (k+1)(k+2)(k+4)\pi, &q_j = \frac{1}{j+3}, \label{eq:pk} \\
-r_k &= 24(k+1)(k+2)\pi, &s_j =  \frac{(j+2)^2}{(j+3)}. \label{eq:rk}
+p_k &= 8 k (k+1)(k+2)(k+4)\pi, &q_j &= \frac{1}{j+3}, \label{eq:pk} \\
+r_k &= 24(k+1)(k+2)\pi, &s_j &=  \frac{(j+2)^2}{(j+3)}. \label{eq:rk}
 \end{align} 
 For each row in $\N{H}_{kj}$ we have that $\N{H}_{kj}=c_0\N{Q}_{kj}\, \forall j 
-> k+4$. A direct LU decomposition of $\N{H}$ can be performed as shown in Alg. 
+> k+4$. A straight forward direct LU decomposition of $\N{H}$ can be performed 
+as shown in Alg. 
 \ref{alg:lu_biharmonic}, which leads to a lower triangular 
 matrix $\N{L}_{kj}$ with two nonzero diagonals at $j=k-2$ and $k-4$ plus a 
 unity 
-main diagonal. The upper triangular matrix $\N{U}_{kj}$ contains three distinct 
-diagonals at $j=k, k+2$ and $k+4$. The remaining part of $\N{U}_{kj}$ can be 
-written as
+main diagonal. The upper triangular matrix $\N{U}_{kj}$ is dense and as such a 
+show stopper for an efficient back solve. However, we note that $\N{U}_{kj}$ 
+contains only three distinct 
+diagonals at $j=k, k+2$ and $k+4$, whereas the remaining part of $\N{U}_{kj}$ 
+can be expressed as
 \begin{equation}
-\N{U}_{kj} = a_k q_j + b_k s_j, \quad j = k+6, k+8, \ldots, N_x-4 \label{eq:ab}
+\N{U}_{kj} = c_0(a_k q_j + b_k s_j), \quad j = k+6, k+8, \ldots, N_x-4, 
+\label{eq:ab}
 \end{equation}
 where $\bm{a}$ and $\bm{b}$ are two new vectors that can be computed 
-recursively as shown in Alg. (\ref{alg:ab}). If $\bm{a}$ and $\bm{b}$ are 
-pre-computed 
+recursively from $\N{L}$ 
+\begin{align}
+a_k &= p_k, \, &\forall \, k= 0, 1, \notag \\
+b_k &= r_k, \, &\forall \, k= 0, 1, \notag\\
+a_k &= p_k - \N{L}_{k,k-2}a_{k-2}, \, &\forall \, k = 2, 3, \notag\\
+b_k &= r_k - \N{L}_{k,k-2}b_{k-2}, \, &\forall \, k = 2, 3, \notag\\
+a_k &= p_k - \N{L}_{k,k-2}a_{k-2} - \N{L}_{k,k-4}a_{k-4}, \, &\forall \, k = 4, 
+5, 
+\ldots, N, \notag\\
+b_k &= r_k - \N{L}_{k,k-2}b_{k-2} - \N{L}_{k,k-4}b_{k-4}, \, &\forall \, k = 4, 
+5, 
+\ldots, N.
+\end{align}
+If $\bm{a}$ and $\bm{b}$ 
+are pre-computed 
 the total storage requirement for the complete LU decomposition is no more than 
-$7N$ and the solution of the complete system can be obtained very quickly with 
-one forward elimination and a back solve. The back 
-solve is very fast because of the formulation (\ref{eq:ab}), leading 
+$7N$, i.e., two diagonals for $\N{L}$, three diagonals for $\N{U}$ plus 
+$\bm{a}$ and 
+$\bm{b}$. The solution of the complete system can be obtained very quickly with 
+one simple forward elimination and a back solve, where the back 
+solve is very fast ($O(N)$) because of the formulation (\ref{eq:ab}), leading 
 to a formula for the backwards substitution like (valid for $k \le N_x-8$)
 \begin{equation}
 u_k = \left(y_k - \N{U}_{k, k+2} u_{k+2} - \N{U}_{k, k+4} u_{k+4} - 
-a_k\sum_{\substack{j=k+6\\k-j \text{ even}}}^{N_x-4} q_j u_j - 
-b_k\sum_{\substack{j=k+6\\k-j \text{ even}}}^{N_x-4} 
+c_0 a_k\sum_{\substack{j=k+6\\k-j \text{ even}}}^{N_x-4} q_j u_j - 
+c_0 b_k\sum_{\substack{j=k+6\\k-j \text{ even}}}^{N_x-4} 
 s_j u_j\right)/\N{U}_{kk},
 \end{equation}
 that only requires 
@@ -770,106 +829,120 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 
 \begin{algorithm}
 	\caption{LU decomposition of biharmonic operator $\N{H}$. Current algorithm 
-	is using dense storage of $U_{kj}$, but no more than the 3 diagonals need 
+	is using dense storage of $\N{U}_{kj}$, but no more than the 3 diagonals 
+	need 
 	to be stored eventually.}
 	\label{alg:lu_biharmonic}
 	\begin{algorithmic}[1]
 		\Procedure{LUbiharmonic}{}
 			\State \textbf{Input:} $\{\N{H}_{kj}\}_{k, j = 0}^{N}$
-	        \State $U_{0j} = \N{H}_{0j} \quad \forall \, j \in 0, 2, \ldots, N$
-	        \State $U_{1j} = \N{H}_{1j} \quad \forall \, j \in 1, 3, \ldots, N$
-	        \State $L_{20} = \N{H}_{20}/U_{00}$
-	        \State $L_{31} = \N{H}_{31}/U_{11}$
-	        \State $U_{2j} = L_{20} U_{0j} \quad \forall \, j \in 2, 4, \ldots, 
-	        N$
-	        \State $U_{3j} = L_{31} U_{1j} \quad \forall \, j \in 3, 5, \ldots, 
-	        N$
+	        \State $\N{U}_{0j} = \N{H}_{0j} \quad \forall \, j \in 0, 2, 
+	        \ldots, N$
+	        \State $\N{U}_{1j} = \N{H}_{1j} \quad \forall \, j \in 1, 3, 
+	        \ldots, N$
+	        \State $\N{L}_{20} = \N{H}_{20}/\N{U}_{00}$
+	        \State $\N{L}_{31} = \N{H}_{31}/\N{U}_{11}$
+	        \State $\N{U}_{2j} = \N{H}_{2j} - \N{L}_{20} \N{U}_{0j} \quad 
+	        \forall \, j \in 2, 4, \ldots, N$
+	        \State $\N{U}_{3j} = \N{H}_{3j} - \N{L}_{31} \N{U}_{1j} \quad 
+	        \forall \, j \in 
+	        3, 5, \ldots, N$
 	        \For{$k = 4, 5, \ldots, N$}
-	            \State $L_{k,k-2} = {U}_{k,k-2}/{U}_{k-2, k-2}$
-		        \State $U_{kj} = {U}_{kj} - L_{k, k-2} U_{k-2, j} \quad 
-		        \forall j = k, k+2, \ldots, N$
-		        \If{$k <= N-2$}
-		        \State $L_{k+2,k-2} = \N{H}_{k+2, k-2} / U_{k-2, k-2}$
-		        \State $U_{k+2,j} = \N{H}_{k+2,j} - L_{k+2, k-2} U_{k-2, j} 
+		        \State $\N{L}_{k,k-4} = \N{H}_{k, k-4} / \N{U}_{k-4, k-4}$
+		        \State $\N{U}_{k,j} = \N{H}_{k,j} - \N{L}_{k, k-4} 
+		        \N{U}_{k-4, j} 
 		        \quad \forall j = k-2, k, \ldots, N$
-		        \EndIf
+	            \State $\N{L}_{k,k-2} = {\N{U}}_{k,k-2}/{\N{U}}_{k-2, k-2}$
+		        \State $\N{U}_{kj} = {\N{U}}_{kj} - \N{L}_{k, k-2} \N{U}_{k-2, 
+		        j} \quad 
+		        \forall j = k, k+2, \ldots, N$
 	        \EndFor
-	        \State \Return $\{L_{kj}\}_{k, j = 0}^{N}$, $\{U_{kj}\}_{k, j = 
+	        \State \Return $\{\N{L}_{kj}\}_{k, j = 0}^{N}$, $\{\N{U}_{kj}\}_{k, 
+	        j = 
 	        0}^{N}$
 		\EndProcedure	
 	\end{algorithmic}
 \end{algorithm}		
 
-\begin{algorithm}
-	\caption{Recursive formula to compute $\{a_k\}_{k=0}^{N_x-4}, 
-	\{b_k\}_{k=0}^{N_x-4}$ in Eq. (\ref{eq:ab}). Note that the lower triangular 
-	matrix $\{L_{kj}\}_{k,j=0}^{N_x-4}$ contains only two nonzero diagonals and 
-	the parameters $p_k$ and $r_k$ are given in Eqs. (\ref{eq:pk}) and 
-	(\ref{eq:rk}) respectively. }
-    \label{alg:ab}
-	\begin{algorithmic}[1]
-		\Procedure{ReduceAB}{}
-		\State \textbf{Input:} $ \{L_{kj}\}_{k,j=0}^{N_x-4}$
-		\For{$k=0,1$}
-		     \State $a_k = p_k$
-		     \State $b_k = r_k$
-		\EndFor
-		\For{$k=2,3$}
-		    \State $a_k = p_k - L_{k,k-2}\,a_{k-2}$
-		    \State $b_k = r_k - L_{k, k-2}\,b_{k-2}$
-		\EndFor
-		\For{$k=4, 5, \ldots, N_x-4$}
-     		\State $a_k = p_k - L_{k,k-2}\,a_{k-2} - L_{k, k-4} \,a_{k-4}$
-	    	\State $b_k = r_k - L_{k, k-2}\,b_{k-2}- L_{k, k-4} \,b_{k-4}$
-		\EndFor
-		\State \Return $\{a_k\}_{k=0}^{N_x-4}, \{b_k\}_{k=0}^{N_x-4}$
-        \EndProcedure
-\end{algorithmic}
-\end{algorithm}
+%\begin{algorithm}
+%	\caption{Recursive formula to compute $\{a_k\}_{k=0}^{N_x-4}, 
+%	\{b_k\}_{k=0}^{N_x-4}$ in Eq. (\ref{eq:ab}). Note that the lower triangular 
+%	matrix $\{L_{kj}\}_{k,j=0}^{N_x-4}$ contains only two nonzero diagonals and 
+%	the parameters $p_k$ and $r_k$ are given in Eqs. (\ref{eq:pk}) and 
+%	(\ref{eq:rk}) respectively. }
+%    \label{alg:ab}
+%	\begin{algorithmic}[1]
+%		\Procedure{ReduceAB}{}
+%		\State \textbf{Input:} $ \{\N{L}_{kj}\}_{k,j=0}^{N_x-4}, c_0$
+%		\For{$k=0,1$}
+%		     \State $a_k \gets p_k$
+%		     \State $b_k \gets r_k$
+%		\EndFor
+%		\For{$k=2,3$}
+%		    \State $a_k \gets p_k - \N{L}_{k,k-2}\,a_{k-2}$
+%		    \State $b_k \gets r_k - \N{L}_{k, k-2}\,b_{k-2}$
+%		\EndFor
+%		\For{$k=4, 5, \ldots, N_x-4$}
+%     		\State $a_k \gets p_k - \N{L}_{k,k-2}\,a_{k-2} - \N{L}_{k, k-4} 
+%\,a_{k-4}$
+%	    	\State $b_k \gets r_k - \N{L}_{k, k-2}\,b_{k-2}- \N{L}_{k, k-4} 
+%\,b_{k-4}$
+%		\EndFor
+%		\For{$k=0, 1, \ldots, N_x-4$}
+%		    \State $a_k \gets a_k\cdot c_0$
+%		    \State $b_k \gets b_k \cdot c_0$
+%		\EndFor
+%		\State \Return $\{a_k\}_{k=0}^{N_x-4}, \{b_k\}_{k=0}^{N_x-4}$
+%        \EndProcedure
+%\end{algorithmic}
+%\end{algorithm}
 
 \begin{algorithm}
-	\caption{Solve biharmonic Eq. (\ref{eq:ufin}) with pre-computed $L$, $U$ 
+	\caption{Solve biharmonic Eq. (\ref{eq:ufin}) with pre-computed $\N{L}$, 
+	$\N{U}$ 
 	matrices. The parameters $q_j$ and $s_j$ are given in Eqs. (\ref{eq:pk}) 
 	and 
 	(\ref{eq:rk}) respectively. }
 	\label{alg:SolveBiharmonic}
 	\begin{algorithmic}[1]
 		\Procedure{LUSolveBiharmonic}{}
-		  \State \textbf{Input:} $\{U_{kj}\}_{k,j=0}^{N}, 
-		  \{L_{kj}\}_{k,j=0}^{N}, 
+		  \State \textbf{Input:} $\{\N{U}_{kj}\}_{k,j=0}^{N}, 
+		  \{\N{L}_{kj}\}_{k,j=0}^{N}, 
 		  \{f_k\}_{k=0}^{N}, \{a_k\}_{k=0}^{N}, \{b_k\}_{k=0}^{N}$ 
-		  \State // Solve $Ly=f$ by forward elimination 
+		  \State // Solve $\N{L}_{kj}y_j=f_k$ by forward elimination 
 		  \State $y_0 \gets f_0$
 		  \State $y_1 \gets f_1$
-		  \State $y_2 \gets f_2 - L_{20}y_{0}$
-		  \State $y_3 \gets f_3 - L_{31}y_{1}$
+		  \State $y_2 \gets f_2 - \N{L}_{20}y_{0}$
+		  \State $y_3 \gets f_3 - \N{L}_{31}y_{1}$
 		  \For{$k = 4$ \textbf{to} $N$}
-		  \State $y_k \gets f_k - L_{k,k-2}y_{k-2} - L_{k, k-4}y_{k-4}$
+		  \State $y_k \gets f_k - \N{L}_{k,k-2}y_{k-2} - \N{L}_{k, k-4}y_{k-4}$
 		  \EndFor
-		  \State // Solve $Uu=y$ with back substitution                    
-		  \State $u_N = y_N / U_{NN}$
-	      \State $u_{N-1} = y_{N-1} / U_{N-1,N-1}$
-	      \State $u_{N-2} = \left(y_{N-2} - U_{N-2, N}y_N\right)/U_{N-2,N-2}$
-	      \State $u_{N-3} = \left(y_{N-3} - U_{N-3, 
-	      N-1}y_{N-1}\right)/U_{N-3,N-3}$
+		  \State // Solve $\N{U}_{kj}u_j=y_k$ with back 
+		  substitution                    
+		  \State $u_N = y_N / \N{U}_{NN}$
+	      \State $u_{N-1} = y_{N-1} / \N{U}_{N-1,N-1}$
+	      \State $u_{N-2} = \left(y_{N-2} - \N{U}_{N-2, 
+	      N}y_N\right)/\N{U}_{N-2,N-2}$
+	      \State $u_{N-3} = \left(y_{N-3} - \N{U}_{N-3, 
+	      N-1}y_{N-1}\right)/\N{U}_{N-3,N-3}$
 	      
-	      \State $q^o = q^e = s^o = s^e = 0.0$
+	      \State $q^o = q^e = s^o = s^e = 0$
 		  \For{$k = N-4$ \textbf{to} $0$ \textbf{step} $-1$}
-		  \State $u_k \gets y_k - U_{k, k+2} u_{k+2} - U_{k, k+4} 
+		  \State $u_k \gets y_k - \N{U}_{k, k+2} u_{k+2} - \N{U}_{k, k+4} 
 		  u_{k+4} $ 
 		  \If{$k < N-5$}
 		  \State $j=k+6$
 		  \If{$k$ is odd}
 		    \State $q^o \gets q^o + u_{j}q_{j}$
 		    \State $s^o \gets s^o + u_{j}s_{j}$
-		    \State $u_k \gets u_k - c_0 q^o a_k - c_0 s^o b_k $	    
+		    \State $u_k \gets u_k - q^o a_k - s^o b_k $	    
 		  \Else
 		    \State $q^e \gets q^e + u_{j}q_{j}$
 		    \State $s^e \gets s^e + u_{j}s_{j}$	  
-		    \State $u_k \gets u_k - c_0 q^e a_k - c_0 s^e b_k $
+		    \State $u_k \gets u_k - q^e a_k - s^e b_k $
 		  \EndIf
 		  \EndIf
-		  \State $u_k \gets  u_k / U_{kk}$
+		  \State $u_k \gets  u_k / \N{U}_{kk}$
 		  \EndFor
 		  \State \Return $\{u_k\}_{k=0}^{N}$  
 		  
@@ -877,6 +950,104 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 	\end{algorithmic}
 \end{algorithm}
 
+\section{Verification}
+We have described a Navier-Stokes solver for channel flows that scales no worse 
+than the fast transforms used to go between spectral and real space. All the 
+matrices that make up the linear systems can be inverted using sparse direct LU 
+decompositions that scales like $O(N)$. To verify and to further show that we 
+can use these algorithms for large scale simulations, we will first study some 
+simple 1D problems. 
+
+We first consider the roundoff error of the matrix decomposition methods 
+described in Sec.~\ref{sec:implementation}. The roundoff error may be 
+approximated 
+by the following approach: Let $\{u_i\}_{i=0}^{N-4}$ be a uniformly distributed 
+random vector. Compute the matrix vector product $\bm{f}=\N{H}\bm{u}$ and 
+then solve $\N{H} \bm{v} = \bm{f}$, using Alg. \ref{alg:SolveBiharmonic}, for 
+$\{v_i\}_{i=0}^{i=N-4}$. The roundoff error of the matrix decomposition 
+algorithm may then be found as $\max_{0 \ge i \ge N-4}(|u_i-v_i|)/\max_{0 \ge i 
+\ge N-4}|u_i|$. For this experiment we assume that $\triangle t=0.0001$ 
+and $\nu=1/1200$, that are reasonable parameters for a turbulent channel flow 
+simulation at $\text{Re}_{\tau}=1200$. Three different wavenumbers 
+$z=(2, 200, 5600)$ are 
+also chosen as representative for simulations that are using up to 8000 
+wavenumbers in each periodic direction, which is approximately the resolution 
+of the largest known channel simulations, performed by Lee and 
+Moser~\cite{leemoser15}. The mesh in the wall normal direction 
+is varied from 64 to 4096 points, which covers almost three times higher 
+resolution than used by Lee and Moser \cite{leemoser15}. Results shown in the 
+first three rows of Table \ref{tab:roundoff} indicate that 
+roundoff errors are not very pronounced, even for problems as large as 
+$N_x=4096$. Further, the roundoff errors increase only slowly with increasing 
+the wavenumbers. Corresponding results are also computed for the Helmholtz 
+matrix (\ref{eq:Helmholtz_matrix}) and 
+results are shown in the last three rows of Table \ref{tab:roundoff}. For 
+the Helmholtz matrix the roundoff errors are seen to be insignificant.
+
+\begin{table}
+	\caption{Roundoff error of the matrix decomposition method. The first three 
+	rows show results for Alg. (\ref{alg:SolveBiharmonic}) and matrix $\N{H}(z, 
+	\triangle t, \nu)$, whereas the last three rows show results for matrix 
+	$\D{H}(z, \triangle t, \nu)$. Parameters 
+	are chosen as $\nu=1/1200$ and $\triangle t=0.0001$ and the numbers shown 
+	are for an average of 100 runs. }
+	\label{tab:roundoff}
+\begin{tabular}{cccccccc}
+	   \multicolumn{8}{c}{$N_x$} \\
+	   \hline
+	$z$ & 64 & 128 & 256 & 512 & 1024 & 2048 & 4096 \\
+	\hline
+0 & 2.66e-15 & 6.71e-15 & 1.73e-14 & 4.64e-14 & 1.18e-13 & 3.30e-13 & 9.21e-13 
+\\
+200 & 8.39e-15 & 1.78e-14 & 5.12e-14 & 1.56e-13 & 4.47e-13 & 1.18e-12 & 
+3.45e-12 \\
+5600 & 7.09e-15 & 2.08e-14 & 5.65e-14 & 1.43e-13 & 4.38e-13 & 1.01e-12 & 
+2.61e-12 \\
+		\hline
+0 & 3.29e-15 & 6.07e-15 & 6.05e-15 & 6.50e-15 & 5.63e-15 & 5.43e-15 & 5.13e-15 
+\\
+200 & 3.03e-15 & 6.30e-15 & 6.14e-15 & 5.87e-15 & 5.67e-15 & 5.50e-15 & 
+5.39e-15 \\
+5600 & 3.35e-15 & 7.78e-15 & 8.86e-15 & 7.94e-15 & 7.18e-15 & 7.20e-15 & 
+7.03e-15
+		
+\end{tabular}
+\end{table}
+
+To show that the solvers are scaling with size, we investigate the execution time 
+for solving $\N{H} \bm{v} = \bm{f}$ and $\D{H} \bm{v} = \bm{f}$ on a complete 
+wavenumber mesh of size $(N_x,64,64)$. The numbers have been produced on a MacBook Pro laptop with the 2.8 GHz intel Core i7 processor. The average time for one single 
+solve is shown in Table~\ref{tab:timings}, where the numbers in parenthesis are used to indicate scaling (unity would be perfectly $O(N)$). The scaling is seen to be close to linear, and variations 
+are most likely due to how well datastructures fit in the cache. Naturally, the timings are not 100$\%$ reproducible, but the ability to solve large scale problems is evident.
+\begin{table}
+	\centering
+	\caption{Execution time (in seconds) for one solve  of the Helmholtz 
+	(\ref{eq:gfin}) and Biharmonic 
+	(\ref{eq:ufin}) problems. The numbers in parenthesis are computed as $t_n / t_{n-1} / 2$, where $t_n$ is the current solvers timing in row $n$.}
+	\label{tab:timings}
+	\begin{tabular}{ccc}
+%		$N_x$ & Biharmonic & Helmholtz \\
+%		\hline
+%64 & 6.49e-07 (*) & 4.64e-07 (*) \\ 
+%128 & 1.40e-06 (1.08) & 9.43e-07 (1.02) \\ 
+%256 & 2.96e-06 (1.06) & 1.93e-06 (1.02) \\ 
+%512 & 6.09e-06 (1.03) & 4.01e-06 (1.04) \\ 
+%1024 & 1.49e-05 (1.22) & 9.83e-06 (1.23) \\ 
+%2048 & 2.53e-05 (0.85) & 1.64e-05 (0.83) \\ 
+%4096 & 6.15e-05 (1.22) & 4.09e-05 (1.25) \\ 
+%8192 & 1.25e-04 (1.02) & 8.18e-05 (1.00) 
+Nx & Biharmonic & Helmholtz \\ 
+\hline
+64 & 8.09e-07 (0.00) & 4.51e-07 (0.00) \\ 
+128 & 1.57e-06 (0.97) & 9.41e-07 (1.04) \\ 
+256 & 2.76e-06 (0.88) & 1.97e-06 (1.05) \\ 
+512 & 4.96e-06 (0.90) & 4.22e-06 (1.07) \\ 
+1024 & 1.18e-05 (1.18) & 8.40e-06 (1.00) \\ 
+2048 & 2.37e-05 (1.01) & 1.79e-05 (1.07) \\ 
+4096 & 4.82e-05 (1.02) & 3.78e-05 (1.05) \\ 
+8192 & 9.72e-05 (1.01) & 7.91e-05 (1.05)
+	\end{tabular}
+\end{table}
 
 
 
@@ -1110,6 +1281,7 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 %
 %
 
+\bibliography{bib.bib}
 
 \section{Appendices}
 %\subsection*{Fast Shen transforms}
@@ -1312,6 +1484,7 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 \end{equation}
 
 For Gauss-Lobatto points we have $c_0=c_{N_x}=2$ and $c_k=1$ for $0<k<N_x$. For Gauss-Chebyshev points we have $c_0=2$ and $c_k=1$ for $k>0$. Note that for an $L^2_w$ scalar product we would have $c_{N_x}=1$ as well, but for the $l^2_w$ scalar product used here we get $c_{N_x}=2$. This disagreement, that follows from inexact quadrature at the highest mode, is not reported by Shen, but is reported by, e.g., Kopriva.
+
 
 
 \end{document}
