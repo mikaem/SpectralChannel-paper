@@ -1,4 +1,4 @@
-\documentclass[11pt, oneside]{elsarticle}
+\documentclass[preprint]{elsarticle}
 \usepackage[utf8]{inputenc}
 \usepackage{bm}
 \usepackage{amsmath}
@@ -9,14 +9,9 @@
 \usepackage{cancel}
 \usepackage{caption}
 \usepackage{subfigure}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
+\usepackage[ruled,vlined]{algorithm2e}
+%\usepackage{algpseudocode}
 
-\subfiglabelskip=0pt
-
-%\newcommand{\codetitlestyle}[1]{\small\textit{#1}\hspace{0.1cm}}
-\newcommand{\belowtitleskip}{2pt}%\smallskipamount}
-%\newcommand{\captionposition}{t}
 
 %\newcommand{\mmo}[1]{\emph{#1}}
 
@@ -449,42 +444,52 @@ for $\hat{w}^{\kappa}_0$ and $\hat{\mathcal{H}}^{\kappa}_{z,0}$.
 
 \section{Implementation}
 \label{sec:implementation}
-An outline of the solution procedure used, for the numerical method described in Sec.~\ref{sec:discretizationNS}, is given in Algorithm \ref{alg:NS}.
+An outline of the solution procedure used, for the numerical method described 
+in Sec.~\ref{sec:discretizationNS}, is given in Algorithm \ref{alg:NS}. Note 
+that the Adams-Bashforth projection of convection reverts to a first order 
+forward Euler on the first time step. For simulations of turbulent flows this 
+is insignificant, but for accuracy tests, like the Orr-Sommerfeld instability, 
+a proper initialization would need to set both the two first time steps instead.
 \begin{algorithm}
-	\caption{Solution procedure for Navier Stokes equations.     \label{alg:NS}}
-    \begin{algorithmic}[1]
-    	\State \text{Initialize} $\bm{u}(\bm{x}, 0)$ and compute 
-    	$\hat{g}_{\bm{k}}(0)$ and $\hat{u}_{\bm{k}}(0)$
-		\State \text{Compute LU decomposition of} $\N{H}(m,n), \D{H}(m,n) 
-		\,\forall \, m, n \in K^p$
-		\State \text{Compute LU decomposition of coefficient matrices in} (\ref{eq:v00}) and (\ref{eq:w00})
-		\State $t=0; {\kappa}=0$
-    	\While{$t<T$}
-	    	\State \text{Compute nonlinear convection} $\bm{\hat{\mathcal{H}}}^{\kappa}$
-	    	\State \text{Compute right hand sides of Eqs.~}(\ref{eq:ufin}), 
-	    	(\ref{eq:gfin})
-		    \State \text{Solve Eq.}(\ref{eq:ufin}) for 
-		    $\hat{u}^{{\kappa}+1}_{\bm{k}} \, \forall \,\bm{k} \in \N{K}_N$
-		    \State \text{Solve Eqs.}(\ref{eq:gfin}) for 
-		    $\hat{g}^{{\kappa}+1}_{\bm{k}} \, \forall\, \bm{k} \in \D{K}_N$
-		    \State \text{Solve Eqs.}(\ref{eq:f3}, \ref{eq:g3}) for  
+	\caption{Solution procedure for Navier Stokes equations.    
+	 \label{alg:NS}}
+ 	\DontPrintSemicolon	
+    	Initialize $\bm{u}(\bm{x}, 0)$ and compute 
+    	$\hat{g}_{\bm{k}}(0)$ and $\hat{\bm{u}}_{\bm{k}}(0)$ \;
+		Compute LU decomposition of $\N{H}(m,n), \D{H}(m,n) 
+		\,\forall \, m, n \in K^p$ \;
+		Compute LU decomposition of coefficient matrices in (\ref{eq:v00}) and 
+		(\ref{eq:w00}) \;
+		$t \gets 0$\; 
+		${\kappa} \gets 0$ \;
+    	Compute nonlinear convection 
+    	$\bm{\hat{\mathcal{H}}}^{\kappa-1}(\hat{\bm{u}}_{\bm{k}}(0), 
+    	\hat{g}_{\bm{k}}(0))$ \;
+    	\While{$t<T$}{
+	    	Compute nonlinear convection $\bm{\hat{\mathcal{H}}}^{\kappa}$ \;
+	    	{Compute right hand sides of Eqs.~}(\ref{eq:ufin}), 
+	    	(\ref{eq:gfin}) \;
+		    {Solve Eq.}(\ref{eq:ufin}) for 
+		    $\hat{u}^{{\kappa}+1}_{\bm{k}} \, \forall \,\bm{k} \in \N{K}_N$ \;
+		    {Solve Eqs.}(\ref{eq:gfin}) for 
+		    $\hat{g}^{{\kappa}+1}_{\bm{k}} \, \forall\, \bm{k} \in \D{K}_N$ \;
+		    {Solve Eqs.}(\ref{eq:f3}, \ref{eq:g3}) for  
 		    $\hat{v}_{\bm{k}}, \hat{w}_{\bm{k}}\, \forall\, \bm{k} 
-		    \in \D{K}_N^0$
-		    \State \text{Solve Eqs.}(\ref{eq:v00}, \ref{eq:w00}) for 
+		    \in \D{K}_N^0$ \;
+		    {Solve Eqs.}(\ref{eq:v00}, \ref{eq:w00}) for 
 		    $\hat{v}_0^{{\kappa}+1}, \hat{w}_0^{{\kappa}+1}\, 
-		    \forall \, l \in \D{K}^x$
-		    \State ${\kappa} \gets {\kappa} + 1$
-		    \State $t \gets t+\triangle t$
-		    \State \text{Update to new time step}
-	    \EndWhile 
-	    	
-    \end{algorithmic}
+		    \forall \, l \in \D{K}^x$ \;
+		    ${\kappa} \gets {\kappa} + 1$ \;
+		    $t \gets t+\triangle t$ \;
+		    {Update to new time step} \;
+	    }
 \end{algorithm}
-The major computational cost comes from  computing the nonlinear convection 
-and solving for Eqs.~(\ref{eq:ufin}, \ref{eq:gfin}). The nonlinear 
-convection 
-term, $\bm{\hat{\mathcal{H}}}$, is computed using a pseudo-spectral method with 
-the 3/2-rule for dealiasing in the periodic directions, see \cite{canuto1988}. The 
+
+The major computational cost in Alg. \ref{alg:NS} comes from  computing the 
+nonlinear convection and solving for Eqs.~(\ref{eq:ufin}, \ref{eq:gfin}). The 
+nonlinear convection term, $\bm{\hat{\mathcal{H}}}$, is computed using a 
+pseudo-spectral method with the 3/2-rule for dealiasing in the periodic 
+directions, see \cite{canuto1988}. The 
 transforms are carried out using fast Fourier and fast Chebyshev transforms 
 that are all of order $\mathcal{O}(N_x\log N_x)$ per one-dimensional transform of size 
 $N_x$. The Shen transforms make use of the Chebyshev transforms that are using 
@@ -709,123 +714,87 @@ that only requires
 one new addition to the row-sums for each back-traversed
 row, see Alg. (\ref{alg:SolveBiharmonic}).
 
+\SetKwProg{Fn}{Function}{}{}
+\SetKwFunction{reduceAB}{ReduceAB}
 \begin{algorithm}
-	\caption{LU decomposition of biharmonic operator $\N{H}$. Current algorithm 
-	is using dense storage of $\N{U}_{kj}$, but no more than the 3 items per row
-	need 
-	to be stored after the row is no longer needed in the for-loop below (as the loop is traversed we do not need $\N{U}_{m, j}$ for $m<k-4$). \label{alg:lu_biharmonic}}
-	\begin{algorithmic}[1]
-		\Procedure{LUbiharmonic}{}
-			\State \textbf{Input:} $\{\N{H}_{kj}\}_{k, j = 0}^{N}$
-			\State Integer $M_e \gets \lfloor N/2 \rfloor$
-			\State Integer $M_o \gets \lfloor (N-1)/2 \rfloor$  
-	        \State $\{\hat{U}_{0,2j}\}_{j=0}^{M_e} \gets \{\hat{H}_{0,2j}\}_{j=0}^{M_e}$ 
-	        \State $\{\hat{U}_{1,2j+1}\}_{j=0}^{M_o} \gets \{\hat{H}_{1,2j+1}\}_{j=0}^{M_o}$ 
-	        \State $\N{L}_{20} \gets \N{H}_{20}/\N{U}_{00}$
-	        \State $\N{L}_{31} \gets \N{H}_{31}/\N{U}_{11}$
-	        \State $\{\hat{U}_{2,2j}\}_{j=1}^{M_e} \gets \{\N{H}_{2,2j}\}_{j=1}^{M_e} - \N{L}_{20} \{\N{U}_{0,2j}\}_{j=1}^{M_e}$
-	        \State $\{\hat{U}_{3,2j+1}\}_{j=1}^{M_o} \gets \{\N{H}_{3,2j+1}\}_{j=1}^{M_o} - \N{L}_{31} \{\N{U}_{1,2j+1}\}_{j=1}^{M_o}$
-
-	        %\State $\N{U}_{2j} = \N{H}_{2j} - \N{L}_{20} \N{U}_{0j} \quad 
-	        %\forall \, j \in 2, 4, \ldots, N$
-	        %\State $\N{U}_{3j} = \N{H}_{3j} - \N{L}_{31} \N{U}_{1j} \quad 
-	        %\forall \, j \in 
-	        %3, 5, \ldots, N$
-	        \For{$k = 4, 5, \ldots, N$}
-	            \State Integer $M \gets \lfloor \frac{N-k}{2}\rfloor$
-		        \State $\N{L}_{k,k-4} \gets \N{H}_{k, k-4} / \N{U}_{k-4, k-4}$
-		        \State $\{\N{U}_{k,k+2j}\}_{j=-1}^{M} \gets \{\N{H}_{k,k+2j}\}_{j=-1}^{M} - \N{L}_{k, k-4} 
-		        \{\N{U}_{k-4, k+2j}\}_{j=-1}^{M}$
-		        %\State $\N{U}_{k,j} = \N{H}_{k,j} - \N{L}_{k, k-4}  \N{U}_{k-4, j} \quad \forall j = k-2, k, \ldots, N$
-	            \State $\N{L}_{k,k-2} \gets {\N{U}}_{k,k-2}/{\N{U}}_{k-2, k-2}$
-	            \State $\{\N{U}_{k,k+2j}\}_{j=0}^{M} \gets \{{\N{U}}_{k,k+2j}\}_{j=0}^{M} - \N{L}_{k, k-2} \{\N{U}_{k-2,k+2j}\}_{j=0}^{M}$
-		        %\State $\N{U}_{kj} = {\N{U}}_{kj} - \N{L}_{k, k-2} \N{U}_{k-2, j} \quad \forall j = k, k+2, \ldots, N$
-	        \EndFor
-	        \State \Return $\{\N{L}_{kj}\}_{k, j = 0}^{N}$, $\{\N{U}_{kj}\}_{k, 
-	        j = 
-	        0}^{N}$
-		\EndProcedure	
-	\end{algorithmic}
-\end{algorithm}		
-
-\begin{algorithm}
-	\caption{Recursive formula to compute $\{a_k\}_{k=0}^{N_x-4}, 
+	\DontPrintSemicolon
+    \caption{Recursive formula to compute $\{a_k\}_{k=0}^{N_x-4}, 
 	\{b_k\}_{k=0}^{N_x-4}$ in Eq. (\ref{eq:ab}). Note that the lower triangular 
 	matrix $\{L_{kj}\}_{k,j=0}^{N_x-4}$ contains only two nonzero diagonals and 
 	the parameters $p_k$ and $r_k$ are given in Eqs. (\ref{eq:pk}) and 
 	(\ref{eq:rk}) respectively. \label{alg:ab}}
-	\begin{algorithmic}[1]
-		\Procedure{ReduceAB}{}
-		\State \textbf{Input:} $ \{\N{L}_{kj}\}_{k,j=0}^{N_x-4}, \xi_0$
-		\For{$k=0,1$}
-		     \State $a_k \gets p_k$
-		     \State $b_k \gets r_k$
-		\EndFor
-		\For{$k=2,3$}
-		    \State $a_k \gets p_k - \N{L}_{k,k-2}\,a_{k-2}$
-		    \State $b_k \gets r_k - \N{L}_{k, k-2}\,b_{k-2}$
-		\EndFor
-		\For{$k=4, 5, \ldots, N_x-4$}
-     		\State $a_k \gets p_k - \N{L}_{k,k-2}\,a_{k-2} - \N{L}_{k, k-4} 
-\,a_{k-4}$
-	    	\State $b_k \gets r_k - \N{L}_{k, k-2}\,b_{k-2}- \N{L}_{k, k-4} 
-\,b_{k-4}$
-		\EndFor
-
-		\State \Return $\{a_k\}_{k=0}^{N_x-4}, \{b_k\}_{k=0}^{N_x-4}$
-        \EndProcedure
-\end{algorithmic}
+		\Fn{\reduceAB{$ \{\N{L}_{kj}\}_{k,j=0}^{N_x-4}, \,\xi_0$}}{
+		\For{$k=0,1$}{
+		     $a_k \gets p_k$ \;
+		     $b_k \gets r_k$ \;
+		}
+		\For{$k=2,3$}{
+		    $a_k \gets p_k - \N{L}_{k,k-2}\,a_{k-2}$ \;
+		    $b_k \gets r_k - \N{L}_{k, k-2}\,b_{k-2}$ \;
+		}
+		\For{$k=4, 5, \ldots, N_x-4$}{
+     		$a_k \gets p_k - \N{L}_{k,k-2}\,a_{k-2} - \N{L}_{k, k-4} \,a_{k-4}$ 
+     		\;
+	    	$b_k \gets r_k - \N{L}_{k, k-2}\,b_{k-2}- \N{L}_{k, k-4} \,b_{k-4}$ 
+	    	\;
+		}
+		\Return $\{a_k\}_{k=0}^{N_x-4}, \{b_k\}_{k=0}^{N_x-4}$ \;
+    }
 \end{algorithm}
 
+\SetKwFunction{LUSolveBiharmonic}{LUSolveBiharmonic}
 \begin{algorithm}
-	\caption{Solve biharmonic Eq. (\ref{eq:ufin}) with pre-computed $\{\N{U}_{kj}\}_{k,j=0}^{N}, 
+    \DontPrintSemicolon
+	\caption{Solve biharmonic Eq. (\ref{eq:ufin}) with pre-computed 
+	$\{\N{U}_{kj}\}_{k,j=0}^{N}, 
 		\{\N{L}_{kj}\}_{k,j=0}^{N}$ 
-	matrices, as well as the $\{ a_k\}_{k=0}^N$ and $\{ b_k\}_{k=0}^N$ vectors. The parameters $q_j$ and $s_j$ are given in Eqs. (\ref{eq:pk}) and 
+	matrices, as well as the $\{ a_k\}_{k=0}^N$ and $\{ b_k\}_{k=0}^N$ vectors. 
+	The parameters $q_j$ and $s_j$ are given in Eqs. (\ref{eq:pk}) and 
 	(\ref{eq:rk}) respectively. 	\label{alg:SolveBiharmonic}}
-	\begin{algorithmic}[1]
-		\Procedure{LUSolveBiharmonic}{}
-		  \State \textbf{Input:} $\{\N{U}_{kj}\}_{k,j=0}^{N}, 
-		  \{\N{L}_{kj}\}_{k,j=0}^{N}, 
-		  \{f_k\}_{k=0}^{N}, \{a_k\}_{k=0}^{N}, \{b_k\}_{k=0}^{N}, \xi_0$ 
-		  \State // Solve $\N{L}_{kj}y_j=f_k$ by forward elimination 
-		  \State $y_0 \gets f_0$
-		  \State $y_1 \gets f_1$
-		  \State $y_2 \gets f_2 - \N{L}_{20}y_{0}$
-		  \State $y_3 \gets f_3 - \N{L}_{31}y_{1}$
-		  \For{$k = 4$ \textbf{to} $N$}
-		  \State $y_k \gets f_k - \N{L}_{k,k-2}y_{k-2} - \N{L}_{k, k-4}y_{k-4}$
-		  \EndFor
-		  \State // Solve $\N{U}_{kj}u_j=y_k$ with back 
-		  substitution                    
-		  \State $u_N \gets y_N / \N{U}_{NN}$
-	      \State $u_{N-1} \gets y_{N-1} / \N{U}_{N-1,N-1}$
-	      \State $u_{N-2} \gets \left(y_{N-2} - \N{U}_{N-2, 
-	      N}y_N\right)/\N{U}_{N-2,N-2}$
-	      \State $u_{N-3} \gets \left(y_{N-3} - \N{U}_{N-3, 
-	      N-1}y_{N-1}\right)/\N{U}_{N-3,N-3}$
+		\Fn{\LUSolveBiharmonic{$\{\N{U}_{kj}\}_{k,j=0}^{N}, 
+                \{\N{L}_{kj}\}_{k,j=0}^{N}, 
+                \{f_k\}_{k=0}^{N}, \{a_k\}_{k=0}^{N}, \{b_k\}_{k=0}^{N}, 
+                \xi_0$}}{
+          \SetKwInOut{Output}{output}
+          \Output{$\{ \hat{u}_k\}_{k=0}^N$}
+		  \tcp*[l]{Solve $\N{L}_{kj}y_j=f_k$ by forward elimination}
+		  $y_0 \gets f_0$ \;
+		  $y_1 \gets f_1$ \;
+		  $y_2 \gets f_2 - \N{L}_{20}y_{0}$ \;
+		  $y_3 \gets f_3 - \N{L}_{31}y_{1}$ \;
+		  \For{$k = 4$ \textbf{to} $N$}{
+		  $y_k \gets f_k - \N{L}_{k,k-2}y_{k-2} - \N{L}_{k, k-4}y_{k-4}$ \;
+		  }
+		  \tcp*[l]{Solve $\N{U}_{kj}u_j=y_k$ with back 
+              substitution}                    
+		  $\hat{u}_N \gets y_N / \N{U}_{NN}$ \;
+	      $\hat{u}_{N-1} \gets y_{N-1} / \N{U}_{N-1,N-1}$ \;
+	      $\hat{u}_{N-2} \gets \left(y_{N-2} - \N{U}_{N-2, 
+	      N}y_N\right)/\N{U}_{N-2,N-2}$ \;
+	      $\hat{u}_{N-3} \gets \left(y_{N-3} - \N{U}_{N-3, 
+	      N-1}y_{N-1}\right)/\N{U}_{N-3,N-3}$ \;
 	      
-	      \State Float $q^o = q^e = s^o = s^e = 0.0$
-		  \For{$k = N-4$ \textbf{to} $0$ \textbf{step} $-1$}
-		  \State $u_k \gets y_k - \N{U}_{k, k+2} u_{k+2} - \N{U}_{k, k+4} 
-		  u_{k+4} $ 
-		  \If{$k < N-5$}
-		  \State $j \gets k+6$
-		  \If{$k$ is odd}
-		    \State $q^o \gets q^o + u_{j}q_{j}$
-		    \State $s^o \gets s^o + u_{j}s_{j}$
-		    \State $u_k \gets u_k - \xi_0q^o a_k - \xi_0s^o b_k $	    
-		  \Else
-		    \State $q^e \gets q^e + u_{j}q_{j}$
-		    \State $s^e \gets s^e + u_{j}s_{j}$	  
-		    \State $u_k \gets u_k - \xi_0q^e a_k - \xi_0s^e b_k $
-		  \EndIf
-		  \EndIf
-		  \State $u_k \gets  u_k / \N{U}_{kk}$
-		  \EndFor
-		  \State \Return $\{u_k\}_{k=0}^{N}$  
-		  
-		\EndProcedure
-	\end{algorithmic}
+	      float $q^o = q^e = s^o = s^e = 0.0$ \;
+		  \For{$k = N-4$ \textbf{to} $0$ \textbf{step} $-1$}{
+		  $\hat{u}_k \gets y_k - \N{U}_{k, k+2} \hat{u}_{k+2} - \N{U}_{k, k+4} 
+		  \hat{u}_{k+4} $ \;
+		  \If{$k < N-5$}{
+		  $j \gets k+6$ \;
+		  \If{$k$ is odd}{
+		    $q^o \gets q^o + \hat{u}_{j}q_{j}$ \;
+		    $s^o \gets s^o + \hat{u}_{j}s_{j}$ \;
+		    $\hat{u}_k \gets \hat{u}_k - \xi_0q^o a_k - \xi_0s^o b_k $ \;
+        }
+		  \Else{
+		    $q^e \gets q^e + \hat{u}_{j}q_{j}$ \;
+		    $s^e \gets s^e + \hat{u}_{j}s_{j}$ \;	  
+		    $\hat{u}_k \gets \hat{u}_k - \xi_0q^e a_k - \xi_0s^e b_k $ \;
+		}
+		}
+		  $\hat{u}_k \gets  \hat{u}_k / \N{U}_{kk}$ \;
+		  }
+		  \Return $\{\hat{u}_k\}_{k=0}^{N}$ \;  
+		}
 \end{algorithm}
 
 \section{Verification}
@@ -1228,6 +1197,7 @@ The ultimate test for this fully spectral Navier-Stokes solver is the pressure d
 %
 %
 
+\bibliographystyle{model1-num-names}
 \bibliography{bib.bib}
 
 \section{Appendices}
@@ -1381,92 +1351,97 @@ The ultimate test for this fully spectral Navier-Stokes solver is the pressure d
 \subsection*{Fast scalar products and transforms}
 
 The algorithms for the fast scalar products and transforms, for the three spaces $V_N, \D{V}_N, \N{V}_N$, are given in Alg. ~\ref{alg:fst}. The algorithms for the inverse transforms are given in Alg.~\ref{alg:ifst}. The algorithms are using the discrete cosine transforms (dct) of type 1, 2 or 3 depending on the choice of discretization points and direction.
+\SetKwFunction{forwardScalar}{forwardScalar}
 \begin{algorithm}
-	\caption{Forward scalar products and transforms for all spaces $V_N, \D{V}_N, \N{V}_N$. 
-		Here "dct" is the discrete cosine transform from SciPy.}
-		\label{alg:fst}
-		\begin{algorithmic}[1]
-			\Function{forwardScalar}{$\{f_j\}_{j=0}^{N}$, points, space}
-			\If{ points = "Gauss-Lobatto"}
-			\State $\{ w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, \text{type=2}, 
-			\text{axis=0})\frac{\pi}{2 N}$
-			\Else{ points = "Gauss-Chebyshev"}
-			\State $\{ w_k\}_{k=0}^{N} \gets \text{dct}(f, \text{type=1}, 
-			\text{axis=0}) \frac{\pi}{2 (N-1)}$
-			\EndIf
-			\State $\{y\}_{k=0}^N \gets 0$
-			\If{ space = $\D{V}_N$}
-			\State $\{y_k\}_{k=0}^{N-2} \gets \{w_k\}_{k=0}^{N-2} - \{w_k\}_{k=2}^{N}$
-			\ElsIf{ space = $\N{V}_N$}	                
-			\For{$k=0$ to $N-4$}
-			\State ${y}_k \gets w_k - \frac{2(k+2)}{k+3} w_{k+2} + 
-			\frac{k+1}{k+3}w_{k+4}$
-			\EndFor
-			\ElsIf{space = $V_N$}
-			\State $\{y_k\}_{k=0}^N \gets \frac{2}{\pi} \{w_k\}_{k=0}^N $
-			\State $y_0 \gets y_0 / 2$
-			\If{ points = "Gauss-Lobatto"}
-			\State $y_N \gets y_N / 2$	     	
-			\EndIf
-			\EndIf
-			\State \Return $\{y_k\}_{k=0}^{N}$    
-			\EndFunction
-			\Function{forwardTransform}{$\{f_j\}_{j=0}^{N}$, points, space}
-			\State $\{y_k\}_{k=0}^{N} \gets$ forwardScalar($\{f_j\}_{j=0}^{N}$, points, space)
-			\If{space = $\D{V}_N$}
-			\State $B \gets \D{B}$
-			\ElsIf{space = $\N{V}_N$}
-			\State $B \gets \N{B}$
-			\ElsIf{space = $V_N$}
-			\State $B \gets B$
-			\EndIf
-			\State $\bm{y} \gets B^{-1} \bm{y}$
-			\State \Return $\{y_k\}_{k=0}^{N}$
-			\EndFunction
-			
-		\end{algorithmic}
+    \DontPrintSemicolon
+	\caption{Forward scalar products and transforms for all spaces $V_N, 
+	\D{V}_N, \N{V}_N$. 
+		Here "dct" is the discrete cosine transform from SciPy. \label{alg:fst}}
+			\Fn{\forwardScalar{$\{f_j\}_{j=0}^{N}$, points, space}}{
+			\If{ points = "Gauss-Lobatto"}{
+			$\{ w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, \text{type=2}, 
+			\text{axis=0})\frac{\pi}{2 N}$ \;
+            }
+			\ElseIf{ points = "Gauss-Chebyshev"}{
+			$\{ w_k\}_{k=0}^{N} \gets \text{dct}(f, \text{type=1}, 
+			\text{axis=0}) \frac{\pi}{2 (N-1)}$ \;
+		    }
+			$\{y\}_{k=0}^N \gets 0$ \;
+			\If{ space = $\D{V}_N$}{
+			$\{y_k\}_{k=0}^{N-2} \gets \{w_k\}_{k=0}^{N-2} - \{w_k\}_{k=2}^{N}$ 
+			\;
+            }
+			\ElseIf{ space = $\N{V}_N$}{
+			\For{$k=0$ to $N-4$}{
+			${y}_k \gets w_k - \frac{2(k+2)}{k+3} w_{k+2} + 
+			\frac{k+1}{k+3}w_{k+4}$ \;
+		    }
+            }
+			\ElseIf{space = $V_N$}{
+			$\{y_k\}_{k=0}^N \gets \frac{2}{\pi} \{w_k\}_{k=0}^N $ \;
+			$y_0 \gets y_0 / 2$ \;
+            }
+			\If{ points = "Gauss-Lobatto"}{
+			$y_N \gets y_N / 2$ \;   	
+		    }
+			\Return $\{y_k\}_{k=0}^{N}$    \;
+        }
+%			\EndFunction
+%			\Function{forwardTransform}{$\{f_j\}_{j=0}^{N}$, points, space}
+%			\State $\{y_k\}_{k=0}^{N} \gets$ forwardScalar($\{f_j\}_{j=0}^{N}$, 
+%points, space)
+%			\If{space = $\D{V}_N$}
+%			\State $B \gets \D{B}$
+%			\ElsIf{space = $\N{V}_N$}
+%			\State $B \gets \N{B}$
+%			\ElsIf{space = $V_N$}
+%			\State $B \gets B$
+%			\EndIf
+%			\State $\bm{y} \gets B^{-1} \bm{y}$
+%			\State \Return $\{y_k\}_{k=0}^{N}$
+%		}
 \end{algorithm}
-
-\begin{algorithm}
-	\caption{Inverse transforms for all spaces $V_N, \D{V}_N, \N{V}_N$. 
-		Here "dct" is the discrete cosine transform from SciPy.}
-	\label{alg:ifst}
-	\begin{algorithmic}[1]
-		\Function{inverseChebTransform}{$\{f\}_{j=0}^N$, points}
-		\If{points = "Gauss-Chebyshev"}
-		    \State $\{w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, type=3, axis=0)$
-		    \State $\{w_k\}_{k=0}^{N} \gets \frac{1}{2}\{w_k\}_{k=0}^{N} + \frac{1}{2}f_0$
-		    
-        \ElsIf{ points = "Gauss-Lobatto"}
-	        \State $\{w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, type=1, axis=0)$
-	        \State $\{w_k\}_{k=0}^{N} \gets \frac{1}{2}\{w_k\}_{k=0}^{N} + \frac{1}{2}f_0$
-	        \For{$k=0$ \textbf{to} $N$}
-	         \State $w_k \gets \frac{(-1)^k}{2} f_N$
-	        \EndFor
-	    \EndIf
-	    \State \Return{$\{w_k\}_{k=0}^{N}$}
-	    
-	    \EndFunction
-		
-		\Function{inverseShenTransform}{$\{f_j\}_{j=0}^{N}$, points, space}
-		
-		\If{ space = $\D{V}_N$}
-		\State $\{w_k\}_{k=0}^{N-2} \gets \{f_k\}_{k=0}^{N-2}$
-		\State $\{w_k\}_{k=2}^{N} \gets \{w_k\}_{k=2}^{N} - \{f_k\}_{k=0}^{N-2} $
-        \ElsIf{ space = $\N{V}_N$}	                
-		\State $\{w_k\}_{k=0}^{N-4} \gets \{f_k\}_{k=0}^{N-4}$
-		\For{$k=0$ \textbf{to} $N-4$}
-		\State $w_{k+2} \gets w_{k+2} - \frac{2(k+2)}{k+3} f_k$
-		\EndFor
-		\For{$k=0$ \textbf{to} $N-4$}
-		\State $w_{k+4} \gets w_{k+4} + \frac{k+1}{k+3} f_k$
-		\EndFor
-        \EndIf
-        \State $\{{w}_k\}_{k=0}^{N}$ = inverseChebTransform($\{w_k\}_{k=0}^N$, points)
-		\State \Return $\{{w}_k\}_{k=0}^{N}$
-		\EndFunction
-	\end{algorithmic}
-\end{algorithm}
+%
+%\begin{algorithm}
+%	\caption{Inverse transforms for all spaces $V_N, \D{V}_N, \N{V}_N$. 
+%		Here "dct" is the discrete cosine transform from SciPy.}
+%	\label{alg:ifst}
+%	\begin{algorithmic}[1]
+%		\Function{inverseChebTransform}{$\{f\}_{j=0}^N$, points}
+%		\If{points = "Gauss-Chebyshev"}
+%		    \State $\{w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, type=3, axis=0)$
+%		    \State $\{w_k\}_{k=0}^{N} \gets \frac{1}{2}\{w_k\}_{k=0}^{N} + \frac{1}{2}f_0$
+%		    
+%        \ElsIf{ points = "Gauss-Lobatto"}
+%	        \State $\{w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, type=1, axis=0)$
+%	        \State $\{w_k\}_{k=0}^{N} \gets \frac{1}{2}\{w_k\}_{k=0}^{N} + \frac{1}{2}f_0$
+%	        \For{$k=0$ \textbf{to} $N$}
+%	         \State $w_k \gets \frac{(-1)^k}{2} f_N$
+%	        \EndFor
+%	    \EndIf
+%	    \State \Return{$\{w_k\}_{k=0}^{N}$}
+%	    
+%	    \EndFunction
+%		
+%		\Function{inverseShenTransform}{$\{f_j\}_{j=0}^{N}$, points, space}
+%		
+%		\If{ space = $\D{V}_N$}
+%		\State $\{w_k\}_{k=0}^{N-2} \gets \{f_k\}_{k=0}^{N-2}$
+%		\State $\{w_k\}_{k=2}^{N} \gets \{w_k\}_{k=2}^{N} - \{f_k\}_{k=0}^{N-2} $
+%        \ElsIf{ space = $\N{V}_N$}	                
+%		\State $\{w_k\}_{k=0}^{N-4} \gets \{f_k\}_{k=0}^{N-4}$
+%		\For{$k=0$ \textbf{to} $N-4$}
+%		\State $w_{k+2} \gets w_{k+2} - \frac{2(k+2)}{k+3} f_k$
+%		\EndFor
+%		\For{$k=0$ \textbf{to} $N-4$}
+%		\State $w_{k+4} \gets w_{k+4} + \frac{k+1}{k+3} f_k$
+%		\EndFor
+%        \EndIf
+%        \State $\{{w}_k\}_{k=0}^{N}$ = inverseChebTransform($\{w_k\}_{k=0}^N$, points)
+%		\State \Return $\{{w}_k\}_{k=0}^{N}$
+%		\EndFunction
+%	\end{algorithmic}
+%\end{algorithm}
 
 \subsection*{Matrices}
 
