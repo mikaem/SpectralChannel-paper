@@ -24,24 +24,29 @@
 \newcommand{\N}[1]{\check{#1}}
 \newcommand{\D}[1]{\overline{#1}}
 
-
 \newcommand{\includecode}[2][py]{\lstinputlisting[caption=#2,label=list:#2,style=pythonstyle,
 float=!htpb]{#2}}
 
+\SetKwProg{Fn}{Function}{}{}
+\DontPrintSemicolon
+\SetKwInOut{Output}{output}
+\SetKwInOut{Input}{input}
+\SetKw{KwStep}{ step }
 \newcommand{\mmo}[1]{({\bf mmo comment:} \emph{#1})}
-\bibliographystyle{plain}
+%\bliographystyle{plain}
+\bibliographystyle{model1-num-names}
 
 \begin{document}
 \begin{frontmatter}
 
-\title{Assessment of a Shen-Fourier turbulent channel flow solver for large-scale simulations}
+\title{A Shen-Fourier turbulent channel flow solver for large-scale simulations}
 \author[mmo]{Mikael Mortensen}
 \ead{mikaem@math.uio.no}
 %\date{}							% Activate to display a given date or no date
 \address[mmo]{Department of Mathematics, Division of Mechanics, University of Oslo}
 
 \begin{abstract}
-A fully (pseudo-)spectral solver for direct numerical simulations of large-scale turbulent channel flows is described. The solver utilizes the Chebyshev base functions suggested by J. Shen [SIAM J. Sci. Comput., 16, 1, 1995], that lead to stable and robust numerics, even at very large scale. New algorithms for direct solution of the linear systems are devised, and we show that the solver is accurate and applicable for very large simulations. Specifically, the solver is shown to reproduce first order statistics of a channel flow at $Re_{\tau}=2000$ by Hoyas and Jim\'{e}nez [Phys. Fluids, 18(1), 2006], which is higher than has been achieved in a channel by a fully spectral method before. 
+A fully (pseudo-)spectral solver for direct numerical simulations of large-scale turbulent channel flows is described. The solver utilizes the Chebyshev base functions suggested by J. Shen [SIAM J. Sci. Comput., 16, 1, 1995], that lead to stable and robust numerics, even at very large scale. New algorithms for direct solution of the linear systems are devised, and we show that the solver is accurate and applicable for high Reynolds numbers and very large simulations. Specifically, the solver is shown to reproduce first order statistics of a channel flow at $Re_{\tau}=2000$ by Hoyas and Jim\'{e}nez [Phys. Fluids, 18(1), 2006], which is higher than has been achieved in a channel by a fully spectral method before. 
 \end{abstract}
 \begin{keyword}
 DNS \sep Fourier \sep Chebyshev
@@ -51,16 +56,16 @@ DNS \sep Fourier \sep Chebyshev
 \section{Introduction}
 Direct Numerical Simulations (DNS) of turbulent flows is a very important research tool, utilized across a range of scientific communities. DNS is used extensively to validate statistical models, and to further our understanding of complex mechanisms taking place inside turbulent flows. One of the many advantages of DNS is that it provides all information about a flow, and quantities that can be very hard to study experimentally, like velocity-pressure interactions, are trivially extracted from a DNS. In this regard, DNS both complements and extends the knowledge we are able to extract from experiments.
 
-The most commonly known DNS use simple geometries, because turbulence physics may then most easily be isolated and studied. Isotropic and homogeneous turbulence are usually studied in triply periodic domains, which allows a spectral Fourier decomposition in all three spatial directions. The equations are solved in spectral space and nonlinearities are usually handled with pseudo-spectral techniques. An important feature is that the pressure can be trivially eliminated, which simplifies the Navier-Stokes equations substantially.
+The most commonly known DNS use simple geometries, because turbulence physics may then most easily be isolated and studied. Isotropic and homogeneous turbulence are usually studied in triply periodic domains, which allows a spectral Fourier decomposition in all three spatial directions. The equations are most often solved in spectral space and nonlinearities are usually handled with pseudo-spectral techniques. An important feature is that the pressure can be trivially eliminated, which simplifies the Navier-Stokes equations substantially.
 
-Inhomogeneous, wall bounded, flows, successfully studied with DNS are, e.g., the pipe flow, free shear layers and channel flow between two parallel plates (both Couette and Poiseuille). In this paper we will constrain ourselves to the pressure driven Poiseuille channel flow. In a channel there are two periodic directions that can be handled with Fourier expansions, whereas the wall normal direction is non-periodic and requires a different type of discretization. There are many challenges associated with this inhomogeneity not faced by the pure Fourier solvers, but the first problem at hand is the discretization. The first DNS channel solvers typically used a Chebyshev expansion for the wall-normal direction and, as such, were still able to obtain spectral accuracy in all three spatial directions. A Chebyshev-tau technique, that utilize the recurrence relations of the Chebyshev polynomials, is then used to approximate derivatives, and the coefficient matrices that appear (tridiagonal) can be inverted directly and efficiently. A downside to the Chebyshev-tau method is usually quoted \cite{canuto1988} as numerical stability and roundoff errors, caused by the recurrence relation, and severe condition numbers of the coefficient matrices. For Chebyshev-tau methods the condition numbers have been reported to grow with size as $\mathcal{O}(N^8)$, for a discretization using N points in the wall-normal direction. Discouraged by these numbers, all major recent channel flow simulations have found other, non-spectral, ways of discretizing the non-periodic direction. 
+Inhomogeneous, wall bounded, flows, successfully studied with DNS are, e.g., the pipe flow, free shear layers and channel flow between two parallel plates (both Couette and Poiseuille). In this paper we will constrain ourselves to the pressure driven Poiseuille channel flow. In a channel there are two periodic directions that can be handled with Fourier expansions, whereas the wall normal direction is non-periodic and requires a different type of discretization. There are many challenges associated with this inhomogeneity not faced by the pure Fourier solvers, but the first problem at hand is the discretization. The first DNS channel solvers typically used a Chebyshev expansion for the wall-normal direction and, as such, were still able to obtain spectral accuracy in all three spatial directions. A Chebyshev-tau technique, that utilize the recurrence relations of the Chebyshev polynomials, was frequently  used to approximate derivatives, and the coefficient matrices that appeared (tridiagonal) could then be inverted directly and efficiently. A downside to the Chebyshev-tau method is usually quoted \cite{canuto1988} as numerical stability and roundoff errors, caused by the recurrence relation, and severe condition numbers of the coefficient matrices. For Chebyshev-tau methods the condition numbers have been reported to grow with size as $\mathcal{O}(N^8)$, for a discretization using $N$ points in the wall-normal direction. Discouraged by these numbers, all major recent channel flow simulations have found other, non-spectral, ways of discretizing the non-periodic direction. 
 
 
-The largest known channel simulations to date have been performed by Lee and Moser \cite{leemoser15}, where for $Re_{\tau}\approx 5200$ they used a computational box of resolution $[10240 \times 1530 \times 7680]$ for the streamwise, wall-normal and spanwise directions, respectively. Lee and Moser used seventh-order B-splines for the wall-normal direction. Other simulations of similar magnitude are performed by Hoyas and Jim\'{e}nez \cite{hoyas06, hoyas08}, Lozano-Duran and Jim\'{e}nez \cite{Lozano2014} and Bernardini, Pirozzoli and Orlandi \cite{bernardini2014}. Bernardini et al. used second order finite differences throughout. The Jim\'{e}nez group used dealiased Fourier in the two periodic directions and seventh order compact finite differences, with fourth-order consistency and extended spectral-like resolution \cite{Lele92}, for the wall-normal direction. The solver by Jim\'{e}nez' group is reported to switch from Chebyshev to finite differences if the resolution is above a certain threshold \cite{hoyas08} (reached around $Re_{\tau}=1000$). In other words, they attempt to use spectral methods for as large $Re_{\tau}$ as possible. Spectral methods are attractive for their accuracy, but also for their resolution properties, that are superior to those of any finite difference or spline method. As such, it is desirable to develop fully spectral solvers that can be used for large-scale turbulence simulations.
+The largest known channel simulations to date have been performed by Lee and Moser \cite{leemoser15}, where for $Re_{\tau}\approx 5200$ they used a computational box of resolution $[10240 \times 1530 \times 7680]$ for the streamwise, wall-normal and spanwise directions, respectively. Lee and Moser used seventh-order B-splines for the wall-normal direction. Other simulations of similar magnitude have been performed by Hoyas and Jim\'{e}nez \cite{hoyas06, hoyas08}, Lozano-Duran and Jim\'{e}nez \cite{Lozano2014} and Bernardini, Pirozzoli and Orlandi \cite{bernardini2014}. Bernardini et al. used second order finite differences throughout. The Jim\'{e}nez group used dealiased Fourier in the two periodic directions and seventh order compact finite differences, with fourth-order consistency and extended spectral-like resolution \cite{Lele92}, for the wall-normal direction. The solver by Jim\'{e}nez' group is reported to switch from Chebyshev to finite differences if the resolution is above a certain threshold \cite{hoyas08} (reached around $Re_{\tau}=1000$). In other words, they attempt to use spectral methods for as large $Re_{\tau}$ as possible. Spectral methods are attractive for their accuracy, but also for their resolution properties, that are superior to those of any finite difference or spline method. As such, it is desirable to develop fully spectral solvers that can be used for large-scale turbulence simulations.
 
-In his seminal papers \cite{Shen94,Shen95}, Jie Shen describe how to make Legendre and Chebyshev basis functions that lead to sparse matrices, susceptible to fast ($\mathcal{O}(N)$) direct solvers. To the authors knowledge, the bases have not been used for large-scale channel flow simulations, and algorithms for the required direct solvers have not, until now, been devised. Shen's bases have been used for the Navier Stokes equations before, though. Bouchon et.al.  \cite{Bouchon01} describe a spectral-Galerkin formulation very similar to the one used in this paper. However, they choose the Legendre basis over the Chebyshev, due to the simpler structure of the matrices and the lack of weight functions for the Legendre basis. Also, the channel simulations performed were rather small, and there is also the issue of fast transforms for the Legendre basis.
+In his seminal papers \cite{Shen94,Shen95}, Jie Shen describe how to construct Legendre and Chebyshev basis functions that lead to sparse matrices, susceptible to fast ($\mathcal{O}(N)$) direct solvers. To the authors knowledge, the bases have not been used for large-scale channel flow simulations, and algorithms for the required direct solvers have not, until now, been devised. Shen's bases have been used for the Navier Stokes equations before, though. Bouchon et.al.  \cite{Bouchon01} describe a spectral-Galerkin formulation very similar to the one used in this paper. However, they choose the Legendre basis over the Chebyshev, neglecting the higher cost of transforms and arguing instead for the simpler structure of the matrices and the lack of weight functions for the Legendre basis. The cost of the Legendre transforms, though, makes the basis unsuitable for larger scales, and the simulations performed in \cite{Bouchon01} were rather small.
 
-In this paper we will describe and assess a channel flow solver based on Shen's Chebyshev basis \cite{Shen95}. We will give a proper description of the theoretical basis in Sec~\ref{sec:prelim}, the discretization of Navier-Stokes equations in Sec~\ref{sec:discretizationNS} and we will here describe necessary algorithms, including a new fast direct solver for the biharmonic problem that arise in Sec~\ref{sec:implementation}. We will finally show in Sec~\ref{sec:verification} that roundoff is not a major issue, and that the spectral-Galerkin method is in deed applicable to large-scale simulations, larger than what has been achieved for fully spectral channel simulations before.
+In this paper we will describe and assess a channel flow solver based on Shen's Chebyshev basis \cite{Shen95}. We will give a proper description of the theoretical basis in Sec~\ref{sec:prelim}, the discretization of Navier-Stokes equations in Sec~\ref{sec:discretizationNS} and we will describe necessary algorithms, including a new fast direct solver for the biharmonic problem that arise, in Sec~\ref{sec:implementation}. We will finally show in Sec~\ref{sec:verification} that roundoff is not a major issue, and that the Shen-Fourier spectral Galerkin method is in deed applicable to large-scale simulations, larger than what has been achieved for fully spectral channel simulations before.
 
 \section{Preliminaries}
 \label{sec:prelim}
@@ -84,10 +89,10 @@ the $y-z$ plane and the equations are periodic in the $y$ and $z$ directions wit
 
 The Navier Stokes equations are discretized using Fourier basis functions for the periodic directions, and a combination of Chebyshev polynomials in the wall normal direction. Three different sets of basis functions and function spaces are relevant for the wall normal direction
 \begin{align}
-&  \phi_k(x) = T_k(x), & V_{N_x} &= \text{span}\{\phi_k\}_{k=0}^{N_x} \label{eq:Tk}\\
-& \D{\phi}_k(x) = T_k(x) - T_{k+2}(x), & \D{V}_{N_x} &= \text{span} \{ \D{\phi}_k\}_{k=0}^{N_x-2} \label{eq:phiD}\\
+&  \phi_k(x) = T_k(x), & V_{N_x} &= \text{span}\{\phi_k\}_{k=0}^{N_x}, \label{eq:Tk}\\
+& \D{\phi}_k(x) = T_k(x) - T_{k+2}(x), & \D{V}_{N_x} &= \text{span} \{ \D{\phi}_k\}_{k=0}^{N_x-2}, \label{eq:phiD}\\
 & \N{\phi}_k(x) = T_k(x) - \frac{2(k+2)}{k+3} T_{k+2}(x) + 
-\frac{k+1}{k+3} T_{k+4}, & \N{V}_{N_x} &= \text{span} \{\N{\phi}_k\}_{k=0}^{N_x-4} \label{eq:phiN} 
+\frac{k+1}{k+3} T_{k+4}, & \N{V}_{N_x} &= \text{span} \{\N{\phi}_k\}_{k=0}^{N_x-4}, \label{eq:phiN} 
 \end{align}
 where $T_k(x)$ is the $k$'th degree Chebyshev polynomial of the first kind. The 
 basis functions and function spaces in (\ref{eq:phiD}) and (\ref{eq:phiN}) were 
@@ -258,7 +263,7 @@ $\mathcal{S}_l(\cdot) = (\cdot, T_l)_w$ and $\D{\mathcal{S}}_l(\cdot) = (\cdot,
 \section{Discretization of Navier Stokes equations}
 \label{sec:discretizationNS}
 The Navier Stokes equations (\ref{eq:NS}) are solved using a scheme 
-proposed by Kim, Moin and Moser (1987). This scheme is developed by taking the 
+proposed by Kim, Moin and Moser \cite{Kim87}. This scheme is developed by taking the 
 Laplacian of the wall normal momentum equation and the curl of the momentum 
 equation. Following elimination of the pressure, the equations to solve are 
 \begin{align}
@@ -387,7 +392,12 @@ The convection vector $\bm{\hat{\mathcal{H}}}$, needed to compute Eqs. (\ref{eq:
 \begin{equation}
 \bm{\hat{\mathcal{H}}}_i = \mathcal{\D{T}}((\bm{u} \times \bm{\omega})_i) \quad \forall \, i=0,1,2. \label{eq:H_hat}
 \end{equation}
-The curl, $\bm{\omega} = (g, \partial_z u - \partial_x w, \partial_y u - \partial_x v)$, is computed by projecting each term to its appropriate space. To this end the two terms $\partial_x v$ and $\partial_x w$ are projected to $V_N$, whereas the remaining $\partial_y u$ and $\partial_z u$ are projected to $\N{V}_N$. The nonlinear term is also in need of dealiasing. In this work dealiasing has been performed with the 3/2-rule, see Canuto~et al. \cite{canuto1988}.
+The curl, $\bm{\omega} = (g, \partial_z u - \partial_x w, \partial_y u - 
+\partial_x v)$, is computed by projecting each term to its appropriate space. 
+To this end the two terms $\partial_x v$ and $\partial_x w$ are projected to 
+$V_N$, whereas the remaining $\partial_y u$ and $\partial_z u$ are projected to 
+$\N{V}_N$. Note that the nonlinear term is also generally in need of 
+dealiasing, at least for the two periodic directions.
 
 It remains to discretize the equations in time. Kim, Moin and Mansour use 
 Crank-Nicolson for the diffusive terms and Adams-Bashforth for the nonlinear 
@@ -445,17 +455,26 @@ for $\hat{w}^{\kappa}_0$ and $\hat{\mathcal{H}}^{\kappa}_{z,0}$.
 \section{Implementation}
 \label{sec:implementation}
 An outline of the solution procedure used, for the numerical method described 
-in Sec.~\ref{sec:discretizationNS}, is given in Algorithm \ref{alg:NS}. Note 
+in Sec.~\ref{sec:discretizationNS}, is given in Algorithm 
+\ref{alg:NS}.\footnote{Note that throughout this paper we are using the 
+pseudocode conventions of Kopriva \cite{kopriva09}, with one minor difference. 
+A statement like $\{w\}_{k=0}^{N} \gets \{u\}_{k=0}^N$ will here be used to 
+represent a 
+vectorization, where components $u_k$, for $k=0,1,\ldots,N$, are copied from 
+$u_k$ to $w_k$. Similar conventions apply to matrices, e.g., 
+$\{U_{1,k}\}_{k=0}^N = \{V_{2,k}\}_{k=0}^N$ can be used for copying row 2 of 
+$V$ to row 1 of $U$.} Note 
 that the Adams-Bashforth projection of convection reverts to a first order 
 forward Euler on the first time step. For simulations of turbulent flows this 
 is insignificant, but for accuracy tests, like the Orr-Sommerfeld instability, 
-a proper initialization would need to set both the two first time steps instead.
+a proper initialization would need to set both the two first time steps.
 \begin{algorithm}
 	\caption{Solution procedure for Navier Stokes equations.    
 	 \label{alg:NS}}
  	\DontPrintSemicolon	
     	Initialize $\bm{u}(\bm{x}, 0)$ and compute 
     	$\hat{g}_{\bm{k}}(0)$ and $\hat{\bm{u}}_{\bm{k}}(0)$ \;
+        Set parameters (e.g., mesh and viscosity) and end time $T$ \;
 		Compute LU decomposition of $\N{H}(m,n), \D{H}(m,n) 
 		\,\forall \, m, n \in K^p$ \;
 		Compute LU decomposition of coefficient matrices in (\ref{eq:v00}) and 
@@ -488,11 +507,12 @@ a proper initialization would need to set both the two first time steps instead.
 The major computational cost in Alg. \ref{alg:NS} comes from  computing the 
 nonlinear convection and solving for Eqs.~(\ref{eq:ufin}, \ref{eq:gfin}). The 
 nonlinear convection term, $\bm{\hat{\mathcal{H}}}$, is computed using a 
-pseudo-spectral method with the 3/2-rule for dealiasing in the periodic 
-directions, see \cite{canuto1988}. The 
+pseudo-spectral method, and dealiasing in the periodic directions can be either 
+the 3/2-rule \cite{canuto1988} or the 2/3-rule \cite{Orzag71}. The 
 transforms are carried out using fast Fourier and fast Chebyshev transforms 
-that are all of order $\mathcal{O}(N_x\log N_x)$ per one-dimensional transform of size 
-$N_x$. The Shen transforms make use of the Chebyshev transforms that are using 
+that are all of order $\mathcal{O}(N_x\log N_x)$ per one-dimensional transform 
+of size $N_x$. The Shen transforms make use of the Chebyshev transforms that in 
+turn are using 
 discrete cosine transforms. The forward scalar products and transforms are implemented as shown 
 in Algorithm \ref{alg:fst} of the Appendix. A complete transform is obtained through a scalar 
 product followed by solving the linear system involving the mass 
@@ -669,7 +689,8 @@ r_k &= 24(k+1)(k+2)\pi, &s_j &=  \frac{(j+2)^2}{(j+3)}. \label{eq:rk}
 For each row in $\N{H}_{kj}$ we have that $\N{H}_{kj}=\xi_0\N{Q}_{kj}\, \forall j 
 > k+4$. A straight forward direct LU decomposition of $\N{H}$ can be performed 
 as shown in Alg. 
-\ref{alg:lu_biharmonic}, which leads to a lower triangular 
+\ref{alg:lu_biharmonic}, which leads to a lower 
+triangular 
 matrix $\N{L}_{kj}$ with two nonzero diagonals at $j=k-2$ and $k-4$ plus a 
 unity 
 main diagonal. The upper triangular matrix $\N{U}_{kj}$ is dense and as such a 
@@ -714,7 +735,53 @@ that only requires
 one new addition to the row-sums for each back-traversed
 row, see Alg. (\ref{alg:SolveBiharmonic}).
 
-\SetKwProg{Fn}{Function}{}{}
+\SetKwFunction{LUbiharmonic}{LUbiharmonic}
+\begin{algorithm}
+    \caption{LU decomposition of biharmonic operator $\N{H}$. Current algorithm 
+        is using dense storage of $\N{U}_{kj}$, but no more than the 3 items 
+        per row need 
+        to be stored after the row is no longer needed in the for-loop below 
+        (as the loop is traversed to row $k$, $\N{U}_{m, j}$ is no longer 
+        needed for $m<k-4$). 
+        \label{alg:lu_biharmonic}}
+        \Fn{\LUbiharmonic{$\{\N{H}_{kj}\}_{k, j = 0}^{N}$}}{
+        \Output{$\{\N{L}_{kj}\}_{k, j = 0}^{N}$, $\{\N{U}_{kj}\}_{k, j = 
+        0}^{N}$}
+        integer $M_e \gets \lfloor N/2 \rfloor$ \;
+        integer $M_o \gets \lfloor (N-1)/2 \rfloor$  \;
+        $\{\hat{U}_{0,2j}\}_{j=0}^{M_e} \gets \{\hat{H}_{0,2j}\}_{j=0}^{M_e}$ \;
+        $\{\hat{U}_{1,2j+1}\}_{j=0}^{M_o} \gets 
+        \{\hat{H}_{1,2j+1}\}_{j=0}^{M_o}$ \;
+        $\N{L}_{20} \gets \N{H}_{20}/\N{U}_{00}$ \;
+        $\N{L}_{31} \gets \N{H}_{31}/\N{U}_{11}$ \;
+        $\{\hat{U}_{2,2j}\}_{j=1}^{M_e} \gets \{\N{H}_{2,2j}\}_{j=1}^{M_e} - 
+        \N{L}_{20} \{\N{U}_{0,2j}\}_{j=1}^{M_e}$ \;
+        $\{\hat{U}_{3,2j+1}\}_{j=1}^{M_o} \gets \{\N{H}_{3,2j+1}\}_{j=1}^{M_o} 
+        - \N{L}_{31} \{\N{U}_{1,2j+1}\}_{j=1}^{M_o}$ \;
+        
+        %\State $\N{U}_{2j} = \N{H}_{2j} - \N{L}_{20} \N{U}_{0j} \quad 
+        %\forall \, j \in 2, 4, \ldots, N$
+        %\State $\N{U}_{3j} = \N{H}_{3j} - \N{L}_{31} \N{U}_{1j} \quad 
+        %\forall \, j \in 
+        %3, 5, \ldots, N$
+        \For{$k = 4$ \KwTo $N$}{
+        integer $M \gets \lfloor \frac{N-k}{2}\rfloor$ \;
+        $\N{L}_{k,k-4} \gets \N{H}_{k, k-4} / \N{U}_{k-4, k-4}$ \;
+        $\{\N{U}_{k,k+2j}\}_{j=-1}^{M} \gets \{\N{H}_{k,k+2j}\}_{j=-1}^{M} - 
+        \N{L}_{k, k-4} 
+        \{\N{U}_{k-4, k+2j}\}_{j=-1}^{M}$ \;
+        %\State $\N{U}_{k,j} = \N{H}_{k,j} - \N{L}_{k, k-4}  \N{U}_{k-4, j} 
+        %\quad \forall j = k-2, k, \ldots, N$
+        $\N{L}_{k,k-2} \gets {\N{U}}_{k,k-2}/{\N{U}}_{k-2, k-2}$ \;
+        $\{\N{U}_{k,k+2j}\}_{j=0}^{M} \gets \{{\N{U}}_{k,k+2j}\}_{j=0}^{M} - 
+        \N{L}_{k, k-2} \{\N{U}_{k-2,k+2j}\}_{j=0}^{M}$ \;
+        %\State $\N{U}_{kj} = {\N{U}}_{kj} - \N{L}_{k, k-2} \N{U}_{k-2, j} 
+        %\quad \forall j = k, k+2, \ldots, N$
+        }
+        \Return $\{\N{L}_{kj}\}_{k, j = 0}^{N}$, $\{\N{U}_{kj}\}_{k, j = 0}^{N}$
+    }
+\end{algorithm}	
+
 \SetKwFunction{reduceAB}{ReduceAB}
 \begin{algorithm}
 	\DontPrintSemicolon
@@ -724,6 +791,7 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 	the parameters $p_k$ and $r_k$ are given in Eqs. (\ref{eq:pk}) and 
 	(\ref{eq:rk}) respectively. \label{alg:ab}}
 		\Fn{\reduceAB{$ \{\N{L}_{kj}\}_{k,j=0}^{N_x-4}, \,\xi_0$}}{
+        \Output{$\{a_k\}_{k=0}^{N_x-4}, \{b_k\}_{k=0}^{N_x-4}$}  \;
 		\For{$k=0,1$}{
 		     $a_k \gets p_k$ \;
 		     $b_k \gets r_k$ \;
@@ -732,7 +800,7 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 		    $a_k \gets p_k - \N{L}_{k,k-2}\,a_{k-2}$ \;
 		    $b_k \gets r_k - \N{L}_{k, k-2}\,b_{k-2}$ \;
 		}
-		\For{$k=4, 5, \ldots, N_x-4$}{
+		\For{$k=4$ \KwTo $N_x-4$}{
      		$a_k \gets p_k - \N{L}_{k,k-2}\,a_{k-2} - \N{L}_{k, k-4} \,a_{k-4}$ 
      		\;
 	    	$b_k \gets r_k - \N{L}_{k, k-2}\,b_{k-2}- \N{L}_{k, k-4} \,b_{k-4}$ 
@@ -755,14 +823,13 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
                 \{\N{L}_{kj}\}_{k,j=0}^{N}, 
                 \{f_k\}_{k=0}^{N}, \{a_k\}_{k=0}^{N}, \{b_k\}_{k=0}^{N}, 
                 \xi_0$}}{
-          \SetKwInOut{Output}{output}
           \Output{$\{ \hat{u}_k\}_{k=0}^N$}
 		  \tcp*[l]{Solve $\N{L}_{kj}y_j=f_k$ by forward elimination}
 		  $y_0 \gets f_0$ \;
 		  $y_1 \gets f_1$ \;
 		  $y_2 \gets f_2 - \N{L}_{20}y_{0}$ \;
 		  $y_3 \gets f_3 - \N{L}_{31}y_{1}$ \;
-		  \For{$k = 4$ \textbf{to} $N$}{
+		  \For{$k = 4$ \KwTo $N$}{
 		  $y_k \gets f_k - \N{L}_{k,k-2}y_{k-2} - \N{L}_{k, k-4}y_{k-4}$ \;
 		  }
 		  \tcp*[l]{Solve $\N{U}_{kj}u_j=y_k$ with back 
@@ -774,8 +841,11 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 	      $\hat{u}_{N-3} \gets \left(y_{N-3} - \N{U}_{N-3, 
 	      N-1}y_{N-1}\right)/\N{U}_{N-3,N-3}$ \;
 	      
-	      float $q^o = q^e = s^o = s^e = 0.0$ \;
-		  \For{$k = N-4$ \textbf{to} $0$ \textbf{step} $-1$}{
+	      $q^o \gets 0.0$ \;
+          $q^e \gets 0.0$ \;
+          $s^o \gets 0.0$ \;
+          $s^e \gets 0.0$ \;
+		  \For{$k = N-4$ \KwTo $0$ \KwStep $-1$}{
 		  $\hat{u}_k \gets y_k - \N{U}_{k, k+2} \hat{u}_{k+2} - \N{U}_{k, k+4} 
 		  \hat{u}_{k+4} $ \;
 		  \If{$k < N-5$}{
@@ -886,7 +956,22 @@ $N_x$ & Biharmonic & Helmholtz \\
 	\end{tabular}
 \end{table}
 
-The complete Navier Stokes solver should scale like $\mathcal{O}(aN + bN\log N)$ since it is a combination of linear algebra routines $\mathcal{O}(N)$, fast transforms $\mathcal{O}(N \log N)$ and several elementwise array operations $\mathcal{O}(N)$. We show in Table \ref{tab:timings_solver} some timings for one single time step, increasing only the wall normal discretization. We show that the total time scales approximately as $N \log N$ for large $N$ and better than linearly for small $N$. This shift happens since at small $N$ the transforms are fast and linear operations, like elementwise multiplications, are more dominating. We also see that the time for assembly of the right hand side is approximately $\mathcal{O}(N \log N)$, whereas the time for solving the linear systems is very nearly linear.
+The complete Navier Stokes solver should scale like $\mathcal{O}(N)$ and 
+$\mathcal{O}N\log N)$ since it is a combination of linear algebra routines 
+$\mathcal{O}(N)$, fast transforms $\mathcal{O}(N \log N)$ and several 
+elementwise array operations $\mathcal{O}(N)$. 
+
+We show in Table \ref{tab:timings_solver} some timings for one single time 
+step, increasing only the wall normal discretization. We show that the total 
+time scales approximately as $N \log N$ for large $N$ and better than linearly 
+for small $N$. This shift happens since at small $N$ the transforms are fast 
+and linear operations, like elementwise multiplications, are more dominating. 
+We also see that the time for assembly of the right hand side is approximately 
+$\mathcal{O}(N \log N)$, whereas the time for solving the linear systems is 
+very nearly linear. Note that for fast transforms we are using 
+the FFTW library \cite{libfftw}, with planner effort set to FFTW$\_$MEASURE. 
+Timings in Table \ref{tab:timings_solver} are computed with dealiasing 
+performed with the 2/3-rule \cite{Orzag71}. 
 
 \begin{table}
 	\centering
@@ -919,19 +1004,30 @@ where $\tilde{\bm{u}} = [u, v-(1-x^2)]$ represents the perturbation vector, and 
 Table \ref{tab:epsilon} shows the perturbation error as a function of $\epsilon$, using a mesh of size $128 \times 8 \times 2$, $\triangle t=0.2$ and final time $t=5$. Since the perturbation is added to a base flow of order unity, we know that one digit will be lost in accuracy, for each row, moving down Table \ref{tab:epsilon}. Adding to this the normal roundoff, see Table \ref{tab:roundoff}, $\epsilon=10^{-8}$ should not be expected to yield more than 6-7 digits of accuracy, whereas the final row ($\epsilon=10^{-12}$) no more than 2-3. Still, we observe that the solution is nearly independent of $\epsilon$ for $10^{-6} < \epsilon < 10^{-8}$, and as such $\epsilon=10^{-7}$ is chosen as suitable for computing the temporal accuracy.
 \begin{table}
 	\centering
-	\caption{ Error in Orr-Sommerfeld perturbation as a function of perturbation magnitude $\epsilon$. The $L^2$-norm $ \| \bm{u}' \| = \sqrt{\left< \bm{u}', \bm{u}'\right>}$, where $\bm{u}'=\bm{u}-\bm{u}_{\mathrm{exact}}$ and energy error (\ref{eq:OSenergy}), for the most unstable Orr-Sommerfeld mode. Results are computed with a mesh of size $128 \times 8 \times 2$, $\triangle t=0.2$ and final time $t=5$. \label{tab:epsilon}}
-	\begin{tabular}{ccc}	
-		$-\log_{10}(\epsilon)$ & $\frac{1}{\epsilon}\| \bm{u}' \|(t=5)$ & $E(t=5)$ \\
+	\caption{ Error in Orr-Sommerfeld perturbation as a function of perturbation magnitude $\epsilon$. The $L^2$-norm $ \| \bm{u}' \| = \sqrt{\left< \bm{u}', \bm{u}'\right>}$, where $\bm{u}'=\bm{u}-\bm{u}_{\mathrm{exact}}$ and energy error (\ref{eq:OSenergy}), for the most unstable Orr-Sommerfeld mode. Results are computed with a mesh of size $128 \times 8 \times 2$ or $512 \times 8 \times 2$, with $\triangle t=0.2$ and final time $t=5$. \label{tab:epsilon}}
+	\begin{tabular}{ccccc}	
+		$-\log_{10}(\epsilon)$ & \multicolumn{2}{c}{$\frac{1}{\epsilon}\| \bm{u}' \|(t=5)$} & \multicolumn{2}{c}{$E(t=5)$} \\
 		\hline
-		4 & 1.234544e-02 & 2.441506e-04 \\ 
-		5 & 1.157535e-02 & 2.440520e-04 \\ 
-		6 & 1.156739e-02 & 2.440510e-04 \\ 
-		7 & 1.156732e-02 & 2.440510e-04 \\ 
-		8 & 1.156731e-02 & 2.440504e-04 \\ 
-		9 & 1.156732e-02 & 2.440498e-04 \\ 
-		10 & 1.156726e-02 & 2.440435e-04 \\ 
-		11 & 1.156497e-02 & 2.437132e-04 \\ 
-		12 & 1.155687e-02 & 2.435411e-04
+		 & $N=128$ & $N=512$ & $N=128$ & $N=512$ \\
+		\hline
+4	&	1.23454361e-02	&	2.44150583e-04	&	1.23454363e-02	&	
+2.44150404e-04	\\
+5	&	1.15753545e-02	&	2.44052002e-04	&	1.15753547e-02	&	
+2.44051822e-04	\\
+6	&	1.15673948e-02	&	2.44051018e-04	&	1.15673950e-02	&	
+2.44050836e-04	\\
+7	&	1.15673151e-02	&	2.44051004e-04	&	1.15673154e-02	&	
+2.44050816e-04	\\
+8	&	1.15673142e-02	&	2.44050426e-04	&	1.15673156e-02	&	
+2.44050992e-04	\\
+9	&	1.15673192e-02	&	2.44049842e-04	&	1.15673185e-02	&	
+2.44050701e-04	\\
+10	&	1.15672575e-02	&	2.44043530e-04	&	1.15674820e-02	&	
+2.44052242e-04	\\
+11	&	1.15649705e-02	&	2.43713173e-04	&	1.15684397e-02	&	
+2.44010407e-04	\\
+12	&	1.15568665e-02	&	2.43541116e-04	&	1.15844457e-02	&	
+2.44202451e-04
 	\end{tabular}
 \end{table}
 
@@ -965,6 +1061,34 @@ The ultimate test for this fully spectral Navier-Stokes solver is the pressure d
 \end{figure}
 
 \section{Conclusions}
+Spectral Navier Stokes solvers are attractive for their accuracy and resolution 
+properties, and are usually the preferred tools for performing Direct Numerical 
+Simulations of turbulent flows. A spectral discretization of the wall normal 
+direction in a plane channel is challenging due to roundoff errors from poorly 
+conditions coefficient matrices, and as such all recent large-scale channel DNS 
+have been conducted without spectral accuracy in the wall normal direction. 
+
+In this paper a Navier Stokes solver for large-scale turbulent channel flows 
+has been described. In the wall normal direction the solver utilizes base 
+functions 
+suggested by J. Shen \cite{Shen95}, constructed from Chebyshev polynomials. The 
+solver uses Fourier decompositions in both periodic directions, and, as such, 
+it is fully spectral in all spatial directions. To show that this solver is 
+applicable to large-scale simulations at high Reynolds numbers,  we have shown 
+that the roundoff errors are small, even for simulations twice the size of the 
+largest simulations known to date \cite{leemoser15}.
+The computational cost of the solver is shown to scale with the expected 
+$\mathcal{O}(N \log N)$, for a mesh of size $N \times N \times N$, due to fast 
+transforms. Direct 
+solvers have been devised for Helmholtz and biharmonic coefficient matrices, 
+and these have been shown to scale close to 
+$\mathcal{O}(N)$, with insignificant roundoff errors. The fully spectral solver 
+has been applied to a turbulent 
+channel flow at $Re_{\tau}=2000$, and the first order statistics are shown to agree well with the literature.
+
+\section*{Acknowledgements}
+This research is a part of the 4DSpace Strategic Research Initiative at the 
+University of Oslo.
 
 
 %\section{The incremental pressure correction scheme}
@@ -1197,7 +1321,6 @@ The ultimate test for this fully spectral Navier-Stokes solver is the pressure d
 %
 %
 
-\bibliographystyle{model1-num-names}
 \bibliography{bib.bib}
 
 \section{Appendices}
@@ -1350,14 +1473,22 @@ The ultimate test for this fully spectral Navier-Stokes solver is the pressure d
 
 \subsection*{Fast scalar products and transforms}
 
-The algorithms for the fast scalar products and transforms, for the three spaces $V_N, \D{V}_N, \N{V}_N$, are given in Alg. ~\ref{alg:fst}. The algorithms for the inverse transforms are given in Alg.~\ref{alg:ifst}. The algorithms are using the discrete cosine transforms (dct) of type 1, 2 or 3 depending on the choice of discretization points and direction.
+Algorithms for fast scalar products and transforms, for the three 
+spaces $V_N, \D{V}_N, \N{V}_N$, are given in Alg. ~\ref{alg:fst}. The 
+algorithms for the inverse transforms are given in Alg.~\ref{alg:ifst}. The 
+algorithms are using the discrete cosine transforms (dct) of type 1, 2 or 3 
+depending on the choice of discretization points and direction.
 \SetKwFunction{forwardScalar}{forwardScalar}
+\SetKwFunction{forwardTransform}{forwardTransform}
 \begin{algorithm}
     \DontPrintSemicolon
 	\caption{Forward scalar products and transforms for all spaces $V_N, 
 	\D{V}_N, \N{V}_N$. 
 		Here "dct" is the discrete cosine transform from SciPy. \label{alg:fst}}
 			\Fn{\forwardScalar{$\{f_j\}_{j=0}^{N}$, points, space}}{
+            
+            \Output{$\{y_k\}_{k=0}^{N}$}
+                
 			\If{ points = "Gauss-Lobatto"}{
 			$\{ w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, \text{type=2}, 
 			\text{axis=0})\frac{\pi}{2 N}$ \;
@@ -1372,7 +1503,7 @@ The algorithms for the fast scalar products and transforms, for the three spaces
 			\;
             }
 			\ElseIf{ space = $\N{V}_N$}{
-			\For{$k=0$ to $N-4$}{
+			\For{$k=0$ \KwTo $N-4$}{
 			${y}_k \gets w_k - \frac{2(k+2)}{k+3} w_{k+2} + 
 			\frac{k+1}{k+3}w_{k+4}$ \;
 		    }
@@ -1380,68 +1511,76 @@ The algorithms for the fast scalar products and transforms, for the three spaces
 			\ElseIf{space = $V_N$}{
 			$\{y_k\}_{k=0}^N \gets \frac{2}{\pi} \{w_k\}_{k=0}^N $ \;
 			$y_0 \gets y_0 / 2$ \;
-            }
 			\If{ points = "Gauss-Lobatto"}{
 			$y_N \gets y_N / 2$ \;   	
 		    }
+            }
 			\Return $\{y_k\}_{k=0}^{N}$    \;
-        }
-%			\EndFunction
-%			\Function{forwardTransform}{$\{f_j\}_{j=0}^{N}$, points, space}
-%			\State $\{y_k\}_{k=0}^{N} \gets$ forwardScalar($\{f_j\}_{j=0}^{N}$, 
-%points, space)
-%			\If{space = $\D{V}_N$}
-%			\State $B \gets \D{B}$
-%			\ElsIf{space = $\N{V}_N$}
-%			\State $B \gets \N{B}$
-%			\ElsIf{space = $V_N$}
-%			\State $B \gets B$
-%			\EndIf
-%			\State $\bm{y} \gets B^{-1} \bm{y}$
-%			\State \Return $\{y_k\}_{k=0}^{N}$
-%		}
+            }
+			\Fn{\forwardTransform{$\{f_j\}_{j=0}^{N}$, points, space}}{
+			\Output{$\{y_k\}_{k=0}^{N}$}
+            $\{y_k\}_{k=0}^{N} \gets$ forwardScalar($\{f_j\}_{j=0}^{N}$, 
+points, space) \;
+			\If{space = $\D{V}_N$}{
+			$\{y_k\}_{k=0}^{N-2} \gets \{\D{B}_{kj}^{-1}\}_{k,j=0}^{N-2}\{y_k\}_{k=0}^{N-2}$ \;
+            }
+			\ElseIf{space = $\N{V}_N$}{
+			$\{y_k\}_{k=0}^{N-4} \gets \{\N{B}_{kj}^{-1}\}_{k,j=0}^{N-4}\{y_k\}_{k=0}^{N-4}$ \;
+            }
+			\ElseIf{space = $V_N$}{
+			$\{y_k\}_{k=0}^{N} \gets \{{B}_{kj}^{-1}\}_{k,j=0}^{N}\{y_k\}_{k=0}^{N}$ \;
+            }
+			\Return $\{y_k\}_{k=0}^{N}$
+		}
 \end{algorithm}
-%
-%\begin{algorithm}
-%	\caption{Inverse transforms for all spaces $V_N, \D{V}_N, \N{V}_N$. 
-%		Here "dct" is the discrete cosine transform from SciPy.}
-%	\label{alg:ifst}
-%	\begin{algorithmic}[1]
-%		\Function{inverseChebTransform}{$\{f\}_{j=0}^N$, points}
-%		\If{points = "Gauss-Chebyshev"}
-%		    \State $\{w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, type=3, axis=0)$
-%		    \State $\{w_k\}_{k=0}^{N} \gets \frac{1}{2}\{w_k\}_{k=0}^{N} + \frac{1}{2}f_0$
-%		    
-%        \ElsIf{ points = "Gauss-Lobatto"}
-%	        \State $\{w_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, type=1, axis=0)$
-%	        \State $\{w_k\}_{k=0}^{N} \gets \frac{1}{2}\{w_k\}_{k=0}^{N} + \frac{1}{2}f_0$
-%	        \For{$k=0$ \textbf{to} $N$}
-%	         \State $w_k \gets \frac{(-1)^k}{2} f_N$
-%	        \EndFor
-%	    \EndIf
-%	    \State \Return{$\{w_k\}_{k=0}^{N}$}
-%	    
-%	    \EndFunction
-%		
-%		\Function{inverseShenTransform}{$\{f_j\}_{j=0}^{N}$, points, space}
-%		
-%		\If{ space = $\D{V}_N$}
-%		\State $\{w_k\}_{k=0}^{N-2} \gets \{f_k\}_{k=0}^{N-2}$
-%		\State $\{w_k\}_{k=2}^{N} \gets \{w_k\}_{k=2}^{N} - \{f_k\}_{k=0}^{N-2} $
-%        \ElsIf{ space = $\N{V}_N$}	                
-%		\State $\{w_k\}_{k=0}^{N-4} \gets \{f_k\}_{k=0}^{N-4}$
-%		\For{$k=0$ \textbf{to} $N-4$}
-%		\State $w_{k+2} \gets w_{k+2} - \frac{2(k+2)}{k+3} f_k$
-%		\EndFor
-%		\For{$k=0$ \textbf{to} $N-4$}
-%		\State $w_{k+4} \gets w_{k+4} + \frac{k+1}{k+3} f_k$
-%		\EndFor
-%        \EndIf
-%        \State $\{{w}_k\}_{k=0}^{N}$ = inverseChebTransform($\{w_k\}_{k=0}^N$, points)
-%		\State \Return $\{{w}_k\}_{k=0}^{N}$
-%		\EndFunction
-%	\end{algorithmic}
-%\end{algorithm}
+
+\SetKwFunction{inverseChebTransform}{inverseChebTransform}
+\SetKwFunction{inverseShenTransform}{inverseShenTransform}
+\begin{algorithm}
+	\caption{Inverse transforms for all spaces $V_N, \D{V}_N, \N{V}_N$. 
+		Here "dct" is the discrete cosine transform from SciPy.\label{alg:ifst}}
+		\Fn {\inverseChebTransform{$\{f\}_{j=0}^N$, points}}{
+        \Output{$\{y_k\}_{k=0}^{N}$}    
+        \If{points = "Gauss-Chebyshev"}{
+		    $\{y_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, \text{type=3}, 
+		    \text{axis=0})$ \;
+		    $\{y_k\}_{k=0}^{N} \gets \frac{1}{2}\{y_k\}_{k=0}^{N} + 
+		    \frac{1}{2}f_0$ \;
+		}
+        \ElseIf{ points = "Gauss-Lobatto"}{
+	        $\{y_k\}_{k=0}^{N} \gets \text{dct}(\bm{f}, \text{type=1}, 
+	        \text{axis=0})$ \;
+	        $\{y_k\}_{k=0}^{N} \gets \frac{1}{2}\{y_k\}_{k=0}^{N} + 
+	        \frac{1}{2}f_0$ \;
+	        \For{$k=0$ \KwTo $N$}{
+	         $y_k \gets y_k + \frac{(-1)^k}{2} f_N$ \;
+    	    }
+	    }
+	    \Return{$\{y_k\}_{k=0}^{N}$}
+    }
+	    
+	    \Fn{\inverseShenTransform{$\{f_j\}_{j=0}^{N}$, points, space}}{
+		\Output{$\{y_k\}_{k=0}^{N}$}
+        $\{z_k\}_{k=0}^{N} \gets 0$ \;
+		\If{ space = $\D{V}_N$}{
+		$\{z_k\}_{k=0}^{N-2} \gets \{f_k\}_{k=0}^{N-2}$ \;
+		$\{z_k\}_{k=2}^{N} \gets \{z_k\}_{k=2}^{N} - \{f_k\}_{k=0}^{N-2} $ \;
+        }
+        \ElseIf{ space = $\N{V}_N$}{	       
+		$\{z_k\}_{k=0}^{N-4} \gets \{f_k\}_{k=0}^{N-4}$ \;
+		\For{$k=0$ \KwTo $N-4$}{
+		$z_{k+2} \gets z_{k+2} - \frac{2(k+2)}{k+3} f_k$ \;
+	    }
+		\For{$k=0$ \KwTo $N-4$}{
+		$z_{k+4} \gets z_{k+4} + \frac{k+1}{k+3} f_k$ \;
+	    }
+        }
+        $\{y_k\}_{k=0}^{N} \gets $ inverseChebTransform($\{z_k\}_{k=0}^N$, 
+        points) 
+        \;
+		\Return $\{y_k\}_{k=0}^{N}$ \;
+    }
+\end{algorithm}
 
 \subsection*{Matrices}
 
