@@ -82,6 +82,7 @@
   Publisher                = {Springer-Verlag New York-Heidelberg-Berlin},
   Year                     = {1988},
 
+  Doi                      = {10.1007/978-3-642-84108-8},
   Owner                    = {mikael},
   Timestamp                = {2015.01.20}
 }
@@ -154,7 +155,7 @@
 }
 
 @Article{libfftw,
-  Title                    = {The Design and Implementation of FFTW3},
+  Title                    = {{The Design and Implementation of FFTW3}},
   Author                   = {M. Frigo and S. G. Johnson},
   Journal                  = {Proceedings of the IEEE},
   Year                     = {2005},
@@ -227,10 +228,29 @@
 }
 
 @Article{Kim87,
-  Title                    = {Turbulence statistics in fully developed channel flow at low Reynolds number},
-  Author                   = {John Kim and Parviz Moin and Robert Moser},
-  Journal                  = {J. Fluid Mech},
-  Year                     = {1987}
+  Title                    = {{Turbulence statistics in fully developed channel flow at low Reynolds number}},
+  Author                   = {{Kim}, J. and {Moin}, P. and {Moser}, R.},
+  Journal                  = {Journal of Fluid Mechanics},
+  Year                     = {1987},
+
+  Month                    = apr,
+  Pages                    = {133-166},
+  Volume                   = {177},
+
+  Adsnote                  = {Provided by the SAO/NASA Astrophysics Data System},
+  Adsurl                   = {http://adsabs.harvard.edu/abs/1987JFM...177..133K},
+  Doi                      = {10.1017/S0022112087000892},
+  Keywords                 = {Channel Flow, Computational Fluid Dynamics, Low Reynolds Number, Turbulent Flow, Energy Spectra, Incompressible Flow, Navier-Stokes Equation, Numerical Flow Visualization, Reynolds Stress, Vorticity}
+}
+
+@InProceedings{kleiser80,
+  Title                    = {{Treatment of Incompressibility and Boundary Conditions in 3-D Numerical Spectral SSimulation of Plane Channel Flows}},
+  Author                   = {Kleiser, L. and Schumann, U.},
+  Booktitle                = {3rd GAMM Conf. Numerical Methods in Fluid Mechanics},
+  Year                     = {1980},
+
+  Owner                    = {mikael},
+  Timestamp                = {2016.12.20}
 }
 
 @Book{kopriva09,
@@ -334,6 +354,56 @@
   Url                      = {http://scitation.aip.org/content/aip/journal/pof2/26/1/10.1063/1.4862918}
 }
 
+@Article{marusic2010,
+  Title                    = {Wall-bounded turbulent flows at high Reynolds numbers: Recent advances and key issues},
+  Author                   = {Marusic, Ivan and McKeon, BJ and Monkewitz, PA and Nagib, HM and Smits, AJ and Sreenivasan, KR},
+  Journal                  = {Physics of Fluids (1994-present)},
+  Year                     = {2010},
+  Number                   = {6},
+  Pages                    = {065103},
+  Volume                   = {22},
+
+  Publisher                = {AIP Publishing}
+}
+
+@Article{Moin80,
+  Title                    = {On the numerical solution of time-dependent viscous incompressible fluid flows involving solid boundaries},
+  Author                   = {Moin, P and Kim, J.},
+  Journal                  = {Journal of Computational Physics},
+  Year                     = {1980},
+  Number                   = {3},
+  Pages                    = {381 - 392},
+  Volume                   = {35},
+
+  Abstract                 = {An inherent numerical problem associated with the fully explicit pseudospectral numerical simulation of the incompressible Navier-Stokes equation for viscous flows with no-slip walls is described. A semi-implicit scheme which circumvents this numerical difficulty is presented. In this algorithm the equation of continuity rather than the Poisson equation for pressure is solved directly. Pseudospectral formulation of the channel flow problem using Fourier series and Chebyshev polynominals expansions is given for this scheme. An example demonstrating the applicability of the method is given. },
+  Bdsk-url-1               = {http://www.sciencedirect.com/science/article/pii/0021999180900765},
+  Bdsk-url-2               = {http://dx.doi.org/10.1016/0021-9991(80)90076-5},
+  Doi                      = {http://dx.doi.org/10.1016/0021-9991(80)90076-5},
+  ISSN                     = {0021-9991},
+  Url                      = {http://www.sciencedirect.com/science/article/pii/0021999180900765}
+}
+
+@Article{moin98,
+  Title                    = {DIRECT NUMERICAL SIMULATION: A Tool in Turbulence Research},
+  Author                   = {Parviz Moin and and Krishnan Mahesh},
+  Journal                  = {Annual Review of Fluid Mechanics},
+  Year                     = {1998},
+  Number                   = {1},
+  Pages                    = {539-578},
+  Volume                   = {30},
+
+  Abstract                 = { ▪ Abstract We review the direct numerical simulation (DNS) of turbulent flows. We stress that DNS is a research tool, and not a brute-force solution to the Navier-Stokes equations for engineering problems. The wide range of scales in turbulent flows requires that care be taken in their numerical solution. We discuss related numerical issues such as boundary conditions and spatial and temporal discretization. Significant insight into turbulence physics has been gained from DNS of certain idealized flows that cannot be easily attained in the laboratory. We discuss some examples. Further, we illustrate the complementary nature of experiments and computations in turbulence research. Examples are provided where DNS data has been used to evaluate measurement accuracy. Finally, we consider how DNS has impacted turbulence modeling and provided further insight into the structure of turbulent boundary layers. },
+  Doi                      = {10.1146/annurev.fluid.30.1.539},
+  Eprint                   = { 
+ http://dx.doi.org/10.1146/annurev.fluid.30.1.539
+ 
+},
+  Url                      = { 
+ http://dx.doi.org/10.1146/annurev.fluid.30.1.539
+ 
+}
+}
+
 @Article{gpaw05,
   Title                    = {Real-space grid implementation of the projector augmented wave method},
   Author                   = {J. J. Mortensen and L. B. Hansen and K. W. Jacobsen},
@@ -379,12 +449,22 @@
   Url                      = {http://www.sciencedirect.com/science/article/pii/S0010465514003786}
 }
 
-@Article{,
-  Title                    = {On the Elimination of Aliasing in Finite-Difference Schemes by Filtering High-Wavenumber Components},
-  Author                   = {Orzag, S. A.},
+@Article{Orszag_1971,
+  Title                    = {Accurate solution of the Orr–Sommerfeld stability equation},
+  Author                   = {Orszag, Steven A.},
+  Journal                  = {Journal of Fluid Mechanics},
+  Year                     = {1971},
 
-  Owner                    = {mikael},
-  Timestamp                = {2016.12.06}
+  Month                    = {Dec},
+  Number                   = {4},
+  Pages                    = {689–703},
+  Volume                   = {50},
+
+  Abstractnote             = {The Orr-Sommerfeld equation is solved numerically using expansions in Chebyshev polynomials and the QR matrix eigenvalue algorithm. It is shown that results of great accuracy are obtained very economically. The method is applied to the stability of plane Poiseuille flow; it is found that the critical Reynolds number is 5772·22. It is explained why expansions in Chebyshev polynomials are better suited to the solution of hydrodynamic stability problems than expansions in other, seemingly more relevant, sets of orthogonal functions.},
+  Doi                      = {10.1017/S0022112071002842},
+  Place                    = {Cambridge, UK},
+  Publisher                = {Cambridge University Press},
+  Url                      = {https://www.cambridge.org/core/article/div-class-title-accurate-solution-of-the-orr-sommerfeld-stability-equation-div/39D4D85F9939CC4E2F4A7EF127DFB046}
 }
 
 @Article{orzag71,
@@ -468,6 +548,15 @@
   Doi                      = {10.1137/0915089},
   Eprint                   = {http://dx.doi.org/10.1137/0915089},
   Url                      = {http://dx.doi.org/10.1137/0915089}
+}
+
+@Misc{Shen11,
+  Title                    = {Spectral Methods: Algorithms, Analysis and Applications},
+
+  Author                   = {Shen, Jie and Tang, Tao and Wang, Li-Lian},
+  Year                     = {2011},
+
+  Publisher                = {Berlin: Springer-Verlag}
 }
 
 @Book{stewart98,
@@ -576,5 +665,29 @@
 
   Owner                    = {mikael},
   Timestamp                = {2015.02.12}
+}
+
+@Electronic{cython,
+  Title                    = {Cython},
+  Url                      = {www.cython.org},
+  Year                     = {2016},
+
+  Owner                    = {mikael}
+}
+
+@Electronic{python,
+  Title                    = {Python},
+  Url                      = {www.python.org},
+  Year                     = {2016},
+
+  Owner                    = {mikael}
+}
+
+@Electronic{spectralDNS,
+  Title                    = {{spectralDNS}},
+  Url                      = {https://github.com/spectralDNS},
+  Year                     = {2016},
+
+  Owner                    = {mikael}
 }
 
