@@ -12,6 +12,8 @@
 \usepackage[ruled,vlined]{algorithm2e}
 %\usepackage{algpseudocode}
 
+\usepackage{tikz}
+\usepackage{pgfplots}
 
 %\newcommand{\mmo}[1]{\emph{#1}}
 
@@ -1480,5 +1482,30 @@ $\{B_{kj}\}_{k,j=0}^{N_x} = \{B_{jk}\}_{j,k=0}^{N_x}$ & $(T_k, T_j)_w$ & $\frac{
 
 	\end{tabular}
 \end{table}
+
+
+\begin{figure}[t]
+\begin{center}
+%
+\begin{tikzpicture}
+\begin{axis}[
+  xlabel=$x$,
+  ylabel=$\bar{v}^{+}$,
+  legend cell align=left,
+  legend pos=south east,
+  legend style={fill=none, draw=none},
+  ]
+  \addplot[thick, color=blue, mark=o] table [x=x, y=mine]{tikz_fig.txt};
+\addlegendentry{Current}
+% not compat
+\addplot[color=blue, mark=square] table [x=x, y=their]{tikz_fig.txt};
+  \addlegendentry{Hoyas \& Jim{\' e}nez}
+\end{axis}
+\end{tikzpicture}
+%
+\caption{Tikz figire.}
+\label{fig:tikz_fig}
+\end{center}
+\end{figure}
 
 \end{document}
