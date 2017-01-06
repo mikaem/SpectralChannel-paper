@@ -1035,13 +1035,38 @@ performed with the 2/3-rule \cite{Orzag71}.
 
 For the ultimate test of a fully turbulent flow, we use the turbulent Reynolds number $Re_{\tau}=2000$, which has been simulated previously by Hoyas and Jim\'{e}nez \cite{hoyas06}, Lozano and Jim\'{e}nez \cite{Lozano2014} and Lee and Moser \cite{leemoser15}. Lozano and Jim\'{e}nez showed that a small box  of size $2 \times 2\pi \times \pi$ in $x, y,$ and $z$ directions, respectively, could be simulated with $633 \times 1024 \times 1024$ collocation points (compact finite differences in wall-normal direction, Fourier in periodic) in order to capture all relevant one-point statistics found in much larger boxes. We use the same small computational box, with resolution of $512 \times 1024 \times 1024$, and expect the superior resolution properties of spectral methods to work in our favor. Simulations were run on the Shaheen II supercomputer at KAUST, using 512 cores. With a time step of $2\cdot10^{-5}$, the solver used approximately 1 second per time step. After reaching steady state, statistics were sampled for 100,000 time steps (enough to converge first order statistics), and the average velocity is shown in Figure \ref{fig:U_mean} in a dashed line, alongside the results obtained by Hoyas and Jim\'{e}nez \cite{hoyas06} in a dotted line. The difference is hardly visible, showing that the fully spectral Shen-Fourier solver is reliable and robust for $Re_{\tau} = 2000$. Furthermore, the results presented in Tables \ref{tab:roundoff}, \ref{tab:timings} and \ref{tab:timings_solver} indicate that the solver is more than likely to be reliable for even higher Reynolds numbers and larger scales.
 
+%\begin{figure}[t]
+%	\begin{center}
+%	\includegraphics[width=0.9\textwidth]{U_Re2000.eps}
+%	\caption{Average velocity $\D{v}^+ = \D{v}/u_{\tau}$ in $y$-direction, for $Re_{\tau}=2000$. Our results (dashed) are compared with those of Hoyas and Jim\'{e}nez \cite{hoyas06} (dotted).}
+%	\label{fig:U_mean}
+%	\end{center}
+%\end{figure}
 \begin{figure}[t]
 	\begin{center}
-	\includegraphics[width=0.9\textwidth]{U_Re2000.eps}
-	\caption{Average velocity $\D{v}^+ = \D{v}/u_{\tau}$ in $y$-direction, for $Re_{\tau}=2000$. Our results (dashed) are compared with those of Hoyas and Jim\'{e}nez \cite{hoyas06} (dotted).}
-	\label{fig:U_mean}
+		%
+		\begin{tikzpicture}[xscale=1.2]
+		\begin{axis}[
+		xlabel=$x$,
+		ylabel=$\bar{v}^{+}$,
+		legend cell align=left,
+		legend pos=south east,
+		legend style={fill=none, draw=none},
+		]
+		\addplot[dashed, color=blue] table [x=x, y=u]{my_data.txt};
+		\addlegendentry{Current}
+		% not compat
+		\addplot[dotted, color=blue] table [x=x, y=u]{hoyas_data5.txt};
+		\addlegendentry{Hoyas \& Jim{\' e}nez}
+		\end{axis}
+		\end{tikzpicture}
+		%
+		\caption{Average velocity $\D{v}^+ = \D{v}/u_{\tau}$ in $y$-direction, for $Re_{\tau}=2000$. Our results (dashed) are compared with those of Hoyas and Jim\'{e}nez \cite{hoyas06} (dotted).}
+		\label{fig:U_mean2}
 	\end{center}
 \end{figure}
+
+
 
 \section{Conclusions}
 Spectral Navier Stokes solvers are attractive for their accuracy and resolution 
@@ -1484,28 +1509,5 @@ $\{B_{kj}\}_{k,j=0}^{N_x} = \{B_{jk}\}_{j,k=0}^{N_x}$ & $(T_k, T_j)_w$ & $\frac{
 \end{table}
 
 
-\begin{figure}[t]
-\begin{center}
-%
-\begin{tikzpicture}
-\begin{axis}[
-  xlabel=$x$,
-  ylabel=$\bar{v}^{+}$,
-  legend cell align=left,
-  legend pos=south east,
-  legend style={fill=none, draw=none},
-  ]
-  \addplot[thick, color=blue, mark=o] table [x=x, y=mine]{tikz_fig.txt};
-\addlegendentry{Current}
-% not compat
-\addplot[color=blue, mark=square] table [x=x, y=their]{tikz_fig.txt};
-  \addlegendentry{Hoyas \& Jim{\' e}nez}
-\end{axis}
-\end{tikzpicture}
-%
-\caption{Tikz figire.}
-\label{fig:tikz_fig}
-\end{center}
-\end{figure}
 
 \end{document}
