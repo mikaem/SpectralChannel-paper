@@ -16,6 +16,10 @@
 \usepackage{pgfplots}
 
 %\newcommand{\mmo}[1]{\emph{#1}}
+\interfootnotelinepenalty=10000
+\newcommand*{\Scale}[2][4]{\scalebox{#1}{$#2$}}%
+\newcommand{\half}{\Scale[0.6]{\tfrac{1}{2}}}
+\newcommand{\nhalf}{\Scale[0.6]{-\tfrac{1}{2}}}
 
 %\renewcommand{\ttdefault}{pcr}
 \usepackage[T1]{fontenc}
@@ -48,7 +52,7 @@ float=!htpb]{#2}}
 \address[mmo]{Department of Mathematics, Division of Mechanics, University of Oslo}
 
 \begin{abstract}
-A fully (pseudo-)spectral solver for direct numerical simulations of large-scale turbulent channel flows is described. The solver utilizes the Chebyshev base functions suggested by J. Shen [SIAM J. Sci. Comput., 16, 1, 1995], that lead to stable and robust numerical schemes, even at very large scale. New algorithms for direct solution of the linear systems are devised, and we show that the solver is accurate and applicable for very high Reynolds numbers. Specifically, the solver is shown to reproduce the first order statistics of Hoyas and Jim\'{e}nez [Phys. Fluids, 18(1), 2006], for a channel flow at $Re_{\tau}=2000$, which is higher than has been reported by a fully spectral method before. The solver is available through the open source project spectralDNS [https://github.com/spectralDNS].
+A fully (pseudo-)spectral solver for direct numerical simulations of large-scale turbulent channel flows is described. The solver utilizes the Chebyshev base functions suggested by J. Shen [SIAM J. Sci. Comput., 16, 1, 1995], that lead to stable and robust numerical schemes, even at very large scale. New and fast algorithms for the direct solution of the linear systems are devised, and algorithms and matrices for all required scalar products and transforms are provided. We validate the solver for very high Reynolds numbers. Specifically, the solver is shown to reproduce the first order statistics of Hoyas and Jim\'{e}nez [Phys. Fluids, 18(1), 2006], for a channel flow at $Re_{\tau}=2000$. The solver is available through the open source project spectralDNS [https://github.com/spectralDNS].
 \end{abstract}
 \begin{keyword}
 DNS \sep Fourier \sep Chebyshev \sep Biharmonic \sep Helmholtz \sep turbulence
@@ -63,37 +67,63 @@ The most commonly known DNS use simple geometries, because turbulence physics ma
 In this paper we will consider the pressure driven turbulent channel flow, where there are two periodic directions that can be handled with Fourier expansions, and a non-periodic wall-normal direction that requires a different type of discretization. There are many challenges associated with this inhomogeneity not faced by the pure Fourier solvers, but the first problem at hand is the discretization. Early DNS channel solvers, see, e.g., \cite{Moin80, Kleiser80, Kim87}, typically used a Chebyshev expansion for the wall-normal direction and, as such, were still able to obtain spectral accuracy in all three spatial directions. A Chebyshev-tau technique, that utilize the recurrence relations of the Chebyshev polynomials, was used to approximate derivatives, and the coefficient matrices that appeared (tridiagonal) could then be inverted directly and efficiently \cite{Kim87}. A downside to the Chebyshev-tau method is usually quoted \cite{canuto1988} as numerical instability and roundoff errors, caused by the recurrence relation, and severe condition numbers of the coefficient matrices. For Chebyshev-tau methods the condition numbers have been reported to grow with size as $\mathcal{O}(N^8)$, for a discretization using $N$ points in the wall-normal direction. Discouraged by these numbers, all major recent channel flow simulations have found other, non-spectral, ways of discretizing the non-periodic direction. 
 
 
-The largest known channel simulations to date have been performed by Lee and Moser \cite{leemoser15}, where, for $Re_{\tau}\approx 5200$, they used a computational box of resolution $[10240 \times 1530 \times 7680]$ for the streamwise, wall-normal and spanwise directions, respectively. Lee and Moser used seventh-order B-splines for the wall-normal direction. Other simulations of similar magnitude have been performed by Hoyas and Jim\'{e}nez \cite{hoyas06, hoyas08}, Lozano-Duran and Jim\'{e}nez \cite{Lozano2014} and Bernardini, Pirozzoli and Orlandi \cite{bernardini2014}. Bernardini et al. used second-order finite differences throughout. The Jim\'{e}nez group used dealiased Fourier in the two periodic directions and seventh-order compact finite differences, with fourth-order consistency and extended spectral-like resolution \cite{Lele92}, for the wall-normal direction. The solver by Jim\'{e}nez' group is reported to switch from Chebyshev to finite differences if the resolution is above a certain threshold \cite{hoyas08} (reached around $Re_{\tau}=1000$). In other words, they attempt to use fully spectral methods for as large $Re_{\tau}$ as possible. As previously mentioned, spectral methods are attractive for their accuracy and resolution properties, that are superior to those of any finite difference or spline method. As such, it is desirable to develop fully spectral solvers that can be used for large-scale turbulence simulations.
+The largest known channel simulations to date have been performed by Lee and Moser \cite{leemoser15}, where, for $Re_{\tau}\approx 5200$, they used a computational box of resolution $[10240 \times 1530 \times 7680]$ for the streamwise, wall-normal and spanwise directions, respectively. Lee and Moser used seventh-order B-splines for the wall-normal direction. Other simulations of similar magnitude have been performed by Hoyas and Jim\'{e}nez \cite{hoyas06, hoyas08}, Lozano-Duran and Jim\'{e}nez \cite{Lozano2014} and Bernardini, Pirozzoli and Orlandi \cite{bernardini2014}. Bernardini et al. used second-order finite differences throughout. The Jim\'{e}nez group used dealiased Fourier in the two periodic directions and seventh-order compact finite differences, with fourth-order consistency and extended spectral-like resolution \cite{Lele92}, for the wall-normal direction. The solver by Jim\'{e}nez' group is reported to switch from Chebyshev to finite differences if the resolution is above a certain threshold \cite{hoyas08} (reached around $Re_{\tau}=1000$). In other words, they attempt to use a fully spectral discretization for as large $Re_{\tau}$ as possible. As previously mentioned, spectral methods are attractive for their accuracy and resolution properties, that are superior to those of any finite difference or spline method. As such, it is desirable to develop fully spectral solvers that can be used for large-scale turbulence simulations.
 
-In his seminal papers \cite{Shen94,Shen95}, Jie Shen describe how to construct Legendre and Chebyshev basis functions that lead to sparse matrices, susceptible to very fast direct solvers. To the authors knowledge, the bases have not been used for large-scale channel flow simulations, and algorithms for the required direct solvers have not, until now, been devised. Shen's bases have been used for the Navier Stokes equations before, though. Bouchon et.al.  \cite{Bouchon01} describe a spectral-Galerkin formulation very similar to the one used in this paper. However, they choose the Legendre basis over Chebyshev, neglecting the higher cost of transforms and arguing instead for the simpler structure of the matrices and the lack of weight functions for the Legendre basis. The cost of the Legendre transforms, though, makes the basis unsuitable for larger scales, and the simulations performed in \cite{Bouchon01} were rather small.
+In his seminal papers \cite{Shen94,Shen95}, Jie Shen describe how to construct Legendre and Chebyshev basis functions that lead to sparse matrices, susceptible to very fast direct solvers. To the author's knowledge, the bases have not been used for large-scale channel flow simulations, and algorithms for the required direct solvers have not, until now, been devised. Shen's bases have been used for the Navier Stokes equations before, though. Bouchon et.al.  \cite{Bouchon01} describe a spectral-Galerkin formulation very similar to the one used in this paper. However, they choose the Legendre basis over Chebyshev, which has some consequences when aiming for large-scale, because fast transforms are required in moving from spectral to physical space, and back again. For Fourier and Chebyshev bases, the Fast Fourier Transforms (FFTs of $\mathcal{O} (N \log N)$) apply directly. However, until recently, the discrete Legendre transforms required $\mathcal{O}(N^2)$ operations. This scaling has now been improved by several authors, as recently reviewed by Hale and Townsend \cite{Hale14, Hale2015}, but the methods are still not quite on par with the FFTs. For example, Hale and Townsend describe an $\mathcal{O}(N (\log N)^2 / \log \log N)$ algorithm, using intermediate fast transforms from Legendre to Chebyshev coefficients.
 
-In this paper we will describe and assess a spectral-Galerkin channel flow solver based on Fourier and Shen's Chebyshev basis \cite{Shen95}. We will give a proper description of the theoretical basis in Sec~\ref{sec:prelim}, the discretization of Navier-Stokes equations in Sec~\ref{sec:discretizationNS} and we will describe necessary algorithms, including a new fast direct solver for the biharmonic problem that arise, in Sec~\ref{sec:implementation}. We will finally show in, Sec~\ref{sec:verification}, that roundoff is not a major issue, and that the Shen-Fourier spectral-Galerkin method is in deed applicable to large-scale simulations, larger than what has been reported for fully spectral channel simulations before. The solver has been implemented in the open source code spectralDNS \cite{spectralDNS}, where the bulk of the solver is written in high-level Python \cite{python}, with critical parts of the code migrated to Cython \cite{cython} for efficiency.
+In this paper we will describe and assess a spectral-Galerkin channel flow solver based on Fourier and Shen's Chebyshev basis \cite{Shen95}. The solver will consist of parts that scale at worst as $N \log N$, for a 1D problem of size $N$, and as such as $N^3 \log N$ for a 3D box of size $N^3$. We will give a proper description of the theoretical basis in Sec~\ref{sec:prelim}, the discretization of Navier-Stokes equations in Sec~\ref{sec:discretizationNS}, and we will describe necessary algorithms, including a new fast direct solver for the biharmonic problem that arise, in Sec~\ref{sec:implementation}. We will finally show, in Sec~\ref{sec:verification}, that roundoff is not a major issue, and that the Shen-Fourier spectral-Galerkin method is in deed applicable to large-scale simulations. The solver has been implemented in the open source code spectralDNS \cite{spectralDNS}, where the bulk of the code is written in high-level Python \cite{python}, with critical parts migrated to Cython \cite{cython} for efficiency.
 
-\section{Preliminaries}
+\section{Basis functions and fast transforms}
 \label{sec:prelim}
 The Navier-Stokes equations, used to describe turbulent flow in a doubly 
 periodic channel, can be written in rotational form as
 \begin{align}
  \frac{\partial \bm{u}}{\partial t}   &= \bm{\mathcal{H}} + \nu 
- \nabla^2 \bm{u} - \nabla{P}, \notag \\
+ \nabla^2 \bm{u} - \nabla{\tilde{p}}, \notag \\
  \nabla \cdot \bm{u} &= 0, \label{eq:NS}
 \end{align}
 where $\bm{u}(\bm{x}, t)=(u, v, w)$ is the velocity vector, $\bm{x}=(x, y, z)$ 
 and $t$ are position and time, and the nonlinearity $\bm{\mathcal{H}}(\bm{x}, t) = (\mathcal{H}_x, \mathcal{H}_y, \mathcal{H}_z) = \bm{u}\times 
 \bm{\omega}$, where $\bm{\omega} = \nabla \times \bm{u}$.  The constant dynamic viscosity is denoted as $\nu$ 
-and $P(\bm{x}, t)$ is a pressure modified to account for both the driving force, $\beta(t)$, and the kinetic energy, i.e., $P = p + \bm{u} \cdot \bm{u}/2 + \beta y$, where $p$ is the instantaneous 
+and $\tilde{p}(\bm{x}, t)$ is a pressure modified to account for both the driving force, $\beta(t)$, and the kinetic energy, i.e., $\tilde{p} = p + \bm{u} \cdot \bm{u}/2 + \beta y$, where $p$ is the instantaneous 
 pressure normalized by a constant density. The computational domain is 
 $\Omega=[-1, 1]\times [0, L_y] \times [0, L_z]$, with channel walls 
 located at $x=\pm 1$, such that no-slip applies at 
 $ \bm{u}(\pm 1, y, z, t) = 0$. The walls are spanning 
 the $y-z$ plane and the equations are periodic in the $y$ and $z$ directions with periodic lengths $L_y$ and $L_z$, respectively.
 
+The domain $\Omega$ is discretized using $N = (N_x, N_y, N_z)$ intervals, where the two periodic directions use uniform intervals. The computational mesh is given as
+\begin{align}
+X_N = \Big\{ \bm{x} \in \mathbb{R}^3 | &(x_i, y_j, z_k) = \left( h(i), \frac{jL_y}{N_y}, \frac{kL_z}{N_z} \right), \text{where} \notag \\
+&(i, j, k) \in [0, 1, \ldots, N_x] \times [0, 1, \ldots, N_y-1] \times [0, 1, \ldots, N_z-1] \Big\}, \label{eq:Xn}
+\end{align}
+where $x_i = h(i)$ represents
+\begin{equation}
+h(i) = \begin{cases}
+\cos \left(\frac{i \pi }{N_x} \right) \, &\forall \, i=0,1, \ldots, N_x \quad  \text{for Chebyshev-Gauss-Lobatto points}, \\
+\cos \left(\frac{(2i +1)\pi}{2N_x+2} \right) \, &\forall \, i=0,1, \ldots, N_x \quad  \text{for Chebyshev-Gauss points}. \\
+\end{cases}
+\end{equation}
+
+The spectral-Galerkin method makes use of a three-dimensional scalar product in the weighted $L^2_{\sigma}(\Omega)$ space, that is defined as
+\begin{align}
+\left<u, \upsilon \right>_{\sigma} &= \int_{\Omega} {u(\bm{x}) \upsilon^*(\bm{x})} \sigma(\bm{x})\,dxdydz, 
+\end{align}
+where $\upsilon^*$ is the complex conjugate of the test function $\upsilon$ and the weights $\sigma$ are unity for 
+periodic directions and  $\sigma(x)=1/\sqrt{1-x^2}$ for the inhomogeneous direction. In 
+this work we will make use of the discrete weighted $l^2_{\sigma}(\Omega)$ space, 
+where quadrature is employed for the integration. As such, we redefine the scalar product as
+\begin{equation}
+\left<u, \upsilon\right>_{\sigma} = \sum_{i=0}^{N_x}\sum_{j=0}^{N_y-1} \sum_{k=0}^{N_z-1} u(x_i, y_j, z_k) \upsilon^*(x_i, y_j, z_k) \sigma(x_i), \label{eq:quadrature}
+\end{equation}
+that is more amendable to the fast transforms that will be defined later in this section.
+
 The Navier Stokes equations are discretized using Fourier basis functions for the periodic directions, and a combination of Chebyshev polynomials in the wall-normal direction. Three different sets of basis functions and function spaces are relevant for the wall-normal direction
 \begin{align}
-&  \phi_k(x) = T_k(x), & V_{N_x} &= \text{span}\{\phi_k\}_{k=0}^{N_x}, \label{eq:Tk}\\
-& \D{\phi}_k(x) = T_k(x) - T_{k+2}(x), & \D{V}_{N_x} &= \text{span} \{ \D{\phi}_k\}_{k=0}^{N_x-2}, \label{eq:phiD}\\
+&  \phi_k(x) = T_k(x), & W_{N_x} &= \text{span}\{\phi_k\}_{k=0}^{N_x}, \label{eq:Tk}\\
+& \D{\phi}_k(x) = T_k(x) - T_{k+2}(x), & \D{W}_{N_x} &= \text{span} \{ \D{\phi}_k\}_{k=0}^{N_x-2}, \label{eq:phiD}\\
 & \N{\phi}_k(x) = T_k(x) - \frac{2(k+2)}{k+3} T_{k+2}(x) + 
-\frac{k+1}{k+3} T_{k+4}(x), & \N{V}_{N_x} &= \text{span} \{\N{\phi}_k\}_{k=0}^{N_x-4}, \label{eq:phiN} 
+\frac{k+1}{k+3} T_{k+4}(x), & \N{W}_{N_x} &= \text{span} \{\N{\phi}_k\}_{k=0}^{N_x-4}, \label{eq:phiN} 
 \end{align}
 where $T_k(x)$ is the $k$'th degree Chebyshev polynomial of the first kind. The 
 basis functions and function spaces in (\ref{eq:phiD}) and (\ref{eq:phiN}) were 
@@ -108,36 +138,29 @@ and $z$ directions, can now be defined as
   \D{\psi}_{\bm{k}}(\bm{x}) = \D{\phi}_{l}(x)e^{ \imath(\underline{m} y + \underline{n} z)}, \quad \D{V}_N &= \text{span} \{ \D{\psi}_{\bm{k}}(\bm{x}):\, \bm{k} \in \D{K}_N  \}, \\
   \N{\psi}_{\bm{k}}(\bm{x}) = \N{\phi}_{l}(x)e^{ \imath(\underline{m} y + \underline{n} z)}, \quad \N{V}_N &= \text{span} \{ \N{\psi}_{\bm{k}}(\bm{x}):\, \bm{k} \in \N{K}_N  \},
 \end{align}
-where $\imath=\sqrt{-1}$ and 
+where $\imath=\sqrt{-1}$. 
+%\begin{align}
+%K_N = \Big\{&\bm{k} \in \mathbb{Z}\times\mathbb{R}^2 / (l, \underline{m}, \underline{n}) \in \left( l, \frac{2 \pi m}{L_y}, \frac{2 \pi n}{L_z} \right), \text{where} \notag \\
+% &(l, m, n) \in  [0,1, \ldots, N_x] \times  [-\frac{N_y}{2},-\frac{N_y}{2}+1,\ldots, 
+% \frac{N_y}{2}-1] \times [-\frac{N_z}{2},-\frac{N_z}{2},+1,\ldots, \frac{N_z}{2}-1] \Big\} 
+% \label{eq:wavenumbermesh}
+%\end{align}
+%is the wavenumber mesh for $V_N$. The other two wavenumber meshes $\D{K}_N$ and 
+%$\N{K}_N$ are both equal to $K_N$ except from in index $l$ that 
+%ranges $[0, 1, \ldots, N_x-2]$ and $[0, 1, \ldots, N_x-4]$ for $\D{K}_N$ 
+%and $\N{K}_N$ respectively, see (\ref{eq:phiD}) and (\ref{eq:phiN}). We use 
+%notation $K^p(m, n)=K_N(0, m, n)$ when referring to only the two periodic 
+%dimensions of $K_N$. Likewise, ${K}^x(l)={K}_N(l, 0, 0), \D{K}^x(l)=\D{K}_N(l, 0, 0)$ and $\N{K}^x(l)=\N{K}_N(l, 0, 0)$ refer to the wavenumbers, for the different bases, in the wall-normal direction.
+The wavenumbermesh, $K_N$, for space $V_{N}$, is defined by the Cartesian product of wavenumbers from the two periodic and the inhomogeneous wall-normal direction: $K_N(l,m,n)= K^x(l) \times K^p(m,n)$, where
 \begin{align}
-K_N = \Big\{&\bm{k} \in \mathcal{Z}\times\mathcal{R}^2 / (l, \underline{m}, \underline{n}) \in \left( l, \frac{2 \pi m}{L_y}, \frac{2 \pi n}{L_z} \right), \text{where} \notag \\
- &(l, m, n) \in  [0,1, \ldots, N_x] \times  [-\frac{N_y}{2},-\frac{N_y}{2}+1,\ldots, 
- \frac{N_y}{2}-1] \times [-\frac{N_z}{2},-\frac{N_z}{2},+1,\ldots, \frac{N_z}{2}-1] \Big\} 
- \label{eq:wavenumbermesh}
+K^p = \Big\{&(\underline{m}, \underline{n}) = \left(\frac{2 \pi m}{L_y}, \frac{2 \pi n}{L_z} \right), \text{where} \notag \\
+&(m, n) \in  [-\frac{N_y}{2},-\frac{N_y}{2}+1,\ldots, 
+\frac{N_y}{2}-1] \times [-\frac{N_z}{2},-\frac{N_z}{2},+1,\ldots, \frac{N_z}{2}-1] \Big\} 
+\label{eq:wavenumbermeshp}
 \end{align}
-is the wavenumber mesh for $V_N$. The other two wavenumber meshes $\D{K}_N$ and 
-$\N{K}_N$ are both equal to $K_N$ except from in index $l$ that 
-ranges $[0, 1, \ldots, N_x-2]$ and $[0, 1, \ldots, N_x-4]$ for $\D{K}_N$ 
-and $\N{K}_N$ respectively, see (\ref{eq:phiD}) and (\ref{eq:phiN}). We use 
-notation $K^p(m, n)=K_N(0, m, n)$ when referring to only the two periodic 
-dimensions of $K_N$. Likewise, ${K}^x(l)={K}_N(l, 0, 0), \D{K}^x(l)=\D{K}_N(l, 0, 0)$ and $\N{K}^x(l)=\N{K}_N(l, 0, 0)$ refer to the wavenumbers, for the different bases, in the wall-normal direction.
+and $K^x(l) = \{l \in \mathbb{Z} | l=0,1, \ldots, N_x\}$. The two remaining wavenumber meshes, $\D{K}_{N}$ and $\N{K}_{N}$, differ from $K_N$ only in the range of the first index sets, $\D{K}^x$ and $\N{K}^x$, ending in $N_x-2$ and $N_x-4$, respectively (see Eqs. (\ref{eq:phiD}) and (\ref{eq:phiN})). 
 
-The computational mesh in real space can be created using $N = (N_x, N_y, 
-N_z)$ intervals, where the two periodic directions use uniform intervals. The 
-computational mesh is given as
-\begin{align}
-  X_N = \Big\{ \bm{x} \in \mathcal{R}^3/&(x_i, y_j, z_k) \in \left( h(i), \frac{jL_y}{N_y}, \frac{kL_z}{N_z} \right), \text{where} \notag \\
-  &(i, j, k) \in [0, 1, \ldots, N_x] \times [0, 1, \ldots, N_y-1] \times [0, 1, \ldots, N_z-1] \Big\}, \label{eq:Xn}
-\end{align}
-where $x_i = h(i)$ represents
-\begin{equation}
- h(i) = \begin{cases}
-   \cos \left(\frac{i \pi }{N_x} \right) \, &\forall \, i=0,1, \ldots, N_x \quad  \text{for Chebyshev-Gauss-Lobatto points}, \\
-   \cos \left(\frac{(2i +1)\pi}{2N_x+2} \right) \, &\forall \, i=0,1, \ldots, N_x \quad  \text{for Chebyshev-Gauss points}. \\
- \end{cases}
-\end{equation}
-
-For the Navier Stokes equations we look for solutions of the velocity 
+In the spectral-Galerkin method we look for solutions of the velocity 
 components of the form
 \begin{align}
 u(\bm{x}, t) &= \frac{1}{N_yN_z}\sum_{\bm{k} \in \N{K}_N} \hat{u}_{\bm{k}}(t) 
@@ -151,14 +174,14 @@ where $\hat{u}_{\bm{k}}(t) = \hat{u}(l, {m}, {n}, t)$ are the expansion
 coefficients for the velocity component in $x$-direction (and similar for the 
 other two components) and the scaling by $N_y$ and $N_z$ is merely for 
 convenience 
-and compliance with the definition used for the inverse discrete Fourier 
+and compliance with the definition used later for the inverse discrete Fourier 
 transform. Note that from now on we will simply use the notation $\hat{u}$ for 
 $\hat{u}_{\bm{k}}(t)$, when it is possible to simplify without loss of clarity. 
 Likewise we will simply use $u$ for $u(\bm{x}, t)$. 
 
-If the expansion coefficients $\hat{u}$  are known for the entire wavenumber 
-mesh (\ref{eq:wavenumbermesh}), then the expression (\ref{eq:u_solx}) may be 
-evaluated on the mesh (\ref{eq:Xn}) using fast inverse transforms as
+For an efficient method it is crucial to be able to compute $u$ quickly from $\hat{u}$, or, vice versa, to compute $\hat{u}$ quickly from $u$. This may be achieved using the fast transform methods to be defined next.
+Consider first how to compute $u$ from the known expansion coefficients $\hat{u}$. Writing out the summation terms, the expression (\ref{eq:u_solx}) may be 
+evaluated on the entire mesh (\ref{eq:Xn}) as
 \begin{align}
 u(x_i, y_j, z_k, t) &= \underbrace{\frac{1}{N_z}\sum_n 
 \underbrace{\frac{1}{N_y} \sum_m \underbrace{\sum_l 
@@ -167,92 +190,85 @@ u(x_i, y_j, z_k, t) &= \underbrace{\frac{1}{N_z}\sum_n
 y_j}}_{\mathcal{F}_y^{-1}} e^{\imath \underline{n} z_k}}_{\mathcal{F}_z^{-1}} 
 \quad \forall \, \bm{x} \in X_N, \notag \\
   u &= \N{\mathcal{T}}^{-1}(\hat{u}) =  \mathcal{F}^{-1}_z (\mathcal{F}^{-1}_y 
-  (\N{\mathcal{S}}^{-1}_x (\hat{u}))) \quad \forall \, \bm{x} \in X_N.  
+  (\N{\mathcal{S}}^{-1}_x (\hat{u}))),
   \label{eq:ifft} 
 \end{align}
-Here $\N{\mathcal{T}}^{-1}$ is used as short notation for the complete inverse 
-transform, and $\mathcal{F}_{y}^{-1}$ and $\mathcal{F}_{z}^{-1}$ represent inverse discrete
-Fourier transforms along directions $y$ and $z$ respectively. For simplicity, we introduce here a special notation called the inverse 
-\emph{Shen} transform, $\N{\mathcal{S}}^{-1}_x$, that is used to transform coefficients from spectral to physical space in a series expansion that is using either one of the bases in (\ref{eq:Tk}, \ref{eq:phiD}, \ref{eq:phiN}). The inverse Shen transform, $\mathcal{S}^{-1}_x$, is performed along the wall-normal 
+where $\N{\mathcal{T}}^{-1}$ is used as short notation for the complete inverse 
+transform in space $\N{V}_N$, and $\mathcal{F}_{y}^{-1}$ and $\mathcal{F}_{z}^{-1}$ represent inverse discrete
+Fourier transforms along directions $y$ and $z$ respectively. For simplicity, we have introduce here a special notation called the inverse 
+\emph{Shen} transform, ${\mathcal{S}}^{-1}_x$, that is used to transform coefficients from spectral to physical space in a series expansion that is using either one of the bases in (\ref{eq:Tk}, \ref{eq:phiD}, \ref{eq:phiN}). The inverse Shen transform, $\mathcal{S}^{-1}_x$, is performed along the wall-normal 
 $x$ direction, and it may be computed using fast 
 Chebyshev transforms for all the three bases in (\ref{eq:Tk}, \ref{eq:phiD}, 
 \ref{eq:phiN}), see Alg~\ref{alg:ifst} in the Appendix. The transforms are slightly different for the three 
 bases and 
 ${\mathcal{S}}_x^{-1}, \D{\mathcal{S}}_x^{-1}$ and $\N{\mathcal{S}}_x^{-1}$ are used 
-to distinguish between them with obvious notation. 
+to distinguish between them with obvious notation. Similarly, $\D{\mathcal{T}}^{-1}$ and ${\mathcal{T}}^{-1}$ define the inverse transforms for spaces $\D{V}_N$ and $V_N$. Note that a transform in  any one direction is performed over all indices in the other two directions. For example, for the transform in the $x$-direction we have
+\begin{equation}
+u(x_i,m,n,t) = \N{\mathcal{S}}_x^{-1}(\hat{u}(l,m,n,t)) \quad \forall \, i \in [0,1,\ldots, N_x] \text{ and }  m,n \in {K}^p,
+\end{equation}
+and similar for the other two directions.
 
-A three-dimensional scalar product in the weighted $L^2_w(\Omega)$ space is defined as
+Fast transforms may also be used in the scalar product defined in Eq. (\ref{eq:quadrature}), using basis $\N{\psi}_{\bm{k}}$ for $\upsilon$
 \begin{align}
- \left<u, v\right>_w &= \int_{\Omega} {u(\bm{x}) v^*(\bm{x})}w\,dxdydz, 
-\end{align}
-where $v^*$ is the comlex conjugate of $v$ and the weights $w$ are unity for 
-periodic directions and  $w=1/\sqrt{1-x^2}$ for the inhomogeneous direction. In 
-this work we will make use of the discrete weighted $l^2_w(\Omega)$ space, 
-where quadrature is employed for the integration. As such, the scalar product 
-corresponds to sums that may be computed using fast transforms. Using 
-$\N{\psi}_{\bm{k}}$ for $v$ we redefine the scalar product with quadrature as
-\begin{align}
- \left< u, \N{\psi}_{\bm{k}} \right>_w &= h \underbrace{\sum_i 
+ \left< u, \N{\psi}_{\bm{k}} \right>_{\sigma} &= h \underbrace{\sum_i 
  \underbrace{\sum_j \underbrace{\sum_k u(x_i, y_j, z_k, t)  e^{-\imath 
  \underline{n} z_k}}_{\mathcal{F}_n}  e^{-\imath \underline{m} y_j} 
- }_{\mathcal{F}_m} \N{\phi}_{l}(x_i) w_i}_{\N{\mathcal{S}}_l},   \notag \\
+ }_{\mathcal{F}_m} \N{\phi}_{l}(x_i) \sigma(x_i)}_{\N{\mathcal{S}}_l} \quad \forall \, \bm{k} \in \N{K}_N,   \notag \\
   &=  h \N{\mathcal{S}}(u) = h \N{\mathcal{S}}_{l} (\mathcal{F}_{{m}} 
-  (\mathcal{F}_{{n}}(u))) \quad \forall \, \bm{k} \in \N{K}_N. \label{eq:sst1}
+  (\mathcal{F}_{{n}}(u))). \label{eq:sst1}
 \end{align}
-Here $h\N{\mathcal{S}}$ denotes the complete three-dimensional scalar product 
+Here $h\N{\mathcal{S}}(\cdot)$ denotes the complete three-dimensional scalar product 
 and $h = L_yL_zN_y^{-1}N_z^{-1}$ is a constant. $\mathcal{F}_{{n}}$ and 
 $\mathcal{F}_{{m}}$ represent discrete Fourier transforms in $z$- and 
 $y$-directions, respectively, and $\N{\mathcal{S}}_{l}(\cdot) = (\cdot, 
-\N{\phi}_l)_w$ is used to represent the forward \emph{Shen} scalar product in the 
-$x$-direction. The weights, $w_i$, required for the Shen transforms are 
-defined as
+\N{\phi}_l)_{\sigma}$ is used to represent the forward \emph{Shen} scalar product in the 
+$x$-direction. The weights, $\sigma(x_i)$, required for the Shen transforms, are defined as
 \begin{equation}
- w_i = \begin{cases}
+ \sigma(x_i) = \begin{cases}
        \frac{\pi}{c_i N_x} &\forall \, i=0,1,\ldots, N_x \quad  \text{for 
        Chebyshev-Gauss-Lobatto points},\\
        \frac{\pi}{N_x+1} &\forall \, i=0,1,\ldots, N_x  \quad \text{for 
        Chebyshev-Gauss points},      
  \end{cases}
 \end{equation}
-where $c_0 = c_{N_x} = 2$ and $c_i = 1$ for $0 < i < N_x$, see Sec. 1.11 of \cite{kopriva09}.%\footnote{Note that $c_{N_x}=1$ for the continuous scalar product $L^2_w(\Omega)$ (see, e.g., Eq. (2.7) of \cite{Shen95}), but for the discrete $l^2_w(\Omega)$ it follows that $c_{N_x}=2$ due to inexact quadrature for the highest wavenumber.}
+where $c_0 = c_{N_x} = 2$ and $c_i = 1$ for $0 < i < N_x$, see Sec. 1.11 of \cite{kopriva09}.%\footnote{Note that $c_{N_x}=1$ for the continuous scalar product $L^2_{\sigma}(\Omega)$ (see, e.g., Eq. (2.7) of \cite{Shen95}), but for the discrete $l^2_{\sigma}(\Omega)$ it follows that $c_{N_x}=2$ due to inexact quadrature for the highest wavenumber.}
 
 The scalar product  $h\N{\mathcal{S}}$ in (\ref{eq:sst1}) does not represent a 
-complete transform. To find a transformation between physical $u$ and spectral 
+complete transform. To find a transformation from physical $u$ to spectral 
 $\hat{u}$, we make use of Eq. (\ref{eq:u_solx}) directly on the left hand side of (\ref{eq:sst1}) and use extensively the discrete 
 orthogonality of the Fourier basis functions
 \begin{align}
-%\left<u, \N{\psi}_{\bm{k}}\right>_w &= \frac{1}{N_yN_z}\left< 
+%\left<u, \N{\psi}_{\bm{k}}\right>_{\sigma} &= \frac{1}{N_yN_z}\left< 
 %\sum_{\bm{m}=(q,r,s) \in \N{K}_N} \hat{u}_{\bm{m}} \N{\psi}_{\bm{m}}, 
-%\N{\psi}_{\bm{k}} \right>_w, \notag \\
-\left<u, \N{\psi}_{\bm{k}}\right>_w &= \frac{1}{N_yN_z}\left< 
+%\N{\psi}_{\bm{k}} \right>_{\sigma}, \notag \\
+\left<u, \N{\psi}_{\bm{k}}\right>_{\sigma} &= \frac{1}{N_yN_z}\left< 
 \sum_{(q,r,s) \in \N{K}_N} \hat{u}(q,r,s,t) \N{\psi}(q,r,s), 
-\N{\psi}(l,m,n) \right>_w, \notag \\
+\N{\psi}(l,m,n) \right>_{\sigma} \quad \forall \, \bm{k} \in \N{K}_N, \notag \\
            &= h \sum_{q=0}^{N_x-4} \sum_{i=0}^{N_x} \N{\phi}_{q}(x_i) 
-           \N{\phi}_{l}(x_i) w_i \, \hat{u}(q, {m}, {n}, t), \notag \\
-           &= h \sum_{q=0}^{N_x-4} \N{B}_{lq} \hat{u}(q, {m}, {n}, t) \quad \forall \, \bm{k} \in \N{K}_N. 
+           \N{\phi}_{l}(x_i) \sigma(x_i) \, \hat{u}(q, {m}, {n}, t), \notag \\
+           &= h \sum_{q=0}^{N_x-4} \N{B}_{lq} \hat{u}(q, {m}, {n}, t). 
            \label{eq:sst2}
 \end{align}
-Here $\{\N{B}_{lq}\}_{l,q=0}^{N_x-4} = (\N{\phi}_q, \N{\phi}_l)_w = 
-\sum_{i=0}^{N_x} \N{\phi}_{q}(x_i) \N{\phi}_{l}(x_i) w_i$ is a 
+Here $\N{B}_{lq} = (\N{\phi}_q, \N{\phi}_l)_{\sigma} = 
+\sum_{i=0}^{N_x} \N{\phi}_{q}(x_i) \N{\phi}_{l}(x_i) \sigma(x_i)$ are the components of a 
 banded mass matrix with only 5 nonzero diagonals, see Table~\ref{tab:matrices}. The complete transformation is now obtained by 
 setting Eq. (\ref{eq:sst2}) equal to (\ref{eq:sst1}) and solving for $\hat{u}$. 
 Moving to matrix notation we get
 \begin{align}
 h\sum_{q=0}^{N_x-4} \N{B}_{lq}\, \hat{u}(q, {m}, {n}, t) &= 
-h\N{\mathcal{S}}(u)(l, m, n, t), \notag \\
- \hat{u} &= \N{\mathcal{T}}(u) =  \N{B}^{-1}\N{\mathcal{S}}(u) 
- \quad \forall \, \bm{k} \in \N{K}_N, \label{eq:fstB}
+h\N{\mathcal{S}}(u)(l, m, n, t)  \quad \forall \, \bm{k} \in \N{K}_N, \notag \\
+ \hat{u} &= \N{\mathcal{T}}(u) =  \N{B}^{-1}\N{\mathcal{S}}(u), \label{eq:fstB}
 \end{align}
 where $\N{\mathcal{T}}(u)$ denotes the complete transformation, such that $u = 
 \N{\mathcal{T}}^{-1}(\N{\mathcal{T}}(u))$. Note that, since $\N{B}$ assembles to 
 a pentadiagonal matrix for its decoupled odd and even coefficients, the solution ($\N{B}^{-1}$) can be obtained very fast and the complete 
 transformation thus requires a fast Chebyshev transform ($\mathcal{O}(N_x \log N_x)$) and 
-a fast linear algebraic solve ($\mathcal{O}(N_x)$). Similar transforms $\mathcal{T}$ 
+a fast linear algebraic solve ($\mathcal{O}(N_x)$) for the wall-normal direction, given $m$ and $n$. Similar transforms $\mathcal{T}$ 
 and $\D{\mathcal{T}}$ are defined for the two other bases (\ref{eq:Tk}) and 
-(\ref{eq:phiD}), using mass matrices $B_{lq}=(T_q, T_l)_w$ (diagonal) and 
-$\D{B}_{lq}=(\D{\phi}_l, \D{\phi}_q)_w$ (three non-zero diagonals) and scalar products 
-$\mathcal{S}_l(\cdot) = (\cdot, T_l)_w$ and $\D{\mathcal{S}}_l(\cdot) = (\cdot, 
-\D{\phi}_l)_w$. See Alg.~\ref{alg:fst} and \ref{alg:ifst} in the Appendix for algorithms for all required transforms.
+(\ref{eq:phiD}), using mass matrices with components $B_{lq}=(T_q, T_l)_{\sigma}$ (diagonal) and 
+$\D{B}_{lq}=(\D{\phi}_l, \D{\phi}_q)_{\sigma}$ (three non-zero diagonals) and scalar products 
+$\mathcal{S}_l(\cdot) = (\cdot, T_l)_{\sigma}$ and $\D{\mathcal{S}}_l(\cdot) = (\cdot, 
+\D{\phi}_l)_{\sigma}$. See Alg.~\ref{alg:fst} and \ref{alg:ifst} in the Appendix for algorithms for all required transforms.
 
 \section{Discretization of Navier Stokes equations}
 \label{sec:discretizationNS}
@@ -282,176 +298,166 @@ The two remaining velocity components are computed from the definitions of $f$
 and $g$. The biharmonic equation (\ref{eq:biharmonic}) is solved with boundary 
 conditions $u(\pm 1) = u'(\pm 1) = 0$, where the Neumann conditions follow 
 from the continuity equation. The boundary conditions for Eq. (\ref{eq:g}) are 
-$g(\pm 1) = 0$. The variational formulation becomes: Find ${u} \in 
-\N{V}_N$, ${g} \in \D{V}_N$ and ${f} \in \D{V}_N$ such that
+$g(\pm 1) = 0$. 
+
+We consider the spectral-Galerkin discretization of (\ref{eq:biharmonic}), (\ref{eq:g}) and (\ref{eq:f}), using a central difference in time, with Crank-Nicolson for the linear terms and an Adams-Bashforth method for the nonlinear terms. To this end, the discretization in time is performed with a constant time step $\triangle t>0$, 
+such that time is represented discretely as $t_{\kappa} = {\kappa} \triangle t, \, {\kappa} \in [0, 1, \ldots]$, and variables with a time superscript, like $u^{\kappa} = u(t_{\kappa})$. We get the variational formulation: with $u^0(\bm{x}), u^1(\bm{x}), g^0(\bm{x})$ and $g^1(\bm{x})$ given, for all $\kappa > 1$ find ${u}^{\kappa+1} \in \N{V}_N$, ${g}^{\kappa+1} \in \D{V}_N$ and ${f}^{\kappa+1} \in \D{V}_N$ such that
 \begin{align}
-	\frac{\partial }{\partial t} \left< \nabla^2 u, \N{\psi}_{\bm{k}}\right>_w &= 
-	\left<h_u, \N{\psi}_{\bm{k}} \right>_w + \nu \left<\nabla^4u, \N{\psi}_{\bm{k}}\right>_w 
-	&\forall \,\N{\psi}_{\bm{k}} \in \N{V}_N, \label{eq:u1} \\
-	\frac{\partial}{\partial t}\left<g, \D{\psi}_{\bm{k}}\right>_w &= \left<h_g, 
-	\D{\psi}_{\bm{k}}\right>_w + \nu 
-	\left<\nabla^2 g, \D{\psi}_{\bm{k}}\right>_w &\forall \, \D{\psi}_{\bm{k}} \in \D{V}_N ,
-	\label{eq:g1} \\
-	\left<f, \D{\psi}_{\bm{k}}\right>_w &= \left<\frac{\partial u}{\partial x}, 
-	\D{\psi}_{\bm{k}}\right>_w &\forall \, \D{\psi}_{\bm{k}} \in \D{V}_N. \label{eq:f1}
+  \left<  \frac{\nabla^2(u^{\kappa+1}-u^{\kappa})}{\triangle t}, \N{\psi}_{\bm{k}}\right>_{\sigma} &= 
+\left<h_u^{\kappa+\half}, \N{\psi}_{\bm{k}} \right>_{\sigma} + {\nu} \left<\nabla^4 u^{\kappa+\half}, \N{\psi}_{\bm{k}}\right>_{\sigma} 
+&\forall \,\psi_{\bm{k}} \in \N{V}_N, \label{eq:u1} \\
+  \left<\frac{g^{\kappa+1}- g^{\kappa}}{\triangle t}, \D{\psi}_{\bm{k}}\right>_{\sigma} &= \left<h_g^{\kappa + \half}, 
+\D{\psi}_{\bm{k}}\right>_{\sigma} + {\nu} 
+\left<\nabla^2 g^{\kappa+\half}, \D{\psi}_{\bm{k}}\right>_{\sigma} &\forall \, \psi_{\bm{k}} \in \D{V}_N ,
+\label{eq:g1} \\
+	\left<f^{\kappa+1}, \D{\psi}_{\bm{k}}\right>_{\sigma} &= \left<\frac{\partial u^{\kappa+1}}{\partial x}, 
+	\D{\psi}_{\bm{k}}\right>_{\sigma} &\forall \, \psi_{\bm{k}} \in \D{V}_N. \label{eq:f1}
 \end{align}
-The two remaining velocity components are computed by projection to the 
+Here superscript $\kappa + \half$ is used to represent Crank-Nicolson for linear terms (e.g., $u^{\kappa+\half}=0.5(u^{\kappa+1}+u^{\kappa})$) and Adams-Bashforth for nonlinear (e.g., $h_u^{\kappa + \half} = 1.5h_u^{\kappa} - 0.5 h_u^{\kappa-1}$).
+ 
+With ${f}^{\kappa+1}$ and ${g}^{\kappa+1}$ known, the two remaining velocity components are then computed by projection to the 
 Dirichlet space $\D{V}_N$: Find 
-${v} \in \D{V}_N$ and $w \in \D{V}_N$ such that
+${v}^{\kappa+1} \in \D{V}_N$ and $w^{\kappa+1} \in \D{V}_N$ such that
 \begin{align}
-\left<f, \D{\psi}_{\bm{k}}\right>_w &= \left<\frac{\partial v}{\partial y} + 
-\frac{\partial w}{\partial z}, \D{\psi}_{\bm{k}}\right>_w \, &\forall \, \D{\psi}_{\bm{k}} \in 
+\left<f^{\kappa+1}, \D{\psi}_{\bm{k}}\right>_{\sigma} &= \left<\frac{\partial v^{\kappa+1}}{\partial y} + 
+\frac{\partial w^{\kappa+1}}{\partial z}, \D{\psi}_{\bm{k}}\right>_{\sigma} \, &\forall \, \D{\psi}_{\bm{k}} \in 
 \D{V}_N, \label{eq:f2} \\
-\left<g, \D{\psi}_{\bm{k}}\right>_w &= \left<\frac{\partial w}{\partial y}  - 
-\frac{\partial v}{\partial z}, \D{\psi}_{\bm{k}}\right>_w \, &\forall \, \D{\psi}_{\bm{k}} \in 
+\left<g^{\kappa+1}, \D{\psi}_{\bm{k}}\right>_{\sigma} &= \left<\frac{\partial w^{\kappa+1}}{\partial y}  - 
+\frac{\partial v^{\kappa+1}}{\partial z}, \D{\psi}_{\bm{k}}\right>_{\sigma} \, &\forall \, \D{\psi}_{\bm{k}} \in 
 \D{V}_N, \label{eq:g2}
 \end{align}
 which simplifies considerably because all the derivatives are in periodic 
 directions. Written in spectral space Eqs. (\ref{eq:f2}) and (\ref{eq:g2}) 
-become simply
+become simply the algebraic expressions
 \begin{align}
-\hat{f}_{\bm{k}} &= \imath \underline{m}\, \hat{v}_{\bm{k}} + \imath 
-\underline{n}\, \hat{w}_{\bm{k}} &\forall \, \bm{k} \in \D{K}_N^0, \label{eq:f3} \\
-\hat{g}_{\bm{k}} &= \imath \underline{m}\, \hat{w}_{\bm{k}} - \imath 
-\underline{n}\, \hat{v}_{\bm{k}} & \forall \, \bm{k} \in \D{K}_N^0, \label{eq:g3}
+\hat{f}_{\bm{k}}^{\kappa+1} &= \imath \underline{m}\, \hat{v}_{\bm{k}}^{\kappa+1} + \imath 
+\underline{n}\, \hat{w}_{\bm{k}}^{\kappa+1} &\forall \, \bm{k} \in \D{K}_N^0, \label{eq:f3} \\
+\hat{g}_{\bm{k}}^{\kappa+1} &= \imath \underline{m}\, \hat{w}_{\bm{k}}^{\kappa+1} - \imath 
+\underline{n}\, \hat{v}_{\bm{k}}^{\kappa+1} & \forall \, \bm{k} \in \D{K}_N^0, \label{eq:g3}
 \end{align}
 where $\D{K}_N^0$ is used to denote that these equations can be solved for all 
-wavenumbers except $m=n=0$. For $m=n=0$ we solve instead the 
-corresponding transformed momentum equations in $y$ and $z$ directions:
+wavenumbers except $m=n=0$. For $m=n=0$ we solve instead the momentum equations in $y$ and $z$ directions (see Eq. (\ref{eq:NS})):
 \begin{align}
-\frac{\partial }{\partial t} \D{B}_{lq}\hat{v}(q, 0, 0, t) &= 
-\D{B}_{lq}\hat{\mathcal{H}}_y(q, 0, 0, t) - \nu \D{A}_{lq} \hat{v}(q, 0, 0, t) - \left(\beta(t), \D{\phi}_l \right)_w
-& \forall\, l \in \D{K}^x, \label{eq:v0}\\
-\frac{\partial }{\partial t} \D{B}_{lq}\hat{w}(q, 0, 0, t) &= 
-\D{B}_{lq}\hat{\mathcal{H}}_z(q, 0, 0, t) - \nu \D{A}_{lq} \hat{w}(q, 0, 0, t) 
-& \forall\, l \in \D{K}^x,\label{eq:w0}
+\left< \frac{v^{\kappa+1} - v^{\kappa}}{\triangle t}, \psi_{\bm{k}} \right>_{\sigma} &= \left< \mathcal{H}_{y}^{\kappa+\half}, \psi_{\bm{k}} \right>_{\sigma} + \nu \left< \nabla^2 v^{\kappa+\half},  \psi_{\bm{k}} \right>_{\sigma} -\left< \beta^{\kappa+1}, \psi_{\bm{k}} \right>_{\sigma} & \forall \, \bm{k} \in \D{K}^x \times K^p(0,0), \label{eq:v0} \\
+\left< \frac{w^{\kappa+1} - w^{\kappa}}{\triangle t}, \psi_{\bm{k}} \right>_{\sigma} &= \left< \mathcal{H}_{z}^{\kappa+\half}, \psi_{\bm{k}} \right>_{\sigma} + \nu \left< \nabla^2 w^{\kappa+\half},  \psi_{\bm{k}} \right>_{\sigma}  & \forall \, \bm{k} \in \D{K}^x \times K^p(0,0) \label{eq:w0}.
 \end{align}
-where $\D{A}_{lq}=-(\D{\phi}_q^{''}, \D{\phi}_l )_w$. Note that (\ref{eq:v0}) is the only place where the driving force, or the mean pressure gradient, $\beta$, enters, and, since it is constant in space, the term $(\beta(t), \D{\phi}_l )_w$ will only be non-zero for $l=0$.
+%\begin{align}
+%\frac{1}{\triangle t}\D{B}_{lq}(\hat{v}^{\kappa+1}_{q} - \hat{v}^{\kappa}_{q}) &= 
+%\D{B}_{lq}\hat{\mathcal{H}}_{y,q}^{\kappa+1/2} - \nu \D{A}_{lq} \hat{v}^{\kappa+1/2}_q - \left(\beta^{\kappa+1}, \D{\phi}_l \right)_{\sigma}
+%& \forall\, l \in \D{K}^x, m=n=0, \label{eq:v0}\\
+%\frac{1}{\triangle t}\D{B}_{lq}(\hat{w}^{\kappa+1}_{q} - \hat{w}^{\kappa}_{q}) &= 
+%\D{B}_{lq}\hat{\mathcal{H}}_{z,q}^{\kappa+1/2} - \nu \D{A}_{lq} \hat{w}^{\kappa+1/2}_q 
+%& \forall\, l \in \D{K}^x, m=n=0 \label{eq:w0}
+%\end{align}
+Note that the regular pressure is eliminated since $m=n=0$, and that (\ref{eq:v0}) is the only place where the driving force, or the mean pressure gradient, $\beta$, enters the equations. Also, since $\beta$ is constant in space, the term $<\beta^{\kappa+1}, \D{\psi}_{\bm{k}} >_{\sigma}$ will only be non-zero for $l=m=n=0$. 
 
-Equations (\ref{eq:u1}-\ref{eq:f1}) need to be rewritten in terms of one-dimensional scalar products. 
-Inserting the expansion (\ref{eq:u_solx}) for $u$ and a similar expansion for $g$ in $\D{V}_N$, the inner products required to solve Eqs. (\ref{eq:u1}-\ref{eq:f1}) are
+The final step of the method is to rewrite all equations on matrix form, using one-dimensional scalar products. Inserting the expansion (\ref{eq:u_solx}) for $u$ in $\N{V}_N$, and similar for $g, h_u$ and $h_g$ in $\D{V}_N$, the inner products required to solve Eqs. (\ref{eq:u1}-\ref{eq:f1}) are
 \begin{align}
-\left<\nabla^4u, \N{\psi}_{\bm{k}}\right>_w &= h\left[ \left( 
+\left<\nabla^4u, \N{\psi}_{\bm{k}}\right>_{\sigma} &= h\left[ \left( 
 \N{\phi}_q^{''''}, 
-\N{\phi}_l\right)_w -2(\underline{m}^2+\underline{n}^2) \left( \N{\phi}_q^{''}, 
-\N{\phi}_l\right)_w + (\underline{m}^2+\underline{n}^2)^2\left( \N{\phi}_q, 
-\N{\phi}_l\right)_w  \right] \hat{u}_q, \\
-\left< \nabla^2 u, \N{\psi}_{\bm{k}}\right>_w &= h\left[\left( \N{\phi}_q^{''}, 
-\N{\phi}_l\right)_w - (\underline{m}^2+\underline{n}^2)\left( \N{\phi}_q, 
-\N{\phi}_l \right)_w \right] \hat{u}_q, \\
-\left< \nabla^2 g, \D{\psi}_{\bm{k}}\right>_w &= h\left[\left( \D{\phi}_q^{''}, 
-\D{\phi}_l\right)_w - (\underline{m}^2+\underline{n}^2)\left( \D{\phi}_q, 
-\D{\phi}_l \right)_w \right] \hat{g}_q, \\
-\left<\frac{\partial u}{\partial x}, \D{\psi}_{\bm{k}}\right>_w &=
-h\left(\N{\phi}_q^{'}, \D{\phi}_l\right)_w \hat{u}_q, \\
-\left<h_u, \N{\psi}_{\bm{k}} \right>_w &= 
+\N{\phi}_l\right)_{\sigma} -2(\underline{m}^2+\underline{n}^2) \left( \N{\phi}_q^{''}, 
+\N{\phi}_l\right)_{\sigma} + (\underline{m}^2+\underline{n}^2)^2\left( \N{\phi}_q, 
+\N{\phi}_l\right)_{\sigma}  \right] \hat{u}_q, \\
+\left< \nabla^2 u, \N{\psi}_{\bm{k}}\right>_{\sigma} &= h\left[\left( \N{\phi}_q^{''}, 
+\N{\phi}_l\right)_{\sigma} - (\underline{m}^2+\underline{n}^2)\left( \N{\phi}_q, 
+\N{\phi}_l \right)_{\sigma} \right] \hat{u}_q, \\
+\left< \nabla^2 g, \D{\psi}_{\bm{k}}\right>_{\sigma} &= h\left[\left( \D{\phi}_q^{''}, 
+\D{\phi}_l\right)_{\sigma} - (\underline{m}^2+\underline{n}^2)\left( \D{\phi}_q, 
+\D{\phi}_l \right)_{\sigma} \right] \hat{g}_q, \\
+\left<\frac{\partial u}{\partial x}, \D{\psi}_{\bm{k}}\right>_{\sigma} &=
+h\left(\N{\phi}_q^{'}, \D{\phi}_l\right)_{\sigma} \hat{u}_q, \\
+\left<h_u, \N{\psi}_{\bm{k}} \right>_{\sigma} &= 
 h\left[-(\underline{m}^2+\underline{n}^2) 
 \left(\D{\phi}_q, 
-\N{\phi}_l \right)_w \hat{\mathcal{H}}_{x, q} - \imath \underline{m}\left(\D{\phi}_q^{'}, 
-\N{\phi}_l \right)_w \hat{\mathcal{H}}_{y, q} - \imath 
-\underline{n}\left(\D{\phi}_q^{'}, \N{\phi}_l \right)_w 
+\N{\phi}_l \right)_{\sigma} \hat{\mathcal{H}}_{x, q} - \imath \underline{m}\left(\D{\phi}_q^{'}, 
+\N{\phi}_l \right)_{\sigma} \hat{\mathcal{H}}_{y, q} - \imath 
+\underline{n}\left(\D{\phi}_q^{'}, \N{\phi}_l \right)_{\sigma} 
 \hat{\mathcal{H}}_{z, q}\right], \label{eq:S_hv}
 \\
-\left< h_g, \D{\psi}_{\bm{k}} \right>_w &= h\left[ \imath \underline{m}\, \left(\D{\phi}_q, \D{\phi}_l \right)_w 
-\hat{\mathcal{H}}_{z, q} - \imath \underline{n}\, \left(\D{\phi}_q, \D{\phi}_l \right)_w \hat{\mathcal{H}}_{y, q} 
+\left< h_g, \D{\psi}_{\bm{k}} \right>_{\sigma} &= h\left[ \imath \underline{m}\, \left(\D{\phi}_q, \D{\phi}_l \right)_{\sigma} 
+\hat{\mathcal{H}}_{z, q} - \imath \underline{n}\, \left(\D{\phi}_q, \D{\phi}_l \right)_{\sigma} \hat{\mathcal{H}}_{y, q} 
 \right],\label{eq:S_hg}
 \end{align}
-where for brevity in notation (as before) it is understood that the matrices 
+where for brevity in notation (as before) it is understood that the scalar products
 act along the first dimension of the transformed variables, i.e.,  $ 
-(\N{\phi}_q^{'}, \D{\phi}_l)_w \hat{u}_q$ is short for the matrix 
-vector product $ \sum_{q=0}^{N_x-4}( \N{\phi}_q^{'}, \D{\phi}_l)_w 
-\hat{u}(q, {m}, {n}, t)$, where $m$ and $n$ are given. The inner products are used to set up linear systems 
+(\N{\phi}_q^{'}, \D{\phi}_l)_{\sigma} \hat{u}_q$ is short for the matrix 
+vector product $ \sum_{q=0}^{N_x-4}( \N{\phi}_q^{'}, \D{\phi}_l)_{\sigma} 
+\hat{u}(q, {m}, {n}, t)$, for all $m$ and $n$. The scalar products are used to set up linear systems 
 of equations for the inhomogeneous wall-normal direction. All scalar products 
-$(\cdot, \cdot)_w$ can be represented by sparse matrices.
+$(\cdot, \cdot)_{\sigma}$ can be represented by sparse matrices.
 %\begin{align}
-%\frac{\partial }{\partial t} \left( \N{\psi}_j^{''}, \N{\psi}_k\right)_w 
-%\hat{u}_j &=  \left(h_u, \N{\psi}_k \right)_w + \nu \left(\N{\psi}^{''''}_j, 
-%\N{\psi}_k\right)_w \hat{u}_j, \, &\forall \N{\psi}_k \in \N{V}_N, \\
-%\frac{\partial}{\partial t}\left(\D{\psi}_j, \D{\psi}_k\right)_w \hat{g}_j &= 
-%\left(h_g, \D{\psi}_k\right)_w + \nu \left(\D{\psi}_j^{''}, 
-%\D{\psi}_k\right)_w 
+%\frac{\partial }{\partial t} \left( \N{\psi}_j^{''}, \N{\psi}_k\right)_{\sigma} 
+%\hat{u}_j &=  \left(h_u, \N{\psi}_k \right)_{\sigma} + \nu \left(\N{\psi}^{''''}_j, 
+%\N{\psi}_k\right)_{\sigma} \hat{u}_j, \, &\forall \N{\psi}_k \in \N{V}_N, \\
+%\frac{\partial}{\partial t}\left(\D{\psi}_j, \D{\psi}_k\right)_{\sigma} \hat{g}_j &= 
+%\left(h_g, \D{\psi}_k\right)_{\sigma} + \nu \left(\D{\psi}_j^{''}, 
+%\D{\psi}_k\right)_{\sigma} 
 %\hat{g}_j, \, &\forall \D{\psi}_k \in \D{V}_N \\
-%\left(\D{\psi}_j, \D{\psi}_k\right)_w \hat{f}_j &= \left(\N{\psi}_j^{'}, 
-%\D{\psi}_k\right)_w \hat{u}_j, \, &\forall \D{\psi}_k \in \D{V}_N.
+%\left(\D{\psi}_j, \D{\psi}_k\right)_{\sigma} \hat{f}_j &= \left(\N{\psi}_j^{'}, 
+%\D{\psi}_k\right)_{\sigma} \hat{u}_j, \, &\forall \D{\psi}_k \in \D{V}_N.
 %\end{align}
-The required matrices $ \N{B}_{lq} = ( \N{\phi}_q, 
-\N{\phi}_l)_w, \D{B}_{lq} = ( \D{\phi}_q, 
-\D{\phi}_l)_w 
-, \N{M}_{lq} = ( \D{\phi}_q, 
-\N{\phi}_l)_w, \D{C}_{lq} = (\N{\phi}_q^{'}, \D{\phi}_l)_w$ and 
-$ \N{C}_{lq} = (\D{\phi}_q^{'}, \N{\phi}_l)_w$ are given in Table~\ref{tab:matrices}, $\N{A}_{lq} = -( \N{\phi}_q^{''}, 
-\N{\phi}_l)_w, \D{A}_{lq} = -( \D{\phi}_q^{''}, \D{\phi}_l)_w$ are given in \cite{Shen95}, whereas the matrix $\N{Q}_{lq} = (\N{\phi}^{''''}_q, \N{\phi}_l)_w$ is given below in Eqs (\ref{eq:N_Q})-(\ref{eq:rk}). Note that the matrices are computed using quadrature, which has some implications for Chebyshev-Gauss-Lobatto (GL) points, where the rows of the highest modes differ from those presented in Lemma 2.1 and 3.1 of \cite{Shen95}. This disagreement, that follows from inexact quadrature at the highest mode, explains the inclusion of the $c_{k+4}$ term for matrix $\N{B}$ and the $c_{k+2}$ term for matrix $\D{B}$. Matrix $B=(T_k, T_j)_w$ is also different in the highest mode from Eq. 2.7 of \cite{Shen95}, but agrees with Eqs. 1.135 and 1.136 of \cite{kopriva09}.
+The required matrices with components $ \N{B}_{lq} = ( \N{\phi}_q, 
+\N{\phi}_l)_{\sigma}, \D{B}_{lq} = ( \D{\phi}_q, 
+\D{\phi}_l)_{\sigma}, \N{M}_{lq} = ( \D{\phi}_q, 
+\N{\phi}_l)_{\sigma}, \D{C}_{lq} = (\N{\phi}_q^{'}, \D{\phi}_l)_{\sigma}$ and 
+$ \N{C}_{lq} = (\D{\phi}_q^{'}, \N{\phi}_l)_{\sigma}$ are given in Table~\ref{tab:matrices}, $\N{A}_{lq}= -( \N{\phi}_q^{''}, 
+\N{\phi}_l)_{\sigma}, \D{A}_{lq}= -( \D{\phi}_q^{''}, \D{\phi}_l)_{\sigma}$ are given in \cite{Shen95}, whereas $\N{Q}_{lq} = (\N{\phi}^{''''}_q, \N{\phi}_l)_{\sigma}$ is given below in Eqs (\ref{eq:N_Q})-(\ref{eq:rk}). Note that the matrices are computed using quadrature, which has some implications for Chebyshev-Gauss-Lobatto (GL) points, where the rows of the highest modes differ from those presented in Lemma 2.1 and 3.1 of \cite{Shen95}. This disagreement, that follows from inexact quadrature at the highest mode, explains the inclusion of the $c_{k+4}$ term for matrix $\N{B}$ and the $c_{k+2}$ term for matrix $\D{B}$. The matrix with components $B_{lq}=(T_q, T_l)_{\sigma}$ is also different in the highest mode from Eq. 2.7 of \cite{Shen95}, but agrees with Eqs. 1.135 and 1.136 of \cite{kopriva09}.
 
-The convection vector $\bm{\hat{\mathcal{H}}}$, needed to compute Eqs. (\ref{eq:S_hv}) and (\ref{eq:S_hg}), is found by projecting to the Dirichlet vector space $\D{V}_N^3$, which corresponds to transforming the nonlinear cross product over the entire mesh
-\begin{equation}
-\bm{\hat{\mathcal{H}}}_i = \mathcal{\D{T}}((\bm{u} \times \bm{\omega})_i) \quad \forall \, i=x,y,z. \label{eq:H_hat}
-\end{equation}
-The curl, $\bm{\omega} = (g, \partial_z u - \partial_x w, \partial_y u - 
-\partial_x v)$, is computed by projecting each term to its appropriate space, before transforming back to physical space. 
-To this end, the two terms $\partial_x v$ and $\partial_x w$ are projected to 
-$V_N$ (requires $C_{kj} = (\D{\phi}_j^{'}, T_k)_w$, see Tab. \ref{tab:matrices}), whereas the remaining $\partial_y u$ and $\partial_z u$ are projected to 
-$\N{V}_N$:
-\begin{align}
- \partial_x v(\bm{x}) &= \mathcal{T}^{-1}(B^{-1}C\hat{v}) &\forall \, \bm{x} \in X_N, \\
- \partial_x w(\bm{x}) &= \mathcal{T}^{-1}(B^{-1}C\hat{w}) &\forall \, \bm{x} \in X_N, \\
- \partial_y u(\bm{x}) &= \N{\mathcal{T}}^{-1}(\imath \underline{m}\hat{u}) &\forall \, \bm{x} \in X_N, \\
- \partial_z u(\bm{x}) &= \N{\mathcal{T}}^{-1}(\imath \underline{n}\hat{u}) &\forall \, \bm{x} \in X_N.
-\end{align}
-Note that the nonlinear term is also generally in need of 
-dealiasing, at least for the two periodic directions.
 
-It remains to discretize the equations in time. Kim, Moin and Mansour use 
-Crank-Nicolson for the diffusive terms and Adams-Bashforth for the nonlinear 
-convective terms, whereas a third order Runge-Kutta method is used for the 
-nonlinear term by Moser, Kim and Mansour (1999). We have implemented both 
-approaches in \cite{spectralDNS}, but for simplicity only the first one is described here. 
-Discretization in time is performed using a constant time step $\triangle t$, 
-such that the time is represented discretely as $t_{\kappa} = {\kappa} \triangle t, \, {\kappa} \in 
-\mathcal{Z}^{\ge}$. After 
-discretizing in time, equations (\ref{eq:u1}) and (\ref{eq:g1}) are transformed 
-to a matrix form that can be solved for $\hat{u}^{{\kappa}+1}$ and $\hat{g}^{{\kappa}+1}$ 
-given wavenumbers $m$ and $n$
+Assembling all scalar products, the final matrix form of Eqs. (\ref{eq:u1}), (\ref{eq:g1}) and (\ref{eq:f1}), that can be used to solve for $\hat{u}^{{\kappa}+1}$, $\hat{g}^{{\kappa}+1}$ and $\hat{f}^{\kappa+1}$,
+given wavenumbers $m$ and $n$, are now found as
 \begin{align}
 \N{H}\hat{u}^{{\kappa}+1} & = \left(2\N{A} - 2\underline{z}^2\N{B} - \N{H} 
-\right)\hat{u}^{{\kappa}} + \N{\mathcal{S}}(h_v^{{\kappa}+1/2}) \triangle t & 
+\right)\hat{u}^{{\kappa}} + \triangle t \N{\mathcal{S}}(h_v^{{\kappa}+1/2})  & 
 \forall \, {\bm{k}} \in \N{K}_N, 
 \label{eq:ufin}\\ 
 \D{H} \hat{g}^{{\kappa}+1} &= \left(2 \D{B}-\D{H}\right) 
-\hat{g}^{{\kappa}} + \D{\mathcal{S}}(h_g^{{\kappa}+1/2}) \triangle t &\forall \, 
+\hat{g}^{{\kappa}} + \triangle t \D{\mathcal{S}}(h_g^{{\kappa}+1/2})  &\forall \, 
 {\bm{k}} \in 
-\D{K}_N. \label{eq:gfin}
+\D{K}_N, \label{eq:gfin} \\
+\D{B} \hat{f}^{\kappa+1} &= \D{C}\hat{u} &\forall \, \bm{k} \in \D{K_N}. \label{eq:ffin}
 \end{align}
 The coefficient matrices are given as
 \begin{align}
-\N{H}_{lq}(m, n) &= -\frac{\nu \triangle t}{2}\N{Q}_{lq} + \left( 1 + \nu 
+\N{H}(m, n) &= -\frac{\nu \triangle t}{2}\N{Q} + \left( 1 + \nu 
 \triangle t 
-\underline{z}^2 \right) \N{A}_{lq} - \frac{2\underline{z}^2 + \nu \triangle t 
-\underline{z}^4}{2} \N{B}_{lq} &\forall \, m, n \in K^p, 
+\underline{z}^2 \right) \N{A} - \frac{2\underline{z}^2 + \nu \triangle t 
+\underline{z}^4}{2} \N{B} &\forall \, m, n \in K^p, 
 \label{eq:Biharmonic_matrix} \\
-\D{H}_{lq}(m, n) &= -\frac{\nu \triangle 
-t}{2}\D{A}_{lq} + (1 + \frac{\nu \triangle t \underline{z}^2}{2}) \D{B}_{lq} 
+\D{H}(m, n) &= -\frac{\nu \triangle 
+t}{2}\D{A} + (1 + \frac{\nu \triangle t \underline{z}^2}{2}) \D{B} 
 &\forall \, m, n \in K^p, \label{eq:Helmholtz_matrix}
 \end{align}
-where $\underline{z}^2 = \underline{m}^2 + \underline{n}^2$. The convective 
-terms are computed with the recipes given in Eqs. (\ref{eq:S_hv}, \ref{eq:S_hg}), discretized in time with a forward Adams-Bashforth projection, such that 
-$\N{\mathcal{S}}(h_v^{{\kappa}+1/2}) = 
-\N{\mathcal{S}}(1.5h_v^{{\kappa}} - 0.5 h_v^{{\kappa}-1})$ and $\D{\mathcal{S}}(h_g^{{\kappa}+1/2}) 
-= \D{\mathcal{S}}(1.5h_g^{{\kappa}} - 0.5 h_g^{{\kappa}-1})$. Equations 
-(\ref{eq:v0}) and (\ref{eq:w0}) are also discretized in time using 
-Crank-Nicolson and Adams-Bashforth, and we obtain
+where $\underline{z}^2 = \underline{m}^2 + \underline{n}^2$. Equations 
+(\ref{eq:v0}) and (\ref{eq:w0}) are also written on matrix form as
 \begin{align}
-\left(-\frac{\nu \triangle t}{2}\D{A} + \D{B} \right)\hat{v}_0^{{\kappa}+1} &= 
-\left(\frac{\nu \triangle t}{2}\D{A} + \D{B} 
-\right)\hat{v}^{{\kappa}}_0 + \triangle t\D{B}\hat{\mathcal{H}}_{y,0}^{{\kappa}+1/2} - \triangle t \left(\beta(t), \D{\phi}_l \right)_w , 
+\D{H}\hat{v}^{{\kappa}+1} &= 
+\left(2\D{B} - \D{H} \right)\hat{v}^{{\kappa}} + \triangle t\D{B}\hat{\mathcal{H}}_{y}^{{\kappa}+\half} - \triangle t \D{\mathcal{S}}(\beta^{\kappa+1}) & \forall \, l \in \D{K}^x, m=n=0, 
 \label{eq:v00} \\
-\left(-\frac{\nu \triangle t}{2}\D{A} + \D{B} \right)\hat{w}_0^{{\kappa}+1} &= 
-\left(\frac{\nu \triangle t}{2}\D{A} + \D{B} 
-\right)\hat{w}^{{\kappa}}_0 + \triangle t\D{B}\hat{\mathcal{H}}_{z,0}^{{\kappa}+1/2}, 
+\D{H}\hat{w}^{{\kappa}+1} &= 
+\left(2\D{B} - \D{H} \right)\hat{w}^{{\kappa}} + \triangle t\D{B}\hat{\mathcal{H}}_{z}^{{\kappa}+\half} & \forall \, l \in \D{K}^x, m=n=0. 
 \label{eq:w00}
 \end{align}
-where we have used notation $\hat{v}^{{\kappa}}_0 = \hat{v}(l, 0, 0, t_{\kappa})$, 
-$\hat{\mathcal{H}}^{{\kappa}}_{y,0} = \hat{\mathcal{H}}_y(l, 0, 0, t_{\kappa})$ and similar 
-for $\hat{w}^{\kappa}_0$ and $\hat{\mathcal{H}}^{\kappa}_{z,0}$.
+
+Finally, the nonlinear
+terms are computed with the recipes given in Eqs. (\ref{eq:S_hv}, \ref{eq:S_hg}). To this end the required vector $\bm{\hat{\mathcal{H}}}$ is found by projecting to the Dirichlet vector space $\D{V}_N^3$, which corresponds to transforming the nonlinear cross product, evaluated in real space, over the entire mesh
+\begin{equation}
+{\hat{\mathcal{H}}}_i = \mathcal{\D{T}}((\bm{u} \times \bm{\omega})_i) \quad \forall \, i=x,y,z. \label{eq:H_hat}
+\end{equation}
+The curl, $\bm{\omega} = (g, \partial_z u - \partial_x w, \partial_y u - 
+\partial_x v)$, is computed by projecting each individual term to its appropriate spectral space, before transforming back to physical space. 
+To this end, the two terms $\partial_x v$ and $\partial_x w$ are projected to 
+$V_N$ (requires $C_{lq} = (\D{\phi}_j^{'}, T_k)_{\sigma}$, see Tab. \ref{tab:matrices}), whereas the remaining $\partial_y u$ and $\partial_z u$ are projected to 
+$\N{V}_N$. With compact notation using the transforms, we obtain
+\begin{align}
+\partial_x v(\bm{x}) &= \mathcal{T}^{-1}(B^{-1}C\hat{v}) &\forall \, \bm{x} \in X_N, \\
+\partial_x w(\bm{x}) &= \mathcal{T}^{-1}(B^{-1}C\hat{w}) &\forall \, \bm{x} \in X_N, \\
+\partial_y u(\bm{x}) &= \N{\mathcal{T}}^{-1}(\imath \underline{m}\hat{u}) &\forall \, \bm{x} \in X_N, \\
+\partial_z u(\bm{x}) &= \N{\mathcal{T}}^{-1}(\imath \underline{n}\hat{u}) &\forall \, \bm{x} \in X_N.
+\end{align}
+Here, with a slight abuse of notation, the left hand side is simply representing the respective expressions evaluated on the quadrature points in the real mesh $X_N$. 
+Note that the nonlinear term is also generally in need of 
+dealiasing, at least for the two periodic directions, but this is not discussed further in this paper.
 
 \section{Implementation}
 \label{sec:implementation}
@@ -462,54 +468,46 @@ pseudocode conventions of Kopriva \cite{kopriva09}, with some minor differences.
 A vectorization statement like $\{w_k\}_{k=0}^{N} \gets \{u_k\}_{k=0}^N$ indicates that components $u_k$, for $k=0,1,\ldots,N$, are copied from 
 $u_k$ to $w_k$. Similar conventions apply to matrices, e.g., 
 $\{U_{1,k}\}_{k=0}^N = \{V_{2,k}\}_{k=0}^N$ can be used for copying row 2 of 
-$V$ to row 1 of $U$. Broadcasting is also implied, here meaning that for $\{w\}_{k=0}^{N} \gets c$, where $c$ is a scalar, all elements of $w_k$ from $k=0$ to $N$ gets the scalar value $c$.} Note 
-that the Adams-Bashforth projection of convection reverts to a first order 
-forward Euler on the first time step. For simulations of turbulent flows this 
-is insignificant, but for accuracy tests, like the Orr-Sommerfeld instability, 
-a proper initialization will be required to set both the two first time steps.
+$V$ to row 1 of $U$. Broadcasting is also implied, here meaning that for $\{w\}_{k=0}^{N} \gets c$, where $c$ is a scalar, all elements of $w_k$ from $k=0$ to $N$ gets the scalar value $c$.} The major computational cost in Alg. \ref{alg:NS} comes from  computing the 
+nonlinear convection and solving for Eqs.~(\ref{eq:ufin}, \ref{eq:gfin}). We consider in this section the linear solvers.
+
 \begin{algorithm}
 	\caption{Solution procedure for Navier Stokes equations.    
 	 \label{alg:NS}}
  	\DontPrintSemicolon	
-    	Initialize $\bm{u}(\bm{x}, 0)$ and compute 
-    	$\hat{g}_{\bm{k}}(0)$ and $\hat{\bm{u}}_{\bm{k}}(0)$ \;
+    	Initialize $\bm{u}^0(\bm{x})$ and $\bm{u}^1(\bm{x})$ \;
+    	Compute $\hat{\bm{u}}^0_{\bm{k}},  \hat{\bm{u}}^1_{\bm{k}}, \hat{g}^0_{\bm{k}}$ and $\hat{g}^1_{\bm{k}}$ \;
         Set parameters (e.g., mesh and viscosity) and end time $T$ \;
-		Compute LU decomposition of $\N{H}(m,n), \D{H}(m,n) 
+		Compute LU decompositions of $\N{H}(m,n), \D{H}(m,n) 
 		\,\forall \, m, n \in K^p$ \;
-		Compute LU decomposition of coefficient matrices in (\ref{eq:v00}) and 
-		(\ref{eq:w00}) \;
-		$t \gets 0$\; 
-		${\kappa} \gets 0$ \;
+        $t \gets \triangle t$\; 
+		${\kappa} \gets 1$ \;
     	Compute nonlinear convection 
-    	$\bm{\hat{\mathcal{H}}}^{\kappa-1}(\hat{\bm{u}}_{\bm{k}}(0), 
-    	\hat{g}_{\bm{k}}(0))$ \;
+    	$\bm{\hat{\mathcal{H}}}_{\bm{k}}^{0}(\hat{\bm{u}}^0_{\bm{k}}, 
+    	\hat{g}^0_{\bm{k}})$ \;
     	\While{$t<T$}{
-	    	Compute nonlinear convection $\bm{\hat{\mathcal{H}}}^{\kappa}$ \;
+	    	Compute nonlinear convection $\bm{\hat{\mathcal{H}}}_{\bm{k}}^{\kappa}$ \;
 	    	{Compute right hand sides of Eqs.~}(\ref{eq:ufin}), 
 	    	(\ref{eq:gfin}) \;
 		    {Solve Eq.}(\ref{eq:ufin}) for 
 		    $\hat{u}^{{\kappa}+1}_{\bm{k}} \, \forall \,\bm{k} \in \N{K}_N$ \;
 		    {Solve Eqs.}(\ref{eq:gfin}) for 
 		    $\hat{g}^{{\kappa}+1}_{\bm{k}} \, \forall\, \bm{k} \in \D{K}_N$ \;
+		    {Solve Eqs.}(\ref{eq:ffin}) for 
+		    $\hat{f}^{{\kappa}+1}_{\bm{k}} \, \forall\, \bm{k} \in \D{K}_N$ \;
 		    {Solve Eqs.}(\ref{eq:f3}, \ref{eq:g3}) for  
 		    $\hat{v}_{\bm{k}}, \hat{w}_{\bm{k}}\, \forall\, \bm{k} 
 		    \in \D{K}_N^0$ \;
 		    {Solve Eqs.}(\ref{eq:v00}, \ref{eq:w00}) for 
-		    $\hat{v}_0^{{\kappa}+1}, \hat{w}_0^{{\kappa}+1}\, 
-		    \forall \, l \in \D{K}^x$ \;
+		    $\hat{v}^{{\kappa}+1}, \hat{w}^{{\kappa}+1}\, 
+		    \forall \, l \in \D{K}^x, m=n=0$ \;
 		    ${\kappa} \gets {\kappa} + 1$ \;
 		    $t \gets t+\triangle t$ \;
 		    {Update to new time step} \;
 	    }
 \end{algorithm}
 
-The major computational cost in Alg. \ref{alg:NS} comes from  computing the 
-nonlinear convection and solving for Eqs.~(\ref{eq:ufin}, \ref{eq:gfin}). The 
-nonlinear convection term, $\bm{\hat{\mathcal{H}}}$, is computed using a 
-pseudo-spectral method, and dealiasing in the periodic directions can be either 
-the 3/2-rule \cite{canuto1988} or the 2/3-rule \cite{Orzag71}.  
-
-Shen \cite{Shen95} states that it is possible to solve Eq.~(\ref{eq:gfin}) directly 
+Shen \cite{Shen95} writes that it is possible to solve Eq.~(\ref{eq:gfin}) directly 
 with essentially the same number of operations as a pentadiagonal solver. To this end, note that the matrix 
 $\D{H}$ decouples into odd and even components, leading to two matrices of type upper Hessenberg. A direct LU decomposition (see, e.g., \cite{stewart98}), leads to a lower triangular  
 matrix $\D{L}$ with only one subdiagonal and an upper triangular matrix $\D{U}$ that is dense. However, each row in $\D{U}$ 
@@ -651,11 +649,11 @@ written as
 \begin{equation}
 \N{H} = \xi_0\N{Q} + \xi_1\N{A} + \xi_2 \N{B},
 \end{equation}
-where $\xi_0, \xi_1$ and $\xi_2$ are constants (depending on $m$ and $n$). The matrix $\N{A}_{kj}$ contains only 
-three nonzero diagonals at $ j = k-2, k, k+2$,  whereas matrix $\N{B}_{kj}$ 
+where $\xi_0, \xi_1$ and $\xi_2$ are constants (depending on $m$ and $n$). The matrix $\{\N{A}_{kj}\}_{k,j=0}^{N_x-4}$ contains only 
+three nonzero diagonals at $ j = k-2, k, k+2$,  whereas matrix $\{\N{B}_{kj}\}_{k,j=0}^{N_x-4}$ 
 contains five 
 nonzero diagonals at $ j = k-4, k-2, k, k+2, k+4$. The nonzero elements of the 
-upper triangular $\N{Q}_{kj}$ matrix are given as \cite{Shen95}
+upper triangular $\{\N{Q}_{kj}\}_{k,j=0}^{N_x-4}$ matrix are given as \cite{Shen95}
 \begin{align}
 \label{eq:N_Q}
  \N{Q}_{kk} &= -4(k+1)(k+2)^2, \\
@@ -666,20 +664,15 @@ where
 p_k &= 8 k (k+1)(k+2)(k+4)\pi, &q_j &= \frac{1}{j+3}, \label{eq:pk} \\
 r_k &= 24(k+1)(k+2)\pi, &s_j &=  \frac{(j+2)^2}{(j+3)}. \label{eq:rk}
 \end{align} 
-For each row in $\N{H}_{kj}$ we have that $\N{H}_{kj}=\xi_0\N{Q}_{kj}\, \forall j 
-> k+4$. A straight forward direct LU decomposition of $\N{H}$ can be performed 
-as shown in Alg. 
+A straight forward direct LU decomposition (without pivoting) of $\N{H}$ can be performed as shown in Alg. 
 \ref{alg:lu_biharmonic}, which leads to a lower 
 triangular 
-matrix $\N{L}_{kj}$ with two nonzero diagonals at $j=k-2$ and $k-4$ plus a 
-unity 
-main diagonal. The upper triangular matrix $\N{U}_{kj}$ is dense and as such a 
-show stopper for an efficient back solve. However, we note that $\N{U}_{kj}$ 
-contains three distinct 
-diagonals at $j=k, k+2$ and $k+4$, whereas the remaining part of $\N{U}_{kj}$, for $k\le N_x-10$, 
-can be expressed as
+matrix $\{\N{L}_{kj}\}_{k,j=0}^{N_x-4}$ with two nonzero diagonals at $j=k-2$ and $k-4$ plus a unity 
+main diagonal. The upper triangular matrix $\N{U}$ is dense and as such a 
+show stopper for an efficient back solve. However, we note that $\{\N{U}_{kj}\}_{k,j=0}^{N_x-4}$ 
+contains three distinct diagonals at $j=k, k+2$ and $k+4$, whereas the remaining part can be expressed as
 \begin{equation}
-\N{U}_{kj} = \xi_0(a_k q_j + b_k s_j), \quad j = k+6, k+8, \ldots, N_x-4, 
+\N{U}_{kj} = \xi_0(a_k q_j + b_k s_j), \quad j = k+6, k+8, \ldots, N_x-4 \text{ and } k\le N_x-10, 
 \label{eq:ab}
 \end{equation}
 where $\{a_k\}_{k=0}^{N_x-10}$ and $\{b_k\}_{k=0}^{N_x-10}$ are two new 
@@ -696,11 +689,11 @@ vectors that can be computed recursively from $\N{L}$, as shown in Alg.~\ref{alg
 %5, 
 %\ldots, N.
 %\end{align}
-If $\bm{a}$ and $\bm{b}$ 
+If $a$ and $b$
 are pre-computed, 
-the total storage requirement for the complete LU decomposition is no more than 
-$7N_x$, i.e., two diagonals for $\N{L}$, three diagonals for $\N{U}$ plus $\bm{a}$ and 
-$\bm{b}$. The solution of the complete system can be obtained very quickly with 
+the total storage requirement for the complete LU decomposition is less than 
+$7N_x$, since there are two diagonals for $\N{L}$, three for $\N{U}$ plus ${a}$ and 
+${b}$. The solution of the complete system can be obtained very quickly with 
 one simple forward elimination and a back solve, where the back 
 solve is very fast ($\mathcal{O}(N_x)$) because of (\ref{eq:ab}), leading 
 to a formula for the backwards substitution of $\N{U}_{kj} \hat{u}_j = y_k$ like (valid for $k \le N_x-10$)
@@ -719,7 +712,7 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
     \caption{LU decomposition of biharmonic operator $\N{H}$. Current algorithm 
         is using dense storage of $\N{U}_{kj}$, but no more than the 3 items 
         per row need 
-        to be stored after the row is no longer needed in the for-loop below 
+        to be stored ($\N{U}_{kk}, \N{U}_{kk+2}$ and $\N{U}_{kk+4}$) after the row is no longer needed in the for-loop below 
         (as the loop is traversed to row $k$, $\N{U}_{m, j}$ is no longer 
         needed for $m<k-4$). 
         \label{alg:lu_biharmonic}}
@@ -752,8 +745,8 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
         %\State $\N{U}_{k,j} = \N{H}_{k,j} - \N{L}_{k, k-4}  \N{U}_{k-4, j} 
         %\quad \forall j = k-2, k, \ldots, N$
         $\N{L}_{k,k-2} \gets {\N{U}}_{k,k-2}/{\N{U}}_{k-2, k-2}$ \;
-        $\{\N{U}_{k,k+2j}\}_{j=0}^{M} \gets \{{\N{U}}_{k,k+2j}\}_{j=0}^{M} - 
-        \N{L}_{k, k-2} \{\N{U}_{k-2,k+2j}\}_{j=0}^{M}$ \;
+        $\{\N{U}_{k,k+2j}\}_{j=-1}^{M} \gets \{{\N{U}}_{k,k+2j}\}_{j=-1}^{M} - 
+        \N{L}_{k, k-2} \{\N{U}_{k-2,k+2j}\}_{j=-1}^{M}$ \;
         %\State $\N{U}_{kj} = {\N{U}}_{kj} - \N{L}_{k, k-2} \N{U}_{k-2, j} 
         %\quad \forall j = k, k+2, \ldots, N$
         }
@@ -797,10 +790,10 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 		\{\N{L}_{kj}\}_{k,j=0}^{N}$ 
 	matrices, as well as the $\{ a_k\}_{k=0}^{N-6}$ and $\{ b_k\}_{k=0}^{N-6}$ vectors. 
 	The parameters $q_j$ and $s_j$ are given in Eqs. (\ref{eq:pk}) and 
-	(\ref{eq:rk}) respectively. 	\label{alg:SolveBiharmonic}}
-		\Fn{\LUSolveBiharmonic{$\{\N{U}_{kj}\}_{k,j=0}^{N}, 
+	(\ref{eq:rk}) respectively. The vector $\{f_k\}_{k=0}^{N}$ contains the right hand side and $\{ \hat{u}_k\}_{k=0}^N$ is the solution.	\label{alg:SolveBiharmonic}}
+		\Fn{\LUSolveBiharmonic{$\{f_k\}_{k=0}^{N}, \{\N{U}_{kj}\}_{k,j=0}^{N}, 
                 \{\N{L}_{kj}\}_{k,j=0}^{N}, 
-                \{f_k\}_{k=0}^{N}, \{a_k\}_{k=0}^{N-6}, \{b_k\}_{k=0}^{N-6}, 
+                \{a_k\}_{k=0}^{N-6}, \{b_k\}_{k=0}^{N-6}, 
                 \xi_0$}}{
           \Output{$\{ \hat{u}_k\}_{k=0}^N$}
 		  \tcp*[l]{Solve $\N{L}_{kj}y_j=f_k$ by forward elimination}
@@ -844,14 +837,14 @@ row, see Alg. (\ref{alg:SolveBiharmonic}).
 		}
 \end{algorithm}
 
-\section{Verification}
+\section{Verification and validation}
 \label{sec:verification}
-We have in previous sections described a Navier-Stokes solver for channel flows applicable to large-scale simulations. We have devised algorithms for fast direct sparse solvers, scalar products, and for the necessary fast transforms between physical and spectral space. The complete solver has been implemented in the open source code spectralDNS~\cite{spectralDNS}. For MPI we are using a slab decomposition, as described by Mortensen \cite{Mortensen2015}, but parallel scalability is not considered here since all algorithms described in previous sections are executed in serial. In this section we simply verify the implementation, and, to show that these algorithms can be used for large-scale simulations, we will first study some simple 1D problems. 
+We have in previous sections described a Navier-Stokes solver for channel flows applicable to large-scale simulations. We have devised algorithms for fast direct sparse solvers, scalar products, and for the necessary fast transforms between physical and spectral space. The complete solver has been implemented in the open source code spectralDNS~\cite{spectralDNS}. For MPI we are using a slab decomposition, as described by Mortensen \cite{Mortensen2016}, but parallel scalability is not considered here since all algorithms described in previous sections are executed in serial. In this section we will simply verify the implementation, and validate the method for large-scale simulations. To this end we will first study some simple 1D problems. 
 
 Roundoff errors are often causing problems for spectral methods. The roundoff error of the linear solver described for the biharmonic problem in Sec.~\ref{sec:implementation}, and similarly for the Helmholtz problem, may be estimated 
 by the following approach: Let $\{u_i\}_{i=0}^{N_x-4}$ be a uniformly distributed 
-random vector of double precision in the interval $(0, 1)$. Compute the matrix vector product $\bm{f}=\N{H}\bm{u}$ and 
-then solve $\N{H} \bm{v} = \bm{f}$, using Alg. \ref{alg:SolveBiharmonic}, for 
+random vector of double precision in the interval $(0, 1)$. Compute the matrix vector product ${f}=\N{H}{u}$ and 
+then solve $\N{H} {v} = {f}$, using Algorithms \ref{alg:lu_biharmonic}, \ref{alg:ab} and \ref{alg:SolveBiharmonic}, for 
 $\{v_i\}_{i=0}^{N_x-4}$. The roundoff error of the solution 
 algorithm may then be found as $\max \{|u_i-v_i|\}_{i=0}^{N_x-4} / \max \{|u_i|\}_{i=0}^{N_x-4}$. For this experiment we use double precision and assume that $\triangle t= 10^{-5}$ 
 and $\nu=1/5200$, that are reasonable parameters for a turbulent channel flow 
@@ -877,6 +870,7 @@ the Helmholtz matrix roundoff errors are seen to be insignificant. Note that Che
 	$\D{H}(\underline{z}, \triangle t, \nu)$. Parameters 
 	are chosen as $\nu=1/5200$ and $\triangle t=10^{-5}$ and the numbers shown 
 	are for an average of 100 runs.	 \label{tab:roundoff}}
+\centering
    \begin{tabular}{cccccccc}
 	   \multicolumn{8}{c}{$N_x$} \\
 	   \hline
@@ -896,7 +890,7 @@ $\underline{z}$ & 64 & 128 & 256 & 512 & 1024 & 2048 & 4096 \\
 \end{table}
 
 To show that the solvers are scaling with size, we investigate the execution time 
-for solving $\N{H} \bm{v} = \bm{f}$ and $\D{H} \bm{v} = \bm{f}$ on a complete 
+for solving $\N{H} {v} = {f}$ and $\D{H} {v} = {f}$ on a complete 
 wavenumber mesh of size $(N_x,64,64)$. We use a MacBook Pro laptop with the 2.8 GHz intel Core i7 processor. The average time for one single solve is shown in Table~\ref{tab:timings}, where the numbers in parenthesis are used to indicate scaling (unity would be perfectly $\mathcal{O}(N_x)$). The scaling is seen to be close to linear, and variations 
 are most likely due to how well datastructures fit in the cache. The ability to solve large-scale problems is evident.
 \begin{table}
@@ -931,12 +925,12 @@ $N_x$ & Biharmonic & Helmholtz \\
 
 The Orr-Sommerfeld equation (see, e.g., \cite{Orszag_1971}) is further used to establish that we are solving the right equations, and that the accuracy of the solver is second-order in time. The Orr-Sommerfeld eigenvalue problem is first solved for $Re=8000$, using the biharmonic Shen basis (\ref{eq:phiN}). The leading eigenvalue/eigenvector pair is then added as a perturbation to a laminar, parabolic, base flow, leading to an initial field
 \begin{align}
-u(x,y,t) &= -\epsilon  \mathrm{Re}\{\imath \xi(x) \exp (\imath (y-\lambda t))\}, \label{eq:OS1} \\
-v(x,y,t) &= 1-x^2 + \epsilon \mathrm{Re}\{\xi'(x) \exp(\imath(y-\lambda t)\}, \label{eq:OS2}
+u(x,y,t) &= -\epsilon  \Re\{\imath \xi(x) \exp (\imath (y-\lambda t))\}, \label{eq:OS1} \\
+v(x,y,t) &= 1-x^2 + \epsilon \Re\{\xi'(x) \exp(\imath(y-\lambda t)\}, \label{eq:OS2}
 \end{align}
-where $\xi(x)$ is the eigenvector, $\lambda=0.2470750602+\imath 2.664410371\cdot 10^{-3}$ the eigenvalue and $\epsilon \in \mathcal{R}^+$ is a small positive constant. Note that if $\epsilon$ is chosen as too big, then the initial/boundary value problem will not agree well with the linearized Navier-Stokes equations used in deriving the Orr-Sommerfeld equations, due to second-order terms. Likewise, if $\epsilon$ is chosen as too small, then roundoff errors will be too large, since the perturbation is added to a base flow of order unity. It turns our that $\epsilon=10^{-7}$ is a good compromise, and that a mesh of size $128 \times 8 \times 2$ is accurate enough to isolate temporal errors. Since the evolution of the perturbation is known analytically, the $L^2$-norm of the deviation from this exact linearized solution is used as a measure of the error. We also compute the error in the perturbation energy by
+where $\xi(x)$ is the eigenvector, $\lambda=0.2470750602+\imath 2.664410371\cdot 10^{-3}$ the eigenvalue and $\epsilon \in \mathbb{R}^+$ is a small positive constant. Note that if $\epsilon$ is chosen as too big, then the initial/boundary value problem will not agree well with the linearized Navier-Stokes equations used in deriving the Orr-Sommerfeld equations, due to second-order terms. Likewise, if $\epsilon$ is chosen as too small, then roundoff errors will be too large, since the perturbation is added to a base flow with magnitude of order unity. It turns our that $\epsilon=10^{-7}$ is a good compromise, and that a mesh of size $128 \times 8 \times 2$ is accurate enough to isolate temporal errors. Since the evolution of the perturbation is known analytically, the $L^2$-norm of the deviation from this exact linearized solution is used as a measure of the error. We also compute the error in the perturbation energy by
 \begin{equation}
-E(t) =  \frac{\left<\tilde{\bm{u}}(\bm{x}, t), \tilde{\bm{u}}(\bm{x}, t) \right>}{\left<\tilde{\bm{u}}(\bm{x}, 0), \tilde{\bm{u}}(\bm{x}, 0) \right>}  - \exp(2 \mathrm{Im}\{\lambda\}t), \label{eq:OSenergy}
+E(t) =  \frac{\left<\tilde{\bm{u}}(\bm{x}, t), \tilde{\bm{u}}(\bm{x}, t) \right>}{\left<\tilde{\bm{u}}(\bm{x}, 0), \tilde{\bm{u}}(\bm{x}, 0) \right>}  - \exp(2 \Im\{\lambda\}t), \label{eq:OSenergy}
 \end{equation}
 where $\tilde{\bm{u}} = [u, v-(1-x^2)]$ represents the perturbation vector. 
 %Table \ref{tab:epsilon} shows the perturbation error as a function of $\epsilon$, using a mesh of size $128 \times 8 \times 2$ or $512 \times 8 \times 2$, $\triangle t=0.2$ and final time $t=5$. Since the perturbation is added to a base flow of order unity, we know that one digit will be lost in accuracy, for each row, moving down Table \ref{tab:epsilon}. Adding to this the normal roundoff, see Table \ref{tab:roundoff}, $\epsilon=10^{-8}$ should not be expected to yield more than 6-7 digits of accuracy, whereas the final row ($\epsilon=10^{-12}$) no more than 2-3. Still, we observe that the solution is nearly independent of $\epsilon$ for $10^{-6} < \epsilon < 10^{-8}$, and as such $\epsilon=10^{-7}$ is chosen as suitable for computing the temporal accuracy. Note also that we can assume spatial discretization errors are negligible, as the case with $N_x=512$ gives more or less the same result as $N_x=128$. 
@@ -972,9 +966,9 @@ Table \ref{tab:OS} shows the computed errors using a final time of $t=50$, corre
 
 \begin{table}
 	\centering
-	\caption{Error in the Orr-Sommerfeld perturbation at $Re=8000$, for the most unstable eigenmode, as a function of time step. The mesh size is $128 \times 8 \times 2$. The $L^2$-norm $ \| \bm{u}' \| = \sqrt{\left< \bm{u}', \bm{u}'\right>}$, where $\bm{u}'=\bm{u}-\bm{u}_{\mathrm{exact}}$, and the energy error is computed as Eq. (\ref{eq:OSenergy}). The numbers in parenthesis are showing the order of the error, computed as $\log(\tau_i/\tau_{i-1})/\log(\triangle t_i/ \triangle t_{i-1})$, where $i$ is the row number of the table and $\tau$ represents the values of $\|\bm{u}'\|$ or $E(t=50)$.  \label{tab:OS}}
+	\caption{Error in the Orr-Sommerfeld perturbation at $Re=8000$, for the most unstable eigenmode, as a function of time step. The mesh size is $128 \times 8 \times 2$. The $L^2$-norm $ \| \bar{\bm{u}} \| = \sqrt{\left< \bar{\bm{u}}, \bar{\bm{u}}\right>}$, where $\bar{\bm{u}}=\bm{u}-\bm{u}_{\mathrm{exact}}$, and the energy error is computed as Eq. (\ref{eq:OSenergy}). The numbers in parenthesis are showing the order of the error, computed as $\log(\tau_i/\tau_{i-1})/\log(\triangle t_i/ \triangle t_{i-1})$, where $i$ is the row number of the table and $\tau$ represents the values of $\|\bar{\bm{u}}\|$ or $E(t=50)$.  \label{tab:OS}}
 	\begin{tabular}{ccc}	
- $\triangle t$ & $\| \bm{u}' \|(t=50)$ & $\int_{t=0}^{t=50}E(t) \mathrm{d}t$ \\
+ $\triangle t$ & $\| \bar{\bm{u}} \|(t=50)$ & $\int_{t=0}^{t=50}E(t) \mathrm{d}t$ \\
  \hline
 
 1.0000e-01 & 2.9005e-09  (0.000) & 1.2775e-02 (0.000) \\
@@ -989,9 +983,9 @@ Table \ref{tab:OS} shows the computed errors using a final time of $t=50$, corre
 
 \begin{table}
 	\centering
-	\caption{Error in the Orr-Sommerfeld perturbation at $Re=8000$, for the most unstable eigenmode, as a function of $N_x$. The time step $\triangle t = 10^{-3}$ and the end time is $t=0.05$. The $L^2$-norm $ \| \bm{u}' \| = \sqrt{\left< \bm{u}', \bm{u}'\right>}$, where $\bm{u}'=\bm{u}-\bm{u}_{\mathrm{exact}}$, and the energy error is computed as Eq. (\ref{eq:OSenergy}). GC and GL refer to Chebyshev-Gauss and Chebyshev-Gauss-Lobatto points, respectively.   \label{tab:OS_spatial}}
+	\caption{Error in the Orr-Sommerfeld perturbation at $Re=8000$, for the most unstable eigenmode, as a function of $N_x$. The time step $\triangle t = 10^{-3}$ and the end time is $t=0.05$. The $L^2$-norm $ \| \bar{\bm{u}} \| = \sqrt{\left< \bar{\bm{u}}, \bar{\bm{u}}\right>}$, where $\bar{\bm{u}}=\bm{u}-\bm{u}_{\mathrm{exact}}$, and the energy error is computed as Eq. (\ref{eq:OSenergy}). GC and GL refer to Chebyshev-Gauss and Chebyshev-Gauss-Lobatto points, respectively.   \label{tab:OS_spatial}}
 	\begin{tabular}{ccccc}	
-		$N_x$ & \multicolumn{2}{c}{${\| \bm{u}' \|(t=0.05)}$} & \multicolumn{2}{c}{$\int_{t=0}^{t=0.05}E(t) \mathrm{d}t$} \\
+		$N_x$ & \multicolumn{2}{c}{$\frac{1}{\epsilon}{\| \bar{\bm{u}} \|(t=0.05)}$} & \multicolumn{2}{c}{$\int_{t=0}^{t=0.05}E(t) \mathrm{d}t$} \\
 		\hline
 			 & GC & GL & GC & GL \\
 		\hline
@@ -1033,7 +1027,7 @@ performed with the 2/3-rule \cite{Orzag71}.
 	\end{tabular}
 \end{table}
 
-For the ultimate test of a fully turbulent flow, we use the turbulent Reynolds number $Re_{\tau}=2000$, which has been simulated previously by Hoyas and Jim\'{e}nez \cite{hoyas06}, Lozano and Jim\'{e}nez \cite{Lozano2014} and Lee and Moser \cite{leemoser15}. Lozano and Jim\'{e}nez showed that a small box  of size $2 \times 2\pi \times \pi$ in $x, y,$ and $z$ directions, respectively, could be simulated with $633 \times 1024 \times 1024$ collocation points (compact finite differences in wall-normal direction, Fourier in periodic) in order to capture all relevant one-point statistics found in much larger boxes. We use the same small computational box, with resolution of $512 \times 1024 \times 1024$, and expect the superior resolution properties of spectral methods to work in our favor. Simulations were run on the Shaheen II supercomputer at KAUST, using 512 cores. With a time step of $2\cdot10^{-5}$, the solver used approximately 1 second per time step. After reaching steady state, statistics were sampled for 100,000 time steps (enough to converge first order statistics), and the average velocity is shown in Figure \ref{fig:U_mean} in a dashed line, alongside the results obtained by Hoyas and Jim\'{e}nez \cite{hoyas06} in a dotted line. The difference is hardly visible, showing that the fully spectral Shen-Fourier solver is reliable and robust for $Re_{\tau} = 2000$. Furthermore, the results presented in Tables \ref{tab:roundoff}, \ref{tab:timings} and \ref{tab:timings_solver} indicate that the solver is more than likely to be reliable for even higher Reynolds numbers and larger scales.
+For the ultimate test of a fully turbulent flow, we use the turbulent Reynolds number $Re_{\tau}=2000$, which has been simulated previously by Hoyas and Jim\'{e}nez \cite{hoyas06}, Lozano and Jim\'{e}nez \cite{Lozano2014} and Lee and Moser \cite{leemoser15}. Lozano and Jim\'{e}nez showed that a small box  of size $2 \times 2\pi \times \pi$ in $x, y,$ and $z$ directions, respectively, could be simulated with $633 \times 1024 \times 1024$ collocation points (compact finite differences in wall-normal direction, Fourier in periodic) in order to capture all relevant one-point statistics found in much larger boxes. We use the same small computational box, with resolution of $512 \times 1024 \times 1024$, and expect the superior resolution properties of spectral methods to work in our favor. Furthermore, the driving force $\beta$ was dynamically adjusted in time to keep the flux through the channel constant. Simulations were run on the Shaheen II supercomputer at KAUST, using 512 cores. With a time step of $2\cdot10^{-5}$, the solver used approximately 1 second per time step. After reaching steady state, statistics were sampled for 100,000 time steps (enough to converge first order statistics), and the average velocity is shown in Figure \ref{fig:U_mean} in a dashed line, alongside the results obtained by Hoyas and Jim\'{e}nez \cite{hoyas06} in a dotted line. The difference is hardly visible, showing that the fully spectral Shen-Fourier solver is reliable and robust for $Re_{\tau} = 2000$. Furthermore, the results presented in Tables \ref{tab:roundoff}, \ref{tab:timings} and \ref{tab:timings_solver} indicate that the solver is more than likely to be reliable for even higher Reynolds numbers and larger scales.
 
 %\begin{figure}[t]
 %	\begin{center}
@@ -1062,26 +1056,19 @@ For the ultimate test of a fully turbulent flow, we use the turbulent Reynolds n
 		\end{tikzpicture}
 		%
 		\caption{Average velocity $\D{v}^+ = \D{v}/u_{\tau}$ in $y$-direction, for $Re_{\tau}=2000$. Our results (dashed) are compared with those of Hoyas and Jim\'{e}nez \cite{hoyas06} (dotted).}
-		\label{fig:U_mean2}
+		\label{fig:U_mean}
 	\end{center}
 \end{figure}
 
 
 
 \section{Conclusions}
-Spectral Navier Stokes solvers are attractive for their accuracy and resolution 
-properties, and are usually the preferred tools for performing Direct Numerical 
-Simulations (DNS) of turbulent flows. A spectral discretization of the wall-normal 
-direction in a plane channel is challenging, due to roundoff errors, and as such recent large-scale channel DNS 
-have been conducted without spectral accuracy in the wall-normal direction. 
-
-In this paper a spectral-Galerkin Navier Stokes solver for large-scale turbulent channel flows 
+In this paper a spectral-Galerkin Navier Stokes solver amenable to large-scale turbulent channel flows 
 has been described. In the wall-normal direction, the solver utilizes base 
 functions 
 suggested by J. Shen \cite{Shen95}, constructed from Chebyshev polynomials. The 
 solver uses Fourier decompositions in both periodic directions, and, as such, 
-it is fully spectral in all spatial directions. To show that this solver is 
-applicable to large-scale simulations at high Reynolds numbers,  we have shown 
+it is fully spectral in all spatial directions. To validate the method for large-scale simulations at high Reynolds numbers, we have shown 
 that the roundoff errors are small, even for simulations twice the size of the 
 largest simulations known to date \cite{leemoser15}.
 The computational cost of the solver is shown to scale with the expected 
@@ -1089,7 +1076,7 @@ $\mathcal{O}(N_x \log N_x)$, for a mesh of size $N_x \times N_y \times N_z$ ($N_
 transforms. Direct 
 solvers have been devised for Helmholtz and biharmonic coefficient matrices, 
 and these have been shown to scale close to 
-$\mathcal{O}(N_x)$, with insignificant roundoff errors. The fully spectral solver 
+$\mathcal{O}(N_x)$, with insignificant roundoff errors. Furthermore, all required scalar product matrices and fast transforms between spectral and physical space have been described. The fully spectral solver 
 has been applied to a turbulent 
 channel flow at $Re_{\tau}=2000$, and the first order statistics are shown to agree well with the literature. The solver has been implemented as part of the open source project spectralDNS \cite{spectralDNS}.
 
@@ -1107,7 +1094,7 @@ This research is a part of the 4DSpace Strategic Research Initiative at the Univ
 %followed by a pressure correction. The two steps may be performed iteratively. 
 %The equations are iterated forward in time in equal size time steps $\triangle 
 %t$ from initial conditions $u(\bm{x}, 0) = u^0(\bm{x})$ at $t=0$, such that 
-%$t_n = n\triangle t$, $n \in \mathcal{Z}$. For turbulent channel flows initial 
+%$t_n = n\triangle t$, $n \in \mathbb{Z}$. For turbulent channel flows initial 
 %conditions are simply a perturbed state used to get a turbulent flow going. 
 %
 %The IPCS attempts to find velocity vector $\bm{u}^{n}$ on time step $t_n$  and 
@@ -1146,29 +1133,29 @@ This research is a part of the 4DSpace Strategic Research Initiative at the Univ
 %
 %1) Find $\bm{u}^*$ in $\D{V}_N^3$ by solving
 %\begin{multline}
-% \frac{1}{\triangle t}\left<\bm{u}^*-\bm{u}^{n-1}, \bm{\D{\psi}}\right>_w + 
-%\left<\bm{N}^{n-1/2}, \bm{\D{\psi}} \right>_w   = \nu \left<\nabla^2 
-%\bm{u}^{n-1/2}, \bm{\D{\psi}} \right>_w \\ - \left<\nabla{p}^{n-3/2}, 
-%\bm{\D{\psi}} \right>_w + \left<\bm{f}, \bm{\D{\psi}} \right>_w \,\,  \forall 
+% \frac{1}{\triangle t}\left<\bm{u}^*-\bm{u}^{n-1}, \bm{\D{\psi}}\right>_{\sigma} + 
+%\left<\bm{N}^{n-1/2}, \bm{\D{\psi}} \right>_{\sigma}   = \nu \left<\nabla^2 
+%\bm{u}^{n-1/2}, \bm{\D{\psi}} \right>_{\sigma} \\ - \left<\nabla{p}^{n-3/2}, 
+%\bm{\D{\psi}} \right>_{\sigma} + \left<\bm{f}, \bm{\D{\psi}} \right>_{\sigma} \,\,  \forall 
 %\, \bm{\D{\psi}} \in \D{V}_N^3. \label{eq:tentative}
 %\end{multline}
 %
 %2) Compute the pressure correction $p^*\in \N{V}_N$ by solving
 %\begin{equation}
-%\left< \nabla^2 p^*, \N{\psi} \right>_w = \frac{1}{\triangle t} \left<\nabla 
-%\cdot \bm{u}^*, \N{\psi} \right>_w\,\, \forall \, \N{\psi} \in \N{V}_N. 
+%\left< \nabla^2 p^*, \N{\psi} \right>_{\sigma} = \frac{1}{\triangle t} \left<\nabla 
+%\cdot \bm{u}^*, \N{\psi} \right>_{\sigma}\,\, \forall \, \N{\psi} \in \N{V}_N. 
 %\label{eq:pcorr}
 %\end{equation}
 %
 %3) Update the velocity, $\bm{u}^n \in \D{V}_N^3$, and pressure, $p^{n-1/2} \in 
 %\N{V}_N$, by solving
 %\begin{align}
-%\left< \bm{u}^n, \bm{\D{\psi}}\right>_w &= \left< \bm{u}^*, 
-%\bm{\D{\psi}}\right>_w - \triangle t \left< \nabla p^*, \bm{\D{\psi}} 
-%\right>_w 
+%\left< \bm{u}^n, \bm{\D{\psi}}\right>_{\sigma} &= \left< \bm{u}^*, 
+%\bm{\D{\psi}}\right>_{\sigma} - \triangle t \left< \nabla p^*, \bm{\D{\psi}} 
+%\right>_{\sigma} 
 %\,\,  &\forall \, \bm{\D{\psi}} \in \D{V}_N^3, \label{eq:u_update} \\
-%\left<p^{n-1/2}, \N{\psi}\right>_w &= \left<p^{n-3/2}, \N{\psi}\right>_w + 
-%\left<p^*, \N{\psi}\right>_w \,\, &\forall \, \N{\psi} \in 
+%\left<p^{n-1/2}, \N{\psi}\right>_{\sigma} &= \left<p^{n-3/2}, \N{\psi}\right>_{\sigma} + 
+%\left<p^*, \N{\psi}\right>_{\sigma} \,\, &\forall \, \N{\psi} \in 
 %\N{V}_N,\label{eq:pres_update}
 %\end{align}
 %where the pressure update simply resorts to $\hat{p}^{n-1/2} = \hat{p}^{n-3/2} 
@@ -1181,31 +1168,31 @@ This research is a part of the 4DSpace Strategic Research Initiative at the Univ
 %inner products in Eqs. (\ref{eq:tentative}, \ref{eq:pcorr}, \ref{eq:u_update}, 
 %\ref{eq:pres_update}) lead to a range of new matrices
 %\begin{align}
-% \left< u_i^* - u_i^{n-1}, \D{\psi}\right>_w &= 
+% \left< u_i^* - u_i^{n-1}, \D{\psi}\right>_{\sigma} &= 
 %h\D{B}\left({\hat{u}}_i^*-{\hat{u}}_i^{n-1} \right) \quad &i \in (0,1,2), \\ 
-% \left<\nabla^2 {u}_i^{n-1/2}, \D{\psi}\right>_w &= -h  \left( \D{A} 
+% \left<\nabla^2 {u}_i^{n-1/2}, \D{\psi}\right>_{\sigma} &= -h  \left( \D{A} 
 %+(\underline{m}^2+\underline{n}^2)\D{B}\right) \hat{u}_i^{n-1/2} \quad &i \in 
 %(0,1,2), \\ 
-% \left< f_i, \D{\psi}\right>_w &= h\D{\mathcal{S}}(f_i) &i \in (0,1,2), \\
-% \left<N_i^{n-1/2}, \D{\psi} \right>_w &= h\D{\mathcal{S}}(N_i^{n-1/2}) &i \in 
+% \left< f_i, \D{\psi}\right>_{\sigma} &= h\D{\mathcal{S}}(f_i) &i \in (0,1,2), \\
+% \left<N_i^{n-1/2}, \D{\psi} \right>_{\sigma} &= h\D{\mathcal{S}}(N_i^{n-1/2}) &i \in 
 %(0,1,2), \\  
-% \left< \nabla p^{n-3/2}, \bm{\D{\psi}} \right>_w &= h\left[\grave{C},\, 
+% \left< \nabla p^{n-3/2}, \bm{\D{\psi}} \right>_{\sigma} &= h\left[\grave{C},\, 
 %\imath \underline{m} \grave{B},\, \imath \underline{n} \grave{B} \right] 
 %\hat{p}^{n-3/2}, \\ 
-% \left< \nabla^2 p^*, \N{\psi} \right>_w &= -h\left(\N{A} +(\underline{m}^2 + 
+% \left< \nabla^2 p^*, \N{\psi} \right>_{\sigma} &= -h\left(\N{A} +(\underline{m}^2 + 
 %\underline{n}^2)\N{B} \right) \hat{p}^*, \\ 
-% \left<\nabla \cdot \bm{u}^*, \N{\psi} \right>_w &= h\left( \tilde{C} 
+% \left<\nabla \cdot \bm{u}^*, \N{\psi} \right>_{\sigma} &= h\left( \tilde{C} 
 %\hat{u}^* + \imath \underline{m} \tilde{B} \hat{v}^* + \imath \underline{n} 
 %\tilde{B} \hat{w}^* \right), 
 %\end{align}
-%where $\D{A}_{kj} = -\left(\D{\phi}^{''}_{j}, \D{\phi}_{k} \right)_w, 
-%\N{A}_{kj} = -\left(\N{\phi}^{''}_{j}, \N{\phi}_{k} \right)_w,  \grave{C}_{kj} 
-%= \left(\N{\phi}^{'}_j, \D{\phi}_k \right)_w, \tilde{C}_{kj} = 
+%where $\D{A}_{kj} = -\left(\D{\phi}^{''}_{j}, \D{\phi}_{k} \right)_{\sigma}, 
+%\N{A}_{kj} = -\left(\N{\phi}^{''}_{j}, \N{\phi}_{k} \right)_{\sigma},  \grave{C}_{kj} 
+%= \left(\N{\phi}^{'}_j, \D{\phi}_k \right)_{\sigma}, \tilde{C}_{kj} = 
 %(\D{\phi}^{'}_j, 
-%\N{\phi}_k)_w, \N{B}_{kj} = \left( \N{\phi}_j, \N{\phi}_k \right)_w, 
-%\grave{B}_{kj} = (\N{\phi}_j, \D{\phi}_k)_w$ and $\tilde{B}_{kj} = 
+%\N{\phi}_k)_{\sigma}, \N{B}_{kj} = \left( \N{\phi}_j, \N{\phi}_k \right)_{\sigma}, 
+%\grave{B}_{kj} = (\N{\phi}_j, \D{\phi}_k)_{\sigma}$ and $\tilde{B}_{kj} = 
 %(\D{\phi}_j, 
-%\N{\phi}_k)_w$ are all more or less sparse matrices. Arranging the governing 
+%\N{\phi}_k)_{\sigma}$ are all more or less sparse matrices. Arranging the governing 
 %equations on matrix form we obtain for the three tentative velocity components 
 %in (\ref{eq:tentative})
 %\begin{align}
@@ -1300,8 +1287,8 @@ This research is a part of the 4DSpace Strategic Research Initiative at the Univ
 %  \frac{\partial w}{\partial x} &= \mathcal{T}^{-1} 
 %(B^{-1}(\acute{C}\hat{w})),  
 %\end{align}
-%where $\D{C}_{kj} = (\D{\phi}_j^{'}, \D{\phi}_k)_w$,  $\acute{C_{kj}} = 
-%(\D{\phi}_j^{'}, T_k)_w$ and $B=(T_j, T_k)_w$. Partial derivatives with 
+%where $\D{C}_{kj} = (\D{\phi}_j^{'}, \D{\phi}_k)_{\sigma}$,  $\acute{C_{kj}} = 
+%(\D{\phi}_j^{'}, T_k)_{\sigma}$ and $B=(T_j, T_k)_{\sigma}$. Partial derivatives with 
 %respect 
 %to periodic directions are computed as
 %\begin{align}
@@ -1334,45 +1321,45 @@ This research is a part of the 4DSpace Strategic Research Initiative at the Univ
 
 \paragraph*{Fast scalar products and transforms}
 Algorithms for fast scalar products and transforms, for the three 
-spaces $V_N, \D{V}_N, \N{V}_N$, are given in Alg. ~\ref{alg:fst}. The 
+spaces $W_N, \D{W}_N, \N{W}_N$, see Eqs. (\ref{eq:Tk}, \ref{eq:phiD}) and (\ref{eq:phiN}), are given in Alg. ~\ref{alg:fst}. The 
 algorithms for the inverse transforms are given in Alg.~\ref{alg:ifst}. The 
 algorithms are using the discrete cosine transforms (dct) of type 1, 2 or 3 
 depending on the choice of discretization points and direction.
 
 \paragraph*{Matrices}
-Matrices representing one-dimensional scalar products are given in Table \ref{tab:matrices}. Note that the mass matrices are symmetrical, and as such only the upper triangular parts are described. Also note that the matrices are computed using quadrature, and not exact integration, which has some minor implications for Chebyshev-Gauss-Lobatto (GL) points. This follows since for an exact $L^2_w$ scalar product we would have $c_{N_x}=1$ for GL as well as Chebyshev-Gauss (GC), but for the $l^2_w$ scalar product used here $c_{N_x}=2$. This disagreement, that follows from inexact quadrature at the highest mode, explains the inclusion of the $c_{k+4}$ term for matrix $\N{B}$, and the $c_{k+2}$ term for matrix $\D{B}$. These are missing from Lemma 2.1 and 3.1 of \cite{Shen95}, because Shen here considers only the exact $L^2_w$ scalar product.
+Matrices representing one-dimensional scalar products are given in Table \ref{tab:matrices}. Note that the mass matrices are symmetrical, and as such only the upper triangular parts are described. Also note that the matrices are computed using quadrature, and not exact integration, which has some minor implications for Chebyshev-Gauss-Lobatto (GL) points. This follows since for an exact $L^2_{\sigma}$ scalar product we would have $c_{N_x}=1$ for GL as well as Chebyshev-Gauss (GC), but for the $l^2_{\sigma}$ scalar product used here $c_{N_x}=2$. This disagreement, that follows from inexact quadrature at the highest mode, explains the inclusion of the $c_{k+4}$ term for matrix $\N{B}$, and the $c_{k+2}$ term for matrix $\D{B}$. These are missing from Lemma 2.1 and 3.1 of \cite{Shen95}, because Shen here considers only the exact $L^2_{\sigma}$ scalar product.
 
 \SetKwFunction{forwardScalar}{forwardScalar}
 \SetKwFunction{forwardTransform}{forwardTransform}
 \begin{algorithm}
     \DontPrintSemicolon
-	\caption{Forward scalar products and transforms for all spaces $V_N, 
-	\D{V}_N, \N{V}_N$. 
-		Here "dct" is the discrete cosine transform from SciPy. \label{alg:fst}}
+	\caption{Forward scalar products and transforms for all spaces $W_N, 
+	\D{W}_N, \N{W}_N$. 
+		Here "dct" is the discrete cosine transform from SciPy. The matrices $B$, $\D{B}$ and $\N{B}$ are given in Table \ref{tab:matrices}.\label{alg:fst}}
 			\Fn{\forwardScalar{$\{f_j\}_{j=0}^{N}$, points, space}}{
             
             \Output{$\{y_k\}_{k=0}^{N}$}
                 
-			\If{ points = "Chebyshev-Gauss-Lobatto"}{
+			\If{ points = "Chebyshev-Gauss"}{
 			$\{ w_k\}_{k=0}^{N} \gets \text{dct}(\{f_j\}_{j=0}^{N}, \text{type=2}, 
 			\text{axis=0})\frac{\pi}{2 N}$ \;
             }
-			\ElseIf{ points = "Chebyshev-Gauss"}{
+			\ElseIf{ points = "Chebyshev-Gauss-Lobatto"}{
 			$\{ w_k\}_{k=0}^{N} \gets \text{dct}(\{f_j\}_{j=0}^{N}, \text{type=1}, 
 			\text{axis=0}) \frac{\pi}{2 (N-1)}$ \;
 		    }
 			$\{y\}_{k=0}^N \gets 0$ \;
-			\If{ space = $\D{V}_N$}{
+			\If{ space = $\D{W}_N$}{
 			$\{y_k\}_{k=0}^{N-2} \gets \{w_k\}_{k=0}^{N-2} - \{w_k\}_{k=2}^{N}$ 
 			\;
             }
-			\ElseIf{ space = $\N{V}_N$}{
+			\ElseIf{ space = $\N{W}_N$}{
 			\For{$k=0$ \KwTo $N-4$}{
 			${y}_k \gets w_k - \frac{2(k+2)}{k+3} w_{k+2} + 
 			\frac{k+1}{k+3}w_{k+4}$ \;
 		    }
             }
-			\ElseIf{space = $V_N$}{
+			\ElseIf{space = $W_N$}{
 			$\{y_k\}_{k=0}^N \gets \frac{2}{\pi} \{w_k\}_{k=0}^N $ \;
 			$y_0 \gets y_0 / 2$ \;
 			\If{ points = "Chebyshev-Gauss-Lobatto"}{
@@ -1385,13 +1372,13 @@ Matrices representing one-dimensional scalar products are given in Table \ref{ta
 			\Output{$\{y_k\}_{k=0}^{N}$}
             $\{y_k\}_{k=0}^{N} \gets$ forwardScalar($\{f_j\}_{j=0}^{N}$, 
 \emph{points}, \emph{space}) \;
-			\If{space = $\D{V}_N$}{
+			\If{space = $\D{W}_N$}{
 			$\{y_k\}_{k=0}^{N-2} \gets \{\D{B}_{kj}^{-1}\}_{k,j=0}^{N-2}\{y_k\}_{k=0}^{N-2}$ \;
             }
-			\ElseIf{space = $\N{V}_N$}{
+			\ElseIf{space = $\N{W}_N$}{
 			$\{y_k\}_{k=0}^{N-4} \gets \{\N{B}_{kj}^{-1}\}_{k,j=0}^{N-4}\{y_k\}_{k=0}^{N-4}$ \;
             }
-			\ElseIf{space = $V_N$}{
+			\ElseIf{space = $W_N$}{
 			$\{y_k\}_{k=0}^{N} \gets \{{B}_{kj}^{-1}\}_{k,j=0}^{N}\{y_k\}_{k=0}^{N}$ \;
             }
 			\Return $\{y_k\}_{k=0}^{N}$
@@ -1400,7 +1387,7 @@ Matrices representing one-dimensional scalar products are given in Table \ref{ta
 \SetKwFunction{inverseChebTransform}{inverseChebTransform}
 \SetKwFunction{inverseShenTransform}{inverseShenTransform}
 \begin{algorithm}
-	\caption{Inverse transforms for all spaces $V_N, \D{V}_N, \N{V}_N$. 
+	\caption{Inverse transforms for all spaces $W_N, \D{W}_N, \N{W}_N$. 
 		Here "dct" is the discrete cosine transform from SciPy.\label{alg:ifst}}
 		\Fn {\inverseChebTransform{$\{f\}_{k=0}^N$, points}}{
         \Output{$\{y_j\}_{j=0}^{N}$}    
@@ -1425,11 +1412,11 @@ Matrices representing one-dimensional scalar products are given in Table \ref{ta
 	    \Fn{\inverseShenTransform{$\{f_k\}_{k=0}^{N}$, points, space}}{
 		\Output{$\{y_j\}_{j=0}^{N}$}
         $\{z_k\}_{k=0}^{N} \gets 0$ \;
-		\If{ space = $\D{V}_N$}{
+		\If{ space = $\D{W}_N$}{
 		$\{z_k\}_{k=0}^{N-2} \gets \{f_k\}_{k=0}^{N-2}$ \;
 		$\{z_k\}_{k=2}^{N} \gets \{z_k\}_{k=2}^{N} - \{f_k\}_{k=0}^{N-2} $ \;
         }
-        \ElseIf{ space = $\N{V}_N$}{	       
+        \ElseIf{ space = $\N{W}_N$}{	       
 		$\{z_k\}_{k=0}^{N-4} \gets \{f_k\}_{k=0}^{N-4}$ \;
 		\For{$k=0$ \KwTo $N-4$}{
 		$z_{k+2} \gets z_{k+2} - \frac{2(k+2)}{k+3} f_k$ \;
@@ -1446,27 +1433,27 @@ Matrices representing one-dimensional scalar products are given in Table \ref{ta
 \end{algorithm}
 \begin{table}
 	\centering
-	\caption{Matrix notation and description for one dimensional scalar products. Note that $c_0=2$ and $c_k=1$ for $0<k<N_x$. For Chebyshev-Gauss points $c_{N_x}=1$, whereas $c_{N_x}=2$ for Chebyshev-Gauss-Lobatto points.	\label{tab:matrices}}
+	\caption{Matrix notation and description for one dimensional scalar products. Note that $c_0=2$ and $c_k=1$ for $0<k<N_x$. For Chebyshev-Gauss points $c_{N_x}=1$, whereas $c_{N_x}=2$ for Chebyshev-Gauss-Lobatto points. Also note that only the upper diagonals are described for the symmetric matrices.	\label{tab:matrices}}
 	\begin{tabular}{ccl}	
 		Notation & Scalar product & Description \\ 
 		\hline
-%		$\{\D{A}_{kj}\}_{k,j=0}^{N_x-2}$ & $-\left(\D{\phi}^{''}_{j}, \D{\phi}_{k} \right)_w$ &
+%		$\{\D{A}_{kj}\}_{k,j=0}^{N_x-2}$ & $-\left(\D{\phi}^{''}_{j}, \D{\phi}_{k} \right)_{\sigma}$ &
 %$\begin{cases} 2\pi(k+1)(k+2), &j=k,\\
 %4\pi(k+1), & j=k+2, k+4, k+6, \ldots, \\
 %0, &\text{otherwise}.\end{cases}$		\\
 %
-%$\{\N{A}_{kj}\}_{k,j=1}^{N_x-2}$ & $-\left(\N{\phi}^{''}_{j}, \N{\phi}_{k} \right)_w$ & $\begin{cases} 2\pi j^2(k+1)/(k+2), &j=k,\\
+%$\{\N{A}_{kj}\}_{k,j=1}^{N_x-2}$ & $-\left(\N{\phi}^{''}_{j}, \N{\phi}_{k} \right)_{\sigma}$ & $\begin{cases} 2\pi j^2(k+1)/(k+2), &j=k,\\
 %4\pi j^2(k+1)/(k+2)^2, & j=k+2, k+4, k+6, \ldots, \\
 %0, &j>k, \text{ or } k+j \text{ odd.} \end{cases}$ \\
 
 $\{\N{C}_{kj}\}_{k,j=0}^{N_x-4, N_x-2}$ & $\left(\D{\phi}^{'}_j, \N{\phi}_k 
-\right)_w$ & $\begin{cases} -\pi(k+1), &j=k-1,\\
+\right)_{\sigma}$ & $\begin{cases} -\pi(k+1), &j=k-1,\\
 2\pi(k+1), & j=k+1, \\
 -\pi(k+1), & j=k+3, \\
 0, &\text{otherwise.} \end{cases}$ \\
 
 $\{\D{C}_{kj}\}_{k,j=0}^{N_x-2, N_x-4}$ & $\left(\N{\phi}^{'}_j, \D{\phi}_k 
-\right)_w$ & $\begin{cases}
+\right)_{\sigma}$ & $\begin{cases}
 \pi (k-2)(k+1)/k, &j=k-3,\\
 -2 \pi \frac{(k+1)^2}{k+2}, & j=k-1, \\
 \pi(k+1), & j=k+1, \\
@@ -1474,14 +1461,14 @@ $\{\D{C}_{kj}\}_{k,j=0}^{N_x-2, N_x-4}$ & $\left(\N{\phi}^{'}_j, \D{\phi}_k
 \end{cases}$ \\
 
 $\{{C}_{kj}\}_{k,j=0}^{N_x, N_x-2}$ & $\left(\D{\phi}^{'}_j, T_k 
-\right)_w$ & $\begin{cases}
+\right)_{\sigma}$ & $\begin{cases}
 -\pi (k+1), &j=k-1,\\
 -2 \pi, & j=k+1,k+3, \ldots, N_x-2 \\
 0, &\text{otherwise.}
 \end{cases}$ \\
 
 
-$\{\N{M}_{kj}\}_{k,j=0}^{N_x-4, N_x-2}$  & $ \left(\D{\phi}_j, \N{\phi}_k \right)_w $ & $\begin{cases}
+$\{\N{M}_{kj}\}_{k,j=0}^{N_x-4, N_x-2}$  & $ \left(\D{\phi}_j, \N{\phi}_k \right)_{\sigma} $ & $\begin{cases}
 -\pi/2 & j=k-2, \\
 \frac{\pi}{2} \left(c_k+2 \frac{k+2}{k+3} \right) & j=k, \\
 -\frac{\pi}{2} \left(2\frac{k+2}{k+3} + c_{j+2} \frac{k+1}{k+3}\right) & j=k+2 \\
@@ -1489,7 +1476,7 @@ $\{\N{M}_{kj}\}_{k,j=0}^{N_x-4, N_x-2}$  & $ \left(\D{\phi}_j, \N{\phi}_k \right
 0, &\text{otherwise.}
 \end{cases}$ \\
 
-$\{\N{B}_{kj}\}_{k,j=0}^{N_x-4} = \{\N{B}_{jk}\}_{j,k=0}^{N_x-4}$ & $(\N{\phi}_j, \N{\phi}_k)_w$ & $\begin{cases}
+$\{\N{B}_{kj}\}_{k,j=0}^{N_x-4}$ & $(\N{\phi}_j, \N{\phi}_k)_{\sigma}$ & $\begin{cases}
 \frac{\pi}{2} \left(c_k + 4 \left(\frac{k+2}{k+3} \right)^2 + c_{k+4} 
 \left(\frac{k+1}{k+3}\right)^2    \right), &j=k,\\
 -\pi \left( \frac{k+2}{k+3} + \frac{(k+4)(k+1)}{(k+5)(k+3)} \right), &j=k + 2,\\
@@ -1497,17 +1484,16 @@ $\{\N{B}_{kj}\}_{k,j=0}^{N_x-4} = \{\N{B}_{jk}\}_{j,k=0}^{N_x-4}$ & $(\N{\phi}_j
 0, &\text{otherwise.}
 \end{cases} $\\
 
-$\{\D{B}_{kj}\}_{k,j=0}^{N_x-2} = \{\D{B}_{jk}\}_{j,k=0}^{N_x-2}$ & $(\D{\phi}_j, \D{\phi}_k)_w$ & $ \begin{cases} 
+$\{\D{B}_{kj}\}_{k,j=0}^{N_x-2} $ & $(\D{\phi}_j, \D{\phi}_k)_{\sigma}$ & $ \begin{cases} 
 \frac{\pi}{2} (c_k+c_{k+2}) &j=k, \\
 -\frac{\pi}{2} &j=k + 2, \\
 0, &\text{otherwise.}
 \end{cases}$ \\
 
-$\{B_{kj}\}_{k,j=0}^{N_x} = \{B_{jk}\}_{j,k=0}^{N_x}$ & $(T_k, T_j)_w$ & $\frac{c_k \pi}{2} \delta_{kj}.$
+$\{B_{kj}\}_{k,j=0}^{N_x} $ & $(T_k, T_j)_{\sigma}$ & $\frac{c_k \pi}{2} \delta_{kj}.$
 
 	\end{tabular}
 \end{table}
-
 
 
 \end{document}

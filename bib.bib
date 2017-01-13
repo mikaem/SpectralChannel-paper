@@ -170,8 +170,35 @@
   Keywords                 = {discrete Fourier transforms;discrete cosine transforms;mathematics computing;optimising compilers;parallel programming;software libraries;DFT algorithm;FFTW3 design;FFTW3 version;cosine transforms;discrete Fourier transform;hand optimized libraries;machine specific single instruction;multiple data instructions;sine transforms;software structure;Data structures;Discrete Fourier transforms;Discrete cosine transforms;Discrete transforms;Fast Fourier transforms;Fourier transforms;Hardware;Multidimensional systems;Optimizing compilers;Software libraries;Adaptive software;Fourier transform;Hartley transform;I/O tensor;cosine transform;fast Fourier transform (FFT)}
 }
 
+@Article{Hale2015,
+  Title                    = {A fast {FFT}-based discrete {L}egendre transform},
+  Author                   = {Hale, Nicholas and Townsend, Alex},
+  Journal                  = {IMA Journal of Numerical Analysis},
+  Year                     = {2015},
+
+  Abstract                 = {An ${\mathcal O}(N(\log N)^2/\log \log N)$ algorithm for the computation of the discrete Legendre transform and its inverse is described. The algorithm combines a recently developed fast transform for converting between Legendre and Chebyshev coefficients with a Taylor series expansion for Chebyshev polynomials about equally spaced points in the frequency domain. Both components are based on the fast Fourier transform, and as an intermediate step we obtain an ${\mathcal O}(N\log N)$ algorithm for evaluating a degree-$(N-1)$ Chebyshev expansion on an $N$-point Legendre grid. Numerical results are given to demonstrate performance and accuracy.},
+  Doi                      = {10.1093/imanum/drv060},
+  Eprint                   = {http://imajna.oxfordjournals.org/content/early/2015/11/12/imanum.drv060.full.pdf+html},
+  Url                      = {http://imajna.oxfordjournals.org/content/early/2015/11/12/imanum.drv060.abstract}
+}
+
+@Article{hale14,
+  Title                    = {{A Fast, Simple, and Stable Chebyshev--Legendre Transform Using an Asymptotic Formula}},
+  Author                   = {Nicholas Hale and Alex Townsend},
+  Journal                  = {SIAM Journal on Scientific Computing},
+  Year                     = {2014},
+  Number                   = {1},
+  Pages                    = {A148-A167},
+  Volume                   = {36},
+
+  Bdsk-url-1               = {http://dx.doi.org/10.1137/130932223},
+  Doi                      = {10.1137/130932223},
+  Eprint                   = {http://dx.doi.org/10.1137/130932223},
+  Url                      = {http://dx.doi.org/10.1137/130932223}
+}
+
 @Article{hoyas08,
-  Title                    = {Reynolds number effects on the Reynolds-stress budgets in turbulent channels},
+  Title                    = {{Reynolds number effects on the Reynolds-stress budgets in turbulent channels}},
   Author                   = {Hoyas, Sergio and Jim{\'e}nez, Javier},
   Journal                  = {Physics of Fluids},
   Year                     = {2008},
@@ -385,7 +412,7 @@
 
 @Article{moin98,
   Title                    = {DIRECT NUMERICAL SIMULATION: A Tool in Turbulence Research},
-  Author                   = {Parviz Moin and and Krishnan Mahesh},
+  Author                   = {Parviz Moin and Krishnan Mahesh},
   Journal                  = {Annual Review of Fluid Mechanics},
   Year                     = {1998},
   Number                   = {1},
@@ -430,6 +457,23 @@
   Subject-category         = {Physics, Condensed Matter},
   Timestamp                = {2015.02.09},
   Unique-id                = {ISI:000226735900040}
+}
+
+@Article{Mortensen2016,
+  Title                    = {High performance Python for direct numerical simulations of turbulent flows},
+  Author                   = {Mikael Mortensen and Hans Petter Langtangen},
+  Journal                  = {Computer Physics Communications},
+  Year                     = {2016},
+  Pages                    = {53 - 65},
+  Volume                   = {203},
+
+  Abstract                 = {Abstract Direct Numerical Simulations (DNS) of the Navier Stokes equations is an invaluable research tool in fluid dynamics. Still, there are few publicly available research codes and, due to the heavy number crunching implied, available codes are usually written in low-level languages such as C/C++ or Fortran. In this paper we describe a pure scientific Python pseudo-spectral \{DNS\} code that nearly matches the performance of C++ for thousands of processors and billions of unknowns. We also describe a version optimized through Cython, that is found to match the speed of C++. The solvers are written from scratch in Python, both the mesh, the \{MPI\} domain decomposition, and the temporal integrators. The solvers have been verified and benchmarked on the Shaheen supercomputer at the \{KAUST\} supercomputing laboratory, and we are able to show very good scaling up to several thousand cores. A very important part of the implementation is the mesh decomposition (we implement both slab and pencil decompositions) and 3D parallel Fast Fourier Transforms (FFT). The mesh decomposition and \{FFT\} routines have been implemented in Python using serial \{FFT\} routines (either NumPy, pyFFTW or any other serial \{FFT\} module), NumPy array manipulations and with \{MPI\} communications handled by \{MPI\} for Python (mpi4py). We show how we are able to execute a 3D parallel \{FFT\} in Python for a slab mesh decomposition using 4 lines of compact Python code, for which the parallel performance on Shaheen is found to be slightly better than similar routines provided through the \{FFTW\} library. For a pencil mesh decomposition 7 lines of code is required to execute a transform. },
+  Bdsk-url-1               = {http://www.sciencedirect.com/science/article/pii/S0010465516300200},
+  Bdsk-url-2               = {http://dx.doi.org/10.1016/j.cpc.2016.02.005},
+  Doi                      = {http://dx.doi.org/10.1016/j.cpc.2016.02.005},
+  ISSN                     = {0010-4655},
+  Keywords                 = {MPI},
+  Url                      = {http://www.sciencedirect.com/science/article/pii/S0010465516300200}
 }
 
 @Article{Mortensen2015,
