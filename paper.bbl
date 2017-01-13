@@ -1,0 +1,177 @@
+\begin{thebibliography}{25}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\href}[2]{#2}
+\providecommand{\path}[1]{#1}
+\providecommand{\DOIprefix}{doi:}
+\providecommand{\ArXivprefix}{arXiv:}
+\providecommand{\URLprefix}{URL: }
+\providecommand{\Pubmedprefix}{pmid:}
+\providecommand{\doi}[1]{\href{http://dx.doi.org/#1}{\path{#1}}}
+\providecommand{\Pubmed}[1]{\href{pmid:#1}{\path{#1}}}
+\providecommand{\bibinfo}[2]{#2}
+\ifx\xfnm\relax \def\xfnm[#1]{\unskip,\space#1}\fi
+%Type = Article
+\bibitem[{Moin and Mahesh(1998)}]{Moin98}
+\bibinfo{author}{P.~Moin}, \bibinfo{author}{K.~Mahesh},
+\newblock \bibinfo{title}{Direct numerical simulation: A tool in turbulence
+  research},
+\newblock \bibinfo{journal}{Annual Review of Fluid Mechanics}
+  \bibinfo{volume}{30} (\bibinfo{year}{1998}) \bibinfo{pages}{539--578}.
+%Type = Article
+\bibitem[{Moin and Kim(1980)}]{Moin80}
+\bibinfo{author}{P.~Moin}, \bibinfo{author}{J.~Kim},
+\newblock \bibinfo{title}{On the numerical solution of time-dependent viscous
+  incompressible fluid flows involving solid boundaries},
+\newblock \bibinfo{journal}{Journal of Computational Physics}
+  \bibinfo{volume}{35} (\bibinfo{year}{1980}) \bibinfo{pages}{381 -- 392}.
+%Type = Inproceedings
+\bibitem[{Kleiser and Schumann(1980)}]{Kleiser80}
+\bibinfo{author}{L.~Kleiser}, \bibinfo{author}{U.~Schumann},
+\newblock \bibinfo{title}{{Treatment of Incompressibility and Boundary
+  Conditions in 3-D Numerical Spectral Simulation of Plane Channel Flows}},
+\newblock in: \bibinfo{booktitle}{3rd GAMM Conf. Numerical Methods in Fluid
+  Mechanics}, \bibinfo{year}{1980}.
+%Type = Article
+\bibitem[{{Kim} et~al.(1987){Kim}, {Moin}, and {Moser}}]{Kim87}
+\bibinfo{author}{J.~{Kim}}, \bibinfo{author}{P.~{Moin}},
+  \bibinfo{author}{R.~{Moser}},
+\newblock \bibinfo{title}{{Turbulence statistics in fully developed channel
+  flow at low Reynolds number}},
+\newblock \bibinfo{journal}{Journal of Fluid Mechanics} \bibinfo{volume}{177}
+  (\bibinfo{year}{1987}) \bibinfo{pages}{133--166}.
+%Type = Book
+\bibitem[{Canuto et~al.(1988)Canuto, Hussaini, Quarteroni, and
+  Zang}]{canuto1988}
+\bibinfo{author}{C.~Canuto}, \bibinfo{author}{M.~Y. Hussaini},
+  \bibinfo{author}{A.~Quarteroni}, \bibinfo{author}{T.~A. Zang},
+  \bibinfo{title}{Spectral Methods in Fluid Dynamics},
+  \bibinfo{publisher}{Springer-Verlag New York-Heidelberg-Berlin},
+  \bibinfo{year}{1988}. \DOIprefix\doi{10.1007/978-3-642-84108-8}.
+%Type = Article
+\bibitem[{Lee and Moser(2015)}]{leemoser15}
+\bibinfo{author}{M.~Lee}, \bibinfo{author}{R.~D. Moser},
+\newblock \bibinfo{title}{{Direct numerical simulation of turbulent channel
+  flow up to $Re_{\tau} \approx 5200$}},
+\newblock \bibinfo{journal}{Journal of Fluid Mechanics} \bibinfo{volume}{774}
+  (\bibinfo{year}{2015}) \bibinfo{pages}{395--415}.
+%Type = Article
+\bibitem[{Hoyas and Jim{\'e}nez(2006)}]{hoyas06}
+\bibinfo{author}{S.~Hoyas}, \bibinfo{author}{J.~Jim{\'e}nez},
+\newblock \bibinfo{title}{{Scaling of the velocity fluctuations in turbulent
+  channels up to $Re_{\tau}=2003$}},
+\newblock \bibinfo{journal}{Physics of Fluids} \bibinfo{volume}{18}
+  (\bibinfo{year}{2006}).
+%Type = Article
+\bibitem[{Hoyas and Jim{\'e}nez(2008)}]{hoyas08}
+\bibinfo{author}{S.~Hoyas}, \bibinfo{author}{J.~Jim{\'e}nez},
+\newblock \bibinfo{title}{{Reynolds number effects on the Reynolds-stress
+  budgets in turbulent channels}},
+\newblock \bibinfo{journal}{Physics of Fluids} \bibinfo{volume}{20}
+  (\bibinfo{year}{2008}).
+%Type = Article
+\bibitem[{Lozano-Dur{\'a}n and Jim{\'e}nez(2014)}]{Lozano2014}
+\bibinfo{author}{A.~Lozano-Dur{\'a}n}, \bibinfo{author}{J.~Jim{\'e}nez},
+\newblock \bibinfo{title}{{Effect of the computational domain on direct
+  simulations of turbulent channels up to $Re_{\tau} = 4200$}},
+\newblock \bibinfo{journal}{Physics of Fluids} \bibinfo{volume}{26}
+  (\bibinfo{year}{2014}).
+%Type = Article
+\bibitem[{Bernardini et~al.(2014)Bernardini, Pirozzoli, and
+  Orlandi}]{bernardini2014}
+\bibinfo{author}{M.~Bernardini}, \bibinfo{author}{S.~Pirozzoli},
+  \bibinfo{author}{P.~Orlandi},
+\newblock \bibinfo{title}{{Velocity statistics in turbulent channel flow up to
+  $Re_{\tau}=4000 $}},
+\newblock \bibinfo{journal}{Journal of Fluid Mechanics} \bibinfo{volume}{742}
+  (\bibinfo{year}{2014}) \bibinfo{pages}{171--191}.
+%Type = Article
+\bibitem[{Lele(1992)}]{Lele92}
+\bibinfo{author}{S.~K. Lele},
+\newblock \bibinfo{title}{Compact finite difference schemes with spectral-like
+  resolution},
+\newblock \bibinfo{journal}{Journal of Computational Physics}
+  \bibinfo{volume}{103} (\bibinfo{year}{1992}) \bibinfo{pages}{16 -- 42}.
+%Type = Article
+\bibitem[{Shen(1994)}]{Shen94}
+\bibinfo{author}{J.~Shen},
+\newblock \bibinfo{title}{{Efficient Spectral-Galerkin Method I. Direct Solvers
+  of Second- and Fourth-Order Equations Using Legendre Polynomials}},
+\newblock \bibinfo{journal}{SIAM Journal on Scientific Computing}
+  \bibinfo{volume}{15} (\bibinfo{year}{1994}) \bibinfo{pages}{1489--1505}.
+%Type = Article
+\bibitem[{Shen(1995)}]{Shen95}
+\bibinfo{author}{J.~Shen},
+\newblock \bibinfo{title}{{Efficient spectral-Galerkin method II. Direct
+  solvers of second- and fourth-order equations using Chebyshev polynomials}},
+\newblock \bibinfo{journal}{SIAM Journal on Scientific Computing}
+  \bibinfo{volume}{16} (\bibinfo{year}{1995}) \bibinfo{pages}{74--87}.
+%Type = Article
+\bibitem[{Bouchon and Jauberteau(2001)}]{Bouchon01}
+\bibinfo{author}{F.~Bouchon}, \bibinfo{author}{F.~Jauberteau},
+\newblock \bibinfo{title}{A multilevel method applied in the nonhomogeneous
+  direction of the channel flow problem},
+\newblock \bibinfo{journal}{Applied Numerical Mathematics} \bibinfo{volume}{36}
+  (\bibinfo{year}{2001}) \bibinfo{pages}{1 -- 34}.
+%Type = Article
+\bibitem[{Hale and Townsend(2014)}]{Hale14}
+\bibinfo{author}{N.~Hale}, \bibinfo{author}{A.~Townsend},
+\newblock \bibinfo{title}{{A Fast, Simple, and Stable Chebyshev--Legendre
+  Transform Using an Asymptotic Formula}},
+\newblock \bibinfo{journal}{SIAM Journal on Scientific Computing}
+  \bibinfo{volume}{36} (\bibinfo{year}{2014}) \bibinfo{pages}{A148--A167}.
+%Type = Article
+\bibitem[{Hale and Townsend(2015)}]{Hale2015}
+\bibinfo{author}{N.~Hale}, \bibinfo{author}{A.~Townsend},
+\newblock \bibinfo{title}{A fast {FFT}-based discrete {L}egendre transform},
+\newblock \bibinfo{journal}{IMA Journal of Numerical Analysis}
+  (\bibinfo{year}{2015}).
+%Type = Misc
+\bibitem[{spe(2016)}]{spectralDNS}
+\bibinfo{title}{{spectralDNS}}, \bibinfo{year}{2016}. \URLprefix
+  \url{https://github.com/spectralDNS}.
+%Type = Misc
+\bibitem[{pyt(2016)}]{python}
+\bibinfo{title}{Python}, \bibinfo{year}{2016}. \URLprefix \url{www.python.org}.
+%Type = Misc
+\bibitem[{cyt(2016)}]{cython}
+\bibinfo{title}{Cython}, \bibinfo{year}{2016}. \URLprefix \url{www.cython.org}.
+%Type = Book
+\bibitem[{Kopriva(2009)}]{kopriva09}
+\bibinfo{author}{D.~A. Kopriva}, \bibinfo{title}{Implementing Spectral Methods
+  for Partial Differential Equations}, \bibinfo{publisher}{{Springer
+  Netherlands}}, \bibinfo{year}{2009}.
+  \DOIprefix\doi{10.1007/978-90-481-2261-5}.
+%Type = Book
+\bibitem[{Stewart(1998)}]{stewart98}
+\bibinfo{author}{G.~W. Stewart}, \bibinfo{title}{Matrix Algorithms: Volume 1,
+  Basic Decompositions}, \bibinfo{publisher}{SIAM}, \bibinfo{year}{1998}.
+%Type = Article
+\bibitem[{Mortensen and Langtangen(2016)}]{Mortensen2016}
+\bibinfo{author}{M.~Mortensen}, \bibinfo{author}{H.~P. Langtangen},
+\newblock \bibinfo{title}{High performance python for direct numerical
+  simulations of turbulent flows},
+\newblock \bibinfo{journal}{Computer Physics Communications}
+  \bibinfo{volume}{203} (\bibinfo{year}{2016}) \bibinfo{pages}{53 -- 65}.
+%Type = Article
+\bibitem[{Orszag(1971)}]{Orszag_1971}
+\bibinfo{author}{S.~A. Orszag},
+\newblock \bibinfo{title}{Accurate solution of the {O}rr–{S}ommerfeld
+  stability equation},
+\newblock \bibinfo{journal}{Journal of Fluid Mechanics} \bibinfo{volume}{50}
+  (\bibinfo{year}{1971}) \bibinfo{pages}{689–703}.
+%Type = Article
+\bibitem[{Frigo and Johnson(2005)}]{libfftw}
+\bibinfo{author}{M.~Frigo}, \bibinfo{author}{S.~G. Johnson},
+\newblock \bibinfo{title}{{The Design and Implementation of FFTW3}},
+\newblock \bibinfo{journal}{Proceedings of the IEEE} \bibinfo{volume}{93}
+  (\bibinfo{year}{2005}) \bibinfo{pages}{216--231}.
+%Type = Article
+\bibitem[{Orzag(1971)}]{Orzag71}
+\bibinfo{author}{S.~A. Orzag},
+\newblock \bibinfo{title}{{On the Elimination of Aliasing in Finite Difference
+  Schemes by Filtering High-Wavenumber Components}},
+\newblock \bibinfo{journal}{{Journal of the Atmospheric Sciences}}
+  \bibinfo{volume}{28} (\bibinfo{year}{1971}) \bibinfo{pages}{1074}.
+
+\end{thebibliography}
