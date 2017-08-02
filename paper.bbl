@@ -127,15 +127,17 @@
 \newblock \bibinfo{journal}{IMA Journal of Numerical Analysis}
   (\bibinfo{year}{2015}).
 %Type = Misc
-\bibitem[{spe(2016)}]{spectralDNS}
-\bibinfo{title}{{spectralDNS}}, \bibinfo{year}{2016}. \URLprefix
-  \url{https://github.com/spectralDNS}.
+\bibitem[{spe(2017)}]{spectralDNS}
+\bibinfo{title}{{https://github.com/spectralDNS}}, \bibinfo{year}{2017}.
+  \URLprefix \url{https://github.com/spectralDNS}.
 %Type = Misc
-\bibitem[{pyt(2016)}]{python}
-\bibinfo{title}{Python}, \bibinfo{year}{2016}. \URLprefix \url{www.python.org}.
+\bibitem[{pyt(2017)}]{python}
+\bibinfo{title}{www.python.org}, \bibinfo{year}{2017}. \URLprefix
+  \url{www.python.org}.
 %Type = Misc
-\bibitem[{cyt(2016)}]{cython}
-\bibinfo{title}{Cython}, \bibinfo{year}{2016}. \URLprefix \url{www.cython.org}.
+\bibitem[{cyt(2017)}]{cython}
+\bibinfo{title}{www.cython.org}, \bibinfo{year}{2017}. \URLprefix
+  \url{www.cython.org}.
 %Type = Book
 \bibitem[{Kopriva(2009)}]{kopriva09}
 \bibinfo{author}{D.~A. Kopriva}, \bibinfo{title}{Implementing Spectral Methods
